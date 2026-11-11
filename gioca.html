@@ -284,6 +284,9 @@ h4{margin:6px 0 0;font-size:11px;letter-spacing:.14em;text-transform:uppercase;c
 #bigMapWrap{position:relative;min-height:0;overflow:hidden}
 #bigMap{position:absolute;inset:0;width:100%;height:100%;touch-action:none;cursor:grab}
 #mapQuick{position:absolute;left:12px;top:12px;display:flex;gap:8px;flex-wrap:wrap;z-index:2}#mapQuick button{display:flex;align-items:center;gap:7px;padding:9px 13px;border-radius:999px;border:1px solid rgba(255,255,255,.22);background:rgba(23,32,31,.86);color:#f3e7cb;font:800 13px Figtree,sans-serif;cursor:pointer}#mapQuick button:hover{background:rgba(40,52,50,.95)}#mapQuick i{width:10px;height:10px;border-radius:3px;display:inline-block}
+@media (max-width:700px){#mapOv .sheetHead{flex-wrap:nowrap;padding:10px 12px;gap:8px}#mapOv .sheetHead .tg-eyebrow{display:none}#mapOv .sheetHead h2{font-size:20px;white-space:nowrap}#mapOv .legend{font-size:10.5px;gap:7px;flex:1;min-width:0}#mapOv .legend span:last-child{display:none}#mapOv .sheetHead .x{flex:none}
+#mapQuick{left:8px;right:8px;top:8px;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;padding-bottom:2px}#mapQuick::-webkit-scrollbar{display:none}#mapQuick button{flex:none;padding:7px 11px;font-size:12px}}
+body:has(#mapOv:not([hidden])) #ngHud,body:has(#mapOv:not([hidden])) #sfHud{display:none!important}
 #mapInfo{position:absolute;left:12px;bottom:12px;width:min(340px,calc(100% - 24px));padding:12px 14px;display:grid;gap:6px}
 #mapInfo h3{margin:0;font-family:var(--tg-display);font-stretch:112%;font-weight:800;font-size:19px;text-transform:uppercase}
 #mapInfo p{margin:0;font-size:13.5px;line-height:1.4;color:#ddd4bf}
@@ -1028,9 +1031,11 @@ html body.touch #hud .where.rot>#toast.rotOn .tMore{display:inline!important;mar
 <script src="engine/tg-aereo-44.js"></script>
 <script src="engine/tg-vita.js"></script>
 <script src="mondo/app.js"></script>
+<script src="engine/tg-msg.js"></script>
 <script src="engine/tg-primo-minuto.js"></script>
 <script src="engine/tg-lavori.js"></script>
 <script src="engine/tg-nocchia-giorno.js"></script>
 <script src="engine/tg-ritorno.js"></script>
+<script src="engine/tg-mappa-plus.js"></script>
 
 </body></html>
