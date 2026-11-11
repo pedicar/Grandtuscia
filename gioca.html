@@ -426,7 +426,9 @@ body.secco #gl{filter:sepia(.4) saturate(.7) brightness(1.06);transition:filter 
 #primi button.fatto{color:var(--tg-muted);text-decoration:line-through}#primi button.fatto i{background:#8cbf52;border-color:#8cbf52;color:#17201f}#primi button.fatto i::before{content:'✓';font-weight:900}
 #primi button.ora i{border-color:#f2c74e;box-shadow:0 0 0 3px rgba(242,199,78,.25)}#primi button.ora{color:#fff}
 #primi em{font-style:normal;font-family:var(--tg-mono);font-size:12px;color:#f2c74e;font-variant-numeric:tabular-nums}
-body.touch #primi{left:calc(10px + env(safe-area-inset-left,0px));top:calc(96px + env(safe-area-inset-top,0px));bottom:auto;width:min(300px,62vw);font-size:12px;padding:8px 10px;gap:2px}
+body.touch #primi{left:calc(10px + env(safe-area-inset-left,0px));top:calc(96px + env(safe-area-inset-top,0px));bottom:auto;width:auto;max-width:min(300px,68vw);font-size:12px;padding:4px 8px;gap:0;border-radius:999px}
+body.touch #primi b,body.touch #primi button:not(.ora){display:none}
+body.touch #primi button{padding:3px 4px;grid-template-columns:14px 1fr auto;gap:6px}body.touch #primi button i{width:12px;height:12px;border-width:1.5px}body.touch #primi em{font-size:11px}
 body.touch.walking #primi,body.cine #primi{display:none}
 #trag{position:absolute;left:50%;bottom:calc(96px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:14;display:grid;gap:8px;padding:12px 14px;border-radius:16px;width:min(420px,calc(100vw - 24px));pointer-events:auto;border:1px solid rgba(242,199,78,.45);animation:tragIn .4s ease-out}
 #trag .tragT{display:grid;gap:2px}#trag b{font-size:17px;color:#f2c74e}#trag .tragT>span:last-child{font-size:13.5px;color:#ddd4bf;line-height:1.35}#trag .btnRow{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
