@@ -1,0 +1,1 @@
+window.TG_STATS_CONFIG={pub:"sb_publishable_AyzB9kHo2_hV7jg4p20nRQ_joQaF-jd",url:"https://wahrowxonkfqsktjmbdg.supabase.co",key:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndhaHJvd3hvbmtmcXNrdGptYmRnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA3NzQ2MTYsImV4cCI6MjEwNjM1MDYxNn0.QwHZbXyt5i78UtAldmGCl7VG7N2nRemgqntfga2Sf5U"};

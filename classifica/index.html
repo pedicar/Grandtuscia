@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Il Trono di Nocchie</title>
+<meta name="description" content="Il Trono di Nocchie: la classifica dei contadini più rispettati della Tuscia in Grand Tuscia Adventure, di sempre, del mese e paese per paese.">
+<link rel="canonical" href="https://grandtuscia.netlify.app/classifica/">
+<meta property="og:title" content="Il Trono di Nocchie · Grand Tuscia Adventure">
+<meta property="og:description" content="Chi è il contadino più rispettato della Tuscia? La classifica di sempre, del mese e di ogni paese.">
+<meta property="og:url" content="https://grandtuscia.netlify.app/classifica/">
+<meta property="og:locale" content="it_IT">
+<meta property="og:image" content="https://grandtuscia.netlify.app/tuscia-games/img/trono.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="../icone/favicon-32.png">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,500..900&family=Figtree:wght@400;600;700;800&family=Martian+Mono:wght@400;600&display=swap">
+<style>
+html{touch-action:manipulation}
+:root{--fondo:#17201f;--fondo-2:#1f2a28;--carta:#f3e7cb;--muted:#b9ae96;--linea:rgba(243,231,203,.16);--oro:#f2c74e;--rosa:#f0a9c4;--verde:#8cbf52;--rosso:#d8432a;
+  --display:"Archivo","Arial Narrow",Arial,sans-serif;--body:"Figtree","Segoe UI",system-ui,sans-serif;--mono:"Martian Mono",ui-monospace,Menlo,monospace}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(120% 70% at 50% 0%,#2c3a2f 0%,var(--fondo) 60%);color:var(--carta);font-family:var(--body);font-size:15px;line-height:1.5;min-height:100vh}
+main{max-width:720px;margin:0 auto;padding:28px 16px 48px;display:grid;gap:18px}
+.eyebrow{font-weight:800;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--oro)}
+h1{margin:4px 0 0;font-family:var(--display);font-stretch:125%;font-weight:900;text-transform:uppercase;line-height:.92;font-size:clamp(34px,9vw,60px)}
+h1 span{display:block;color:var(--oro)}
+.sub{margin:0;color:var(--muted);max-width:56ch}
+.tabs{display:flex;flex-wrap:wrap;gap:6px}
+.tabs button,.chips button{font:inherit;font-weight:800;font-size:13px;border-radius:999px;padding:8px 14px;border:1px solid var(--linea);background:rgba(255,255,255,.04);color:var(--carta);cursor:pointer}
+.tabs button[aria-pressed="true"]{background:var(--carta);color:var(--fondo);border-color:transparent}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chips button{font-size:12px;padding:6px 11px;color:var(--muted)}
+.chips button[aria-pressed="true"]{background:var(--oro);color:#2a1d08;border-color:transparent}
+h2{margin:0;font-family:var(--display);font-stretch:112%;font-weight:800;text-transform:uppercase;font-size:18px}
+ol{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+li{display:grid;grid-template-columns:44px 1fr auto;align-items:center;gap:12px;padding:12px 14px;border-radius:14px;border:1px solid var(--linea);background:var(--fondo-2)}
+li.re{background:linear-gradient(90deg,rgba(242,199,78,.25),var(--fondo-2) 70%);border-color:rgba(242,199,78,.6)}
+li .p{font-family:var(--mono);font-weight:600;text-align:center;color:var(--muted)}
+li.re .p{font-size:24px}
+li b{font-size:17px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}li b small{font-size:12px;font-weight:500;color:#8d8a7e}
+li .s{font-family:var(--mono);font-weight:600;color:var(--rosa);font-variant-numeric:tabular-nums}
+.vuoto,.err{color:var(--muted);margin:0;padding:14px;border:1px dashed var(--linea);border-radius:14px}
+.cta{display:grid;gap:10px;padding:16px;border-radius:16px;background:rgba(242,199,78,.1);border:1px solid rgba(242,199,78,.35)}
+.cta a{justify-self:start;display:inline-block;padding:12px 20px;border-radius:12px;background:var(--rosso);color:#fff;font-family:var(--display);font-stretch:118%;font-weight:800;text-transform:uppercase;text-decoration:none;box-shadow:0 4px 0 #8e2516}
+footer{color:var(--muted);font-size:12.5px;border-top:1px solid var(--linea);padding-top:12px}
+footer a{color:var(--carta)}
+.share{display:flex;flex-wrap:wrap;gap:8px;align-items:center}.share button,.share a{font:inherit;font-weight:800;font-size:14px;border-radius:999px;padding:10px 16px;border:1px solid var(--linea);background:rgba(255,255,255,.06);color:var(--carta);cursor:pointer;text-decoration:none}.share .pri{background:var(--oro);color:#2a1d08;border-color:transparent}.share .ok{color:var(--muted);font-size:13px}
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <span class="eyebrow">Grand Tuscia Adventure · la classifica</span>
+    <h1>Il Trono <span>di Nocchie</span></h1>
+    <p class="sub">Nella Tuscia del gioco non vince il più ricco: vince chi fa di più per i paesi. Fontane, case, cene, legna alle vecchiette. Qui ci sono i contadini più rispettati.</p>
+  </header>
+  <div class="tabs" id="tabs" role="group" aria-label="Quale classifica">
+    <button data-t="sempre" aria-pressed="true">Di sempre</button><button data-t="mese" aria-pressed="false">Questo mese</button><button data-t="comuni" aria-pressed="false">La sfida dei comuni</button><button data-t="paese" aria-pressed="false">Dove hai lavorato</button>
+  </div>
+  <div class="chips" id="paesi" hidden></div>
+  <section><h2 id="tit">I più rispettati della Tuscia</h2></section>
+  <div id="out"><p class="vuoto">Chiedo in piazza…</p></div>
+  <div class="share" id="share" hidden><button class="pri" id="shCond">📣 Condividi la classifica</button><a id="shWa" href="#" target="_blank" rel="noopener">WhatsApp</a><button id="shImg">Scarica la figurina</button><span class="ok" id="shOk"></span></div>
+  <div class="cta"><b>Vuoi sederti sul trono?</b><span class="sub">Si gioca gratis dal telefono o dal computer. Parti con un pezzo di terra tra Caprarola e Carbognano; salva la partita e scegli il tuo soprannome per entrare in classifica.</span><a href="../gioca.html?utm_source=classifica">Gioca adesso</a></div>
+  <footer>Grand Tuscia Adventure · Tuscia Games. In classifica compare solo il soprannome scelto dal giocatore. <a href="../privacy.html">Privacy</a></footer>
+</main>
+<script src="../engine/tg-stats-config.js"></script>
+<script src="../engine/tg-consenso.js"></script>
+<script src="../engine/tg-condividi.js"></script>
+<script>
+(function () {
+'use strict';
+const CFG = window.TG_STATS_CONFIG || {}, $ = id => document.getElementById(id);
+const PAESI = [['caprarola', 'Caprarola'], ['carbognano', 'Carbognano'], ['fabrica', 'Fabrica di Roma'], ['falerii', 'Falerii Novi'], ['viterbo', 'Viterbo']];
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+let ULT = null, q = {}; try { q = Object.fromEntries(new URLSearchParams(location.search)); } catch (e) {}
+const st = { tipo: ['sempre', 'mese', 'paese', 'comuni'].includes(q.tipo) ? q.tipo : (q.paese ? 'paese' : 'sempre'), paese: PAESI.some(p => p[0] === q.paese) ? q.paese : 'fabrica' };
+$('paesi').innerHTML = PAESI.map(([id, n]) => `<button data-p="${id}">${n}</button>`).join('');
+async function carica() {
+  const comuni = st.tipo === 'comuni';
+  const r = await fetch(CFG.url.replace(/\/$/, '') + '/rest/v1/rpc/' + (comuni ? 'tg_trono_comuni' : 'tg_trono'), { method: 'POST', headers: { apikey: CFG.key, Authorization: 'Bearer ' + CFG.key, 'Content-Type': 'application/json' }, body: JSON.stringify(comuni ? { p_tipo: 'sempre' } : { p_tipo: st.tipo, p_paese: st.tipo === 'paese' ? st.paese : null, p_n: 50 }) });
+  if (!r.ok) throw new Error('rete'); return r.json();
+}
+async function vai() {
+  document.querySelectorAll('#tabs button').forEach(b => b.setAttribute('aria-pressed', b.dataset.t === st.tipo));
+  document.querySelectorAll('#paesi button').forEach(b => b.setAttribute('aria-pressed', b.dataset.p === st.paese));
+  $('paesi').hidden = st.tipo !== 'paese';
+  const nome = (PAESI.find(p => p[0] === st.paese) || [])[1];
+  $('tit').textContent = st.tipo === 'mese' ? 'La stima guadagnata questo mese' : st.tipo === 'comuni' ? 'La sfida dei comuni della Tuscia' : st.tipo === 'paese' ? 'Chi ha fatto di più per ' + nome : 'I più rispettati della Tuscia';
+  try { history.replaceState(null, '', '?tipo=' + st.tipo + (st.tipo === 'paese' ? '&paese=' + st.paese : '')); } catch (e) {}
+  $('out').innerHTML = '<p class="vuoto">Chiedo in piazza…</p>'; $('share').hidden = true; $('shOk').textContent = '';
+  try {
+    const D = await carica(), R = D.righe || []; ULT = { D, R };
+    if (st.tipo === 'comuni') {
+      // ogni giocatore gioca per il suo comune: la somma della stima, e la media a testa (così anche un paese piccolo può vincere)
+      $('out').innerHTML = R.length ? `<ol>${R.map(r => `<li class="${r.pos === 1 ? 're' : ''}"><span class="p">${r.pos === 1 ? '👑' : r.pos}</span><b>${esc(r.nome)} <small>· ${r.giocatori} ${r.giocatori === 1 ? 'giocatore' : 'giocatori'} · ${r.media} a testa</small></b><span class="s">♥ ${r.punti}</span></li>`).join('')}</ol><p class="sub">Punti = la stima di tutti i giocatori che hanno scelto quel comune. Il comune si sceglie quando si entra in classifica.</p>`
+        : '<p class="vuoto">Nessun comune ha ancora punti: entra in classifica, scegli il tuo comune e porta i primi.</p>';
+      mostraShare(); return;
+    }
+    mostraShare();
+    $('out').innerHTML = R.length ? `<ol>${R.map(r => `<li class="${r.pos === 1 ? 're' : ''}"><span class="p">${r.pos === 1 ? '👑' : r.pos}</span><b>${esc(r.nome)}${r.comuneNome ? ` <small>· ${esc(r.comuneNome)}</small>` : ''}</b><span class="s">♥ ${r.punti}</span></li>`).join('')}</ol>`
+      : '<p class="vuoto">Il trono è ancora vuoto: il primo che ci si siede, ci resta finché qualcuno non fa di più.</p>';
+  } catch (e) { $('out').innerHTML = '<p class="err">La classifica non è raggiungibile adesso. Riprova tra poco.</p>'; }
+}
+// condividere: testo con i primi cinque + figurina PNG (engine/tg-condividi.js)
+function datiShare() {
+  const nome = (PAESI.find(p => p[0] === st.paese) || [])[1], comuni = st.tipo === 'comuni';
+  const R = (ULT && ULT.R || []).slice().sort((a, b) => a.pos - b.pos);
+  return { tipo: st.tipo, titolo: $('tit').textContent, url: 'https://grandtuscia.netlify.app/classifica/?tipo=' + st.tipo + (st.tipo === 'paese' ? '&paese=' + st.paese : '') + '&utm_source=condivisione',
+    righe: R.map(r => ({ pos: r.pos, nome: r.nome, punti: r.punti, sub: comuni ? `${r.giocatori} ${r.giocatori === 1 ? 'giocatore' : 'giocatori'} · ${r.media} a testa` : r.comuneNome || '' })),
+    nota: comuni ? 'Scegli il tuo comune e portalo in alto.' : nome && st.tipo === 'paese' ? `Chi fa di più per ${nome}?` : 'Vieni a buttarli giù, se ci riesci.', statistica: window.TG && TG.Stats && TG.Stats.ev };
+}
+function mostraShare() { if (!window.TG || !TG.Condividi || !ULT) return; $('share').hidden = false; $('shWa').href = TG.Condividi.whatsapp(datiShare()); }
+$('shCond').onclick = async () => { const r = await TG.Condividi.classifica(datiShare()); $('shOk').textContent = r === 'scaricato' ? 'Figurina scaricata e testo copiato: incollalo dove vuoi.' : r === 'copiato' ? 'Testo copiato.' : ''; };
+$('shImg').onclick = async () => { const b = await TG.Condividi.figurina(datiShare()); TG.Condividi.scarica(b, 'trono-di-nocchie.png'); $('shOk').textContent = 'Figurina scaricata.'; };
+document.querySelectorAll('#tabs button').forEach(b => b.onclick = () => { st.tipo = b.dataset.t; vai(); });
+document.querySelectorAll('#paesi button').forEach(b => b.onclick = () => { st.paese = b.dataset.p; vai(); });
+vai();
+})();
+</script>
+</body>
+</html>

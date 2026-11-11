@@ -1,0 +1,1428 @@
+<!doctype html><html lang="it"><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="description" content="La Città sotto i Campi: col georadar riporti alla luce Falerii Novi, la città romana sotto i campi di Fabrica di Roma. Gioco gratis della Tuscia."><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>La Città sotto i Campi</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Marcellus&family=Archivo:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: full-screen low-poly city, instrument HUD at the corners, menu as a left-anchored survey sheet */
+:root{
+  --ink:#15120e; --panel:rgba(24,19,14,.86); --line:rgba(239,230,212,.16);
+  --paper:#efe6d4; --muted:#ab9f89; --tufo:#d48c4b; --amber:#f2c166; --good:#a9c77f;
+  --f-disp:'Marcellus',Georgia,'Times New Roman',serif;
+  --f-body:'Archivo',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --f-mono:'IBM Plex Mono',ui-monospace,Menlo,Consolas,monospace;
+  color-scheme:dark;
+}
+html,body{height:100%}
+[hidden]{display:none!important}
+body{background:var(--ink);color:var(--paper);font-family:var(--f-body);overflow:hidden;-webkit-user-select:none;user-select:none}
+#c{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none;outline:none}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+
+.hud{position:fixed;pointer-events:none;z-index:5}
+#top{top:calc(env(safe-area-inset-top,0px) + 10px);left:10px;right:10px;display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.stats{display:flex;gap:6px;flex-wrap:wrap;max-width:62vw}
+.stat{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:5px 9px;min-width:60px}
+.stat .k{font:500 9.5px/1 var(--f-mono);letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.stat .v{font:500 16px/1.25 var(--f-mono);font-variant-numeric:tabular-nums;color:var(--paper)}
+.stat.hot .v{color:var(--amber)}
+.tools{display:flex;gap:6px;margin-top:6px;pointer-events:auto;flex-wrap:wrap}
+.ib{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:6px 9px;font:500 10.5px/1.2 var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--paper);min-height:30px}
+.ib:hover{border-color:var(--tufo)}
+.ib.view{border-color:var(--tufo);color:var(--amber)}
+#miniWrap{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:4px;flex:none}
+#mini{display:block;width:150px;height:112px;border-radius:3px}
+#bottom{right:10px;bottom:calc(env(safe-area-inset-bottom,0px) + 10px);display:flex;flex-direction:column;align-items:flex-end;gap:6px}
+#anom{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:6px 9px;width:200px;opacity:0;transition:opacity .25s}
+#anom.on{opacity:1}
+#anom .k{font:500 9.5px/1 var(--f-mono);letter-spacing:.12em;text-transform:uppercase;color:var(--amber);display:flex;justify-content:space-between}
+#anom .bar{height:5px;background:rgba(239,230,212,.12);border-radius:3px;margin-top:6px;overflow:hidden}
+#anom .bar i{display:block;height:100%;width:0;background:var(--amber);transition:width .2s}
+#radar{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:6px;width:200px}
+#radar .hd{display:flex;justify-content:space-between;font:500 9.5px/1 var(--f-mono);letter-spacing:.1em;color:var(--muted);margin-bottom:5px;text-transform:uppercase}
+#radar .hd b{color:var(--amber);font-weight:500}
+.scope{position:relative}
+#rc{display:block;width:100%;height:64px;border-radius:3px;background:#0d0b08}
+.depth{position:absolute;left:3px;top:0;bottom:0;display:flex;flex-direction:column;justify-content:space-between;font:400 8px/1 var(--f-mono);color:rgba(242,193,102,.6);padding-block:3px}
+#coord{font:400 9px/1 var(--f-mono);color:var(--muted);margin-top:5px;font-variant-numeric:tabular-nums}
+#hint{left:10px;bottom:calc(env(safe-area-inset-bottom,0px) + 10px);background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:6px 9px;font:400 10.5px/1.45 var(--f-mono);color:var(--muted);max-width:240px}
+#toast{left:50%;top:calc(env(safe-area-inset-top,0px) + 12px);transform:translate(-50%,-8px);background:var(--panel);border:1px solid var(--tufo);border-radius:20px;padding:7px 14px;font:500 13px/1.3 var(--f-body);opacity:0;transition:opacity .25s,transform .25s;max-width:min(46vw,420px);text-align:center}
+#toast.on{opacity:1;transform:translate(-50%,0)}
+#card{left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 12px);transform:translate(-50%,10px);width:min(620px,calc(100vw - 480px));max-height:34vh;overflow:auto;background:rgba(20,16,12,.78);border:1px solid var(--line);border-top:2px solid var(--tufo);border-radius:8px;padding:8px 12px 9px;opacity:0;transition:opacity .3s,transform .3s;backdrop-filter:blur(3px)}
+#card.on{opacity:1;transform:translate(-50%,0);pointer-events:auto}
+#card .hdr{display:flex;align-items:baseline;gap:10px;padding-right:86px;min-width:0}
+#card .era{font:500 9.5px/1 var(--f-mono);letter-spacing:.14em;text-transform:uppercase;color:var(--amber);white-space:nowrap}
+#card h3{font:400 17px/1.2 var(--f-disp);margin:0;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#card p{font-size:13px;line-height:1.45;color:#dcd2bf;margin:4px 0 0}
+#cText{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+#card.open #cText{display:block}
+#card .x,#card .mn{position:absolute;top:5px;background:none;border:0;color:var(--muted);font:500 11px/1 var(--f-mono);letter-spacing:.08em;text-transform:uppercase;padding:5px 6px}
+#card .x{right:4px;font-size:15px}#card .mn{right:28px;color:var(--amber)}
+#card:not(.open) #cRealT{display:none}
+#cReal{margin-top:6px;display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px}
+#cReal p{flex-basis:100%;order:3}
+#cReal .rk{font:500 9.5px/1 var(--f-mono);letter-spacing:.14em;text-transform:uppercase;color:var(--good)}
+#cReal .links{margin-top:0}
+.rl{padding:5px 7px!important;font-size:11px!important}
+#cReal p{font-size:12.5px}
+.links{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.rl{display:inline-flex;align-items:center;gap:4px;font:500 11.5px/1 var(--f-body);color:var(--ink);background:var(--good);text-decoration:none;border-radius:4px;padding:6px 8px}
+.rl.alt{background:transparent;color:var(--paper);border:1px solid var(--line)}
+.rl:hover{filter:brightness(1.08)}
+#stick{position:fixed;width:104px;height:104px;margin:-52px 0 0 -52px;border-radius:50%;border:1.5px solid rgba(239,230,212,.35);background:rgba(21,18,14,.25);pointer-events:none;z-index:6}
+#knob{position:absolute;left:50%;top:50%;width:44px;height:44px;margin:-22px 0 0 -22px;border-radius:50%;background:rgba(242,193,102,.55);border:1.5px solid var(--amber)}
+
+.sheet{position:fixed;inset:0;z-index:10;display:flex;align-items:center;overflow-y:auto;padding-inline:16px;padding-block:calc(env(safe-area-inset-top,0px) + 20px) calc(env(safe-area-inset-bottom,0px) + 20px);background:linear-gradient(90deg,rgba(21,18,14,.94) 0%,rgba(21,18,14,.78) 48%,rgba(21,18,14,.12) 100%)}
+.inner{max-width:600px;width:100%;margin-left:clamp(0px,5vw,72px);margin-block:auto}
+.eyebrow{font:500 11px/1 var(--f-mono);letter-spacing:.18em;text-transform:uppercase;color:var(--amber)}
+.title{font:400 clamp(40px,8vw,74px)/.98 var(--f-disp);letter-spacing:.01em;margin:12px 0 14px;text-wrap:balance}
+.title em{font-style:normal;color:var(--tufo)}
+.lead{font-size:15.5px;line-height:1.55;color:#dcd2bf;max-width:52ch;margin:0 0 22px}
+.modes{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.mode.exp{border-color:rgba(169,199,127,.45)}.mode.exp .t{color:var(--good)}
+#guide{left:50%;top:calc(env(safe-area-inset-top,0px) + 12px);transform:translateX(-50%);display:flex;align-items:center;gap:9px;background:var(--panel);border:1px solid rgba(169,199,127,.5);border-radius:20px;padding:6px 14px 6px 8px;font:500 13px/1.2 var(--f-body);white-space:nowrap;max-width:min(60vw,520px)}
+#guide .ga{display:inline-grid;place-items:center;width:24px;height:24px;border-radius:50%;background:var(--good);color:var(--ink);font:700 14px/1 var(--f-body);transition:transform .15s}
+#guide .gs{font:500 10px/1 var(--f-mono);letter-spacing:.12em;text-transform:uppercase;color:var(--good)}
+#guide .gd{font:400 11px/1 var(--f-mono);color:var(--muted)}
+#guide span{overflow:hidden;text-overflow:ellipsis}
+body.explore #toast{top:calc(env(safe-area-inset-top,0px) + 54px)}
+.mode{text-align:left;background:rgba(239,230,212,.05);border:1px solid var(--line);border-radius:6px;padding:13px 13px 12px;display:flex;flex-direction:column;gap:6px;transition:border-color .15s,background .15s,transform .15s;min-width:0}
+.mode:hover{border-color:var(--tufo);background:rgba(212,140,75,.1);transform:translateY(-2px)}
+.mode .n{font:400 21px/1.1 var(--f-disp)}
+.mode .d{font-size:12.5px;line-height:1.45;color:#cfc4b0}
+.mode .t{font:500 9.5px/1 var(--f-mono);letter-spacing:.12em;text-transform:uppercase;color:var(--amber);margin-top:auto;padding-top:6px}
+.help{margin-top:16px;font:400 11.5px/1.5 var(--f-mono);color:var(--muted)}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:18px}
+.btn{background:var(--tufo);color:#1a130c;border:0;border-radius:6px;padding:10px 16px;font:600 14px/1 var(--f-body)}
+.btn.ghost{background:transparent;color:var(--paper);border:1px solid var(--line)}
+.btn:hover{filter:brightness(1.08)}
+.big{display:grid;grid-template-columns:repeat(4,auto);gap:22px;justify-content:start;margin:6px 0 4px}
+.big .k{font:500 10px/1 var(--f-mono);letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.big .v{font:400 32px/1.2 var(--f-disp);font-variant-numeric:tabular-nums}
+#card .qq{font-weight:600;margin:6px 0 0;font-size:13px;color:var(--paper)}
+#cQuiz{display:flex;flex-wrap:wrap;gap:6px}#cQuiz .qq{flex-basis:100%}
+.qa{display:block;flex:1 1 150px;text-align:left;margin-top:0;background:rgba(239,230,212,.06);border:1px solid var(--line);border-radius:5px;padding:8px 10px;font:500 13px/1.35 var(--f-body);color:var(--paper)}
+.qa:hover:not(:disabled){border-color:var(--tufo)}
+.qa:disabled{cursor:default}
+.qa.ok{border-color:var(--good);background:rgba(169,199,127,.2)}
+.qa.no{border-color:#d0674f;background:rgba(208,103,79,.2)}
+#card #cFb{margin-top:5px;color:var(--amber);font-size:12.5px}
+#card #cFb:empty{display:none}
+#labels{position:fixed;inset:0;pointer-events:none;z-index:4;overflow:hidden}
+.lbl{position:absolute;left:0;top:0;transform:translate(-50%,-100%);pointer-events:auto;cursor:pointer;background:rgba(20,16,12,.72);border:1px solid rgba(242,193,102,.55);color:var(--paper);font:500 11.5px/1 var(--f-body);padding:5px 8px 5px 7px;border-radius:12px;white-space:nowrap}
+.lbl::after{content:'';position:absolute;left:50%;bottom:-6px;width:1px;height:6px;background:rgba(242,193,102,.7)}
+.lbl.poi{font-size:10.5px;border-color:rgba(169,199,127,.55)}
+.lbl:hover{border-color:var(--amber)}
+#journal,#visit{background:rgba(21,18,14,.96);align-items:flex-start}
+#visit .inner{max-width:760px}
+.vgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
+.vbox{background:rgba(239,230,212,.05);border:1px solid var(--line);border-radius:6px;padding:12px 14px;min-width:0}
+.vbox h3{font:400 19px/1.2 var(--f-disp);color:var(--tufo);margin:0 0 6px}
+.vbox p,.vbox li{font-size:13.5px;line-height:1.55;color:#dcd2bf;margin:0}
+.vbox ul{margin:0;padding-left:18px;display:grid;gap:4px}
+.mis{display:grid;gap:6px;margin-top:4px}
+.mis label{display:flex;gap:9px;align-items:flex-start;font-size:13.5px;line-height:1.45;color:#dcd2bf;cursor:pointer}
+.mis input{accent-color:#a9c77f;margin-top:3px;width:16px;height:16px;flex:none}
+.tel{font-family:var(--f-mono);color:var(--amber);user-select:text;-webkit-user-select:text}
+#journal .inner{max-width:760px}
+.title.jt{font-size:clamp(32px,6vw,54px)}
+.jb h3{font:400 22px/1.2 var(--f-disp);color:var(--tufo);margin:26px 0 6px}
+.je{display:grid;grid-template-columns:minmax(120px,200px) 1fr;gap:14px;padding-block:9px;border-top:1px solid var(--line)}
+.je b{font-weight:600;font-size:14px}
+.je span{color:#dcd2bf;font-size:14px;line-height:1.55;min-width:0}
+.jb .empty{color:var(--muted);font-size:13px;margin:4px 0}
+@media (max-width:680px){
+  .je{grid-template-columns:1fr;gap:3px}
+  .modes{grid-template-columns:1fr}
+  .mode{flex-direction:row;flex-wrap:wrap;align-items:baseline;column-gap:10px}
+  .mode .d{flex-basis:100%}
+  .mode .t{margin-top:0;padding-top:0;margin-left:auto}
+  .sheet{background:rgba(21,18,14,.84);align-items:flex-start}
+  .lead{font-size:14.5px;margin-bottom:16px}
+  #mini{width:108px;height:81px}
+  #radar,#anom{width:150px}
+  #rc{height:44px}
+  #hint{display:none}
+  .stat{padding:4px 7px;min-width:0}
+  .stat .k{font-size:8.5px}
+  .stat .v{font-size:13px}
+  .ib{padding:5px 7px;font-size:10px}
+  .big{grid-template-columns:repeat(2,auto)}
+
+  body.cardon #bottom{visibility:hidden}
+  #card{max-height:38vh}
+  #toast{top:34vh;max-width:86vw}
+  .vgrid{grid-template-columns:1fr}
+  #card h3{font-size:19px}
+  #card p{font-size:12.5px}
+}
+@media (max-width:1000px){#card{width:calc(100vw - 20px)}body.cardon #bottom{visibility:hidden}body.cardon #hint{visibility:hidden}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+/* ---------- schermo pulito: HUD compatto e trasparente ---------- */
+#top{left:max(10px,env(safe-area-inset-left,0px));right:max(10px,env(safe-area-inset-right,0px));top:calc(env(safe-area-inset-top,0px) + 8px)}
+.stats{gap:5px}
+.stat{display:flex;align-items:baseline;gap:6px;padding:4px 8px;min-width:0;background:rgba(24,19,14,.6)}
+.stat .k{font-size:10px}
+.stat .v{font-size:15px;line-height:1.2}
+.tools{gap:5px;margin-top:5px}
+.ib{background:rgba(24,19,14,.6);min-height:34px;font-size:11px}
+#bMore{display:none}
+#miniWrap{background:rgba(24,19,14,.5);padding:3px}
+#mini{width:132px;height:99px}
+#bottom{right:max(10px,env(safe-area-inset-right,0px))}
+#radar,#anom{background:rgba(24,19,14,.62);width:170px}
+#rc{height:48px}
+#hint{left:max(10px,env(safe-area-inset-left,0px));background:rgba(24,19,14,.6);font-size:11px;transition:opacity .6s}
+#card{background:rgba(20,16,12,.72)}
+#toast{background:rgba(24,19,14,.8)}
+body.explore #guide{top:calc(var(--toph,96px) + 6px)}
+body.explore #toast{top:calc(var(--toph,96px) + 46px)}
+@media (pointer:coarse){
+  #hint{display:none}
+  .ib{min-height:44px;min-width:44px;padding:5px 8px}
+}
+@media (max-width:680px),(max-height:500px){
+  /* telefono: i comandi secondari stanno dietro «⋯», guida e avvisi sotto la barra in alto */
+  #bMore{display:inline-block;font-size:16px;letter-spacing:0}
+  body:not(.tools-open) .tools .opt,body:not(.tools-open) #bBackWorldPause{display:none}
+  .stats{max-width:none}
+  .stat{padding:3px 7px;gap:5px}
+  .stat .k{font-size:10px}
+  .stat .v{font-size:13.5px}
+  .ib{font-size:10.5px;letter-spacing:.04em}
+  .ib .vk,#radar .hd b{display:none}
+  #mini{width:96px;height:72px}
+  #radar,#anom{width:132px}
+  #rc{height:34px}
+  #coord,.depth{display:none}
+  #guide{top:calc(var(--toph,96px) + 6px);max-width:calc(100vw - 20px);padding:4px 12px 4px 6px;font-size:12.5px}
+  #toast{top:calc(var(--toph,96px) + 6px);max-width:min(86vw,420px);font-size:12.5px;padding:6px 12px}
+  body.explore #toast{top:calc(var(--toph,96px) + 46px)}
+  .sheet{padding-top:calc(env(safe-area-inset-top,0px) + 52px)}
+}
+@media (max-width:680px){
+  #guide,body.explore #guide,#toast{top:max(calc(var(--toph2,100px) + 6px),calc(env(safe-area-inset-top,0px) + 96px))}
+  body.explore #toast{top:max(calc(var(--toph2,100px) + 46px),calc(env(safe-area-inset-top,0px) + 136px))}
+}
+@media (max-height:500px){
+  #card{width:min(560px,calc(100vw - 20px));max-height:42vh}
+  #card p{font-size:12.5px}
+  /* menu su telefono orizzontale: compatto, le quattro modalità restano visibili */
+  .sheet{background:rgba(21,18,14,.84);padding-top:calc(env(safe-area-inset-top,0px) + 16px);padding-bottom:calc(env(safe-area-inset-bottom,0px) + 14px);padding-left:max(16px,env(safe-area-inset-left,0px))}
+  .inner{max-width:800px;margin-left:clamp(0px,3vw,32px)}
+  .title{font-size:34px;margin:8px 0 8px}
+  .title br{display:none}
+  .title em{margin-left:.25em}
+  .title.jt{font-size:30px}
+  .lead{font-size:13.5px;line-height:1.4;margin-bottom:12px}
+  #menu .lead{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .modes{grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+  .mode{padding:9px 10px;gap:4px}
+  .mode .n{font-size:18px}
+  .mode .d{font-size:12px;line-height:1.35;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+  .row{margin-top:12px}
+  .help{margin-top:10px;font-size:11px}
+}
+</style>
+
+<canvas id="c" tabindex="0" aria-label="Pianoro di Falerii Novi"></canvas>
+
+<div class="hud" id="top" hidden>
+  <div>
+    <div class="stats" id="stats">
+      <div class="stat" id="stA"><div class="k" id="kA">Edifici</div><div class="v" id="vA">0/13</div></div>
+      <div class="stat" id="stB"><div class="k" id="kB">Scoperte</div><div class="v" id="vB">0</div></div>
+      <div class="stat" id="stD"><div class="k" id="kD">Case</div><div class="v" id="vD">0</div></div>
+      <div class="stat hot"><div class="k">Mappato</div><div class="v" id="vC">0%</div></div>
+    </div>
+    <div class="tools">
+      <button class="ib" id="bMenu" type="button">Menu</button>
+      <button class="ib view" id="bView" type="button"><span class="vk">Vista: </span>dall'alto</button>
+      <button class="ib opt" id="bRotL" type="button" aria-label="Ruota a sinistra">⟲</button>
+      <button class="ib opt" id="bRotR" type="button" aria-label="Ruota a destra">⟳</button>
+      <button class="ib opt" id="bBook" type="button">Quaderno</button>
+      <button class="ib view" id="bNext" type="button" hidden><span class="vk">Vai alla </span>tappa ›</button>
+      <button class="ib view" id="bHorn" type="button" hidden>Tromba</button>
+      <button class="ib opt" id="bAudio" type="button">Audio sì</button>
+      <button class="ib" id="bMore" type="button" aria-label="Altri comandi" aria-expanded="false">⋯</button>
+    </div>
+  </div>
+  <div id="miniWrap"><canvas id="mini" width="300" height="225"></canvas></div>
+</div>
+
+<div class="hud" id="bottom" hidden>
+  <div id="anom"><div class="k"><span id="anomName">Anomalia sepolta</span><span id="anomPct">0%</span></div><div class="bar"><i id="anomBar"></i></div></div>
+  <div id="radar">
+    <div class="hd"><span>Georadar <b>multicanale</b></span><span id="sig">segnale 0</span></div>
+    <div class="scope"><canvas id="rc" width="200" height="64"></canvas><div class="depth"><span>0 m</span><span>1 m</span><span>2 m</span></div></div>
+    <div id="coord">42.2918 N · 12.3568 E</div>
+  </div>
+</div>
+<div class="hud" id="hint" hidden>WASD / frecce: guida<br>Trascina col mouse: guarda intorno<br>Rotella: zoom · V: cambia vista<br>Spazio: tromba (Divertimento)</div>
+
+<div class="hud" id="guide" hidden><span class="ga" id="gArrow">↑</span><span class="gs" id="gStep">Tappa 1/14</span><span id="gName"></span><span class="gd" id="gDist"></span></div>
+<div class="hud" id="toast"></div>
+<div id="labels"></div>
+<div class="hud" id="card"><button class="mn" id="cardMin" type="button">Altro</button><button class="x" id="cardX" type="button" aria-label="Chiudi">×</button><div class="hdr"><span class="era" id="cEra"></span><h3 id="cTitle"></h3></div><p id="cText"></p><div id="cQuiz"></div><p id="cFb"></p><div id="cReal" hidden><span class="rk">Nella realtà</span><div class="links" id="cRealL"></div><p id="cRealT"></p></div></div>
+<div id="stick" hidden><div id="knob"></div></div>
+
+<section class="sheet" id="menu">
+  <div class="inner">
+    <div class="eyebrow">Falerii Novi · Fabrica di Roma</div>
+    <h1 class="title">La Città<br><em>sotto i Campi</em></h1>
+    <p class="lead">Nel 241 a.C. i Romani trasferirono i Falisci su questo pianoro e fondarono Falerii Novi. Oggi restano le mura e l'abbazia di Santa Maria di Falleri: il resto è sotto i campi. Guida il quad con il georadar al traino e fai riemergere strade, case, botteghe, pozzi, forni e templi, isolato dopo isolato.</p>
+    <div class="modes">
+      <button class="mode" type="button" data-mode="walk"><span class="n">Passeggiata</span><span class="d">Esplora e impara: lezioni, quiz su ogni edificio e un quaderno dell'archeologo da riempire.</span><span class="t">Didattica</span></button>
+      <button class="mode" type="button" data-mode="race"><span class="n">Competizione</span><span class="d">Chiudi aree col georadar come nel vecchio gioco e salva il 60% della città prima del contadino. Se vinci, la esplori a piedi.</span><span class="t" id="bestTag">Record: nessuno</span></button>
+      <button class="mode" type="button" data-mode="fun"><span class="n">Divertimento</span><span class="d">Ogni scoperta sveglia un Romano che si unisce al tuo trenino. Attento alla testa di Giove che rotola.</span><span class="t">Pecore incluse</span></button>
+      <button class="mode exp" type="button" data-mode="explore"><span class="n">Esplorazione</span><span class="d">Tutta la città è già in superficie. Passeggia a piedi o in drone e segui il percorso guidato in 14 tappe, con lezioni e quiz.</span><span class="t">Solo didattica</span></button>
+    </div>
+    <div class="row"><span id="resumeRow" hidden><button class="btn" id="bResume" type="button">Riprendi la partita</button></span><button class="btn" id="bPovM" type="button" hidden>Esplora la città a piedi</button><button class="btn ghost" id="bVisitM" type="button">Visita la vera Falerii Novi</button></div>
+    <p class="help">WASD o frecce per guidare · su telefono trascina il dito<br>Trascina col mouse per guardarti intorno · rotella per lo zoom<br>Città disegnata sulla pianta delle insulae della British School at Rome e sul rilievo georadar. Gli edifici sono ricostruzioni di gioco.</p>
+  </div>
+</section>
+
+<section class="sheet" id="journal" hidden>
+  <div class="inner">
+    <div class="eyebrow">Quaderno dell'archeologo</div>
+    <h2 class="title jt">Cosa hai imparato</h2>
+    <p class="help" id="jQuiz"></p>
+    <div class="row"><button class="btn" id="bJClose" type="button">Torna allo scavo</button><button class="btn ghost" id="bVisitJ" type="button">Visita il sito vero</button></div>
+    <div id="jBody" class="jb"></div>
+  </div>
+</section>
+
+<section class="sheet" id="visit" hidden>
+  <div class="inner">
+    <div class="eyebrow">Dal gioco alla realtà</div>
+    <h2 class="title jt">Vai a vedere Falerii Novi</h2>
+    <p class="lead">La città che hai fatto riemergere esiste davvero, sotto i campi di Fabrica di Roma. Le mura, la Porta di Giove e l'abbazia sono ancora in piedi e si possono visitare.</p>
+    <div class="row"><a class="rl" href="https://www.google.com/maps/search/?api=1&query=42.2996,12.3584" target="_blank" rel="noopener">Portami lì ↗</a><button class="btn ghost" id="bVClose" type="button">Torna al gioco</button></div>
+    <div class="vgrid">
+      <div class="vbox"><h3>Dove</h3><p>Nelle campagne di Fabrica di Roma (Viterbo), lungo la SP27 via Falerina, a circa 4 km dal paese in direzione Civita Castellana. Si entra dalla Porta di Giove, sul lato ovest delle mura.</p>
+        <div class="links"><a class="rl" href="https://www.google.com/maps/search/?api=1&query=Porta+di+Giove+Falerii+Novi" target="_blank" rel="noopener">Porta di Giove ↗</a><a class="rl alt" href="https://www.google.com/maps/search/?api=1&query=Abbazia+di+Santa+Maria+di+Falleri" target="_blank" rel="noopener">Abbazia ↗</a></div></div>
+      <div class="vbox"><h3>Cosa vedi davvero</h3><ul><li>Oltre 2 km di mura in blocchi di tufo: delle circa 80 torri ne restano una cinquantina.</li><li>La Porta di Giove, con la testa del dio sulla chiave dell'arco.</li><li>L'abbazia di Santa Maria di Falleri (1143), a tre navate e cinque absidi.</li><li>Il pianoro coltivato: sotto c'è la città del gioco.</li></ul></div>
+      <div class="vbox"><h3>Quando andare</h3><p>L'abbazia è gestita dal Comune di Fabrica di Roma; le schede turistiche la indicano aperta il sabato e la domenica mattina, a ingresso libero. Gli orari possono cambiare: prima di partire chiedi all'Ufficio Cultura del Comune, tel. <span class="tel">0761 569001</span>.</p></div>
+      <div class="vbox"><h3>Missioni dal vivo</h3><div class="mis" id="mis">
+        <label><input type="checkbox" id="m1"> Trova la testa di Giove sulla chiave dell'arco.</label>
+        <label><input type="checkbox" id="m2"> Conta le torri che vedi da un tratto di mura.</label>
+        <label><input type="checkbox" id="m3"> Cerca nell'abbazia le pietre romane riusate.</label>
+        <label><input type="checkbox" id="m4"> Conta le absidi della chiesa. Devono essere cinque.</label>
+        <label><input type="checkbox" id="m5"> Dal pianoro, immagina dove passava la via Amerina.</label>
+        <label><input type="checkbox" id="m6"> Scatta una foto dalla Porta di Giove verso l'abbazia.</label></div></div>
+      <div class="vbox" style="grid-column:1/-1"><h3>Per saperne di più</h3><div class="links">
+        <a class="rl alt" href="https://www.tusciaturismo.com/itinerari/falerii-novi/" target="_blank" rel="noopener">Itinerario Tuscia Turismo ↗</a>
+        <a class="rl alt" href="https://www.inagrofalisco.it/in-agrofalisco/faleri-novi" target="_blank" rel="noopener">In Agro Falisco ↗</a>
+        <a class="rl alt" href="https://www.lazionascosto.it/abbazie-del-lazio/abbazia-di-santa-maria-in-falleri/" target="_blank" rel="noopener">L'abbazia su Lazio Nascosto ↗</a>
+        <a class="rl alt" href="https://it.wikiloc.com/percorsi-escursionismo/falerii-novi-cavo-degli-zucchi-tagliata-fantibassi-tagliata-etrusca-porta-di-bove-porta-di-giove-97683106" target="_blank" rel="noopener">Sentiero a piedi (Wikiloc) ↗</a>
+        <a class="rl alt" href="https://www.cam.ac.uk/stories/roman-city-rises" target="_blank" rel="noopener">Il georadar di Cambridge ↗</a>
+        <a class="rl alt" href="https://www.cambridge.org/core/journals/antiquity/article/groundpenetrating-radar-survey-at-falerii-novi-a-new-approach-to-the-study-of-roman-cities/BE7B8E3AE55DB6E03225B01C54CDD09B" target="_blank" rel="noopener">Lo studio su Antiquity ↗</a>
+        <a class="rl alt" href="https://www.cambridge.org/core/journals/papers-of-the-british-school-at-rome/article/il-tempio-monumentale-repubblicano-di-falerii-novi-ricerche-storicotopografiche-sullinsula-xxxi-area-4/36F0C20D0C9DCEE17B94BFF027F2FBFF" target="_blank" rel="noopener">Il tempio dell'insula XXXI ↗</a>
+        <a class="rl alt" href="https://en.wikipedia.org/wiki/Falerii_Novi" target="_blank" rel="noopener">Wikipedia ↗</a></div></div>
+    </div>
+  </div>
+</section>
+
+<section class="sheet" id="end" hidden>
+  <div class="inner">
+    <div class="eyebrow" id="eEye">Fine rilievo</div>
+    <h2 class="title" id="eTitle">Tempo scaduto</h2>
+    <div class="big">
+      <div><div class="k" id="eK1">Punti</div><div class="v" id="eV1">0</div></div>
+      <div><div class="k">Mappato</div><div class="v" id="eV2">0%</div></div>
+      <div><div class="k">Edifici</div><div class="v" id="eV3">0</div></div>
+      <div><div class="k">Case</div><div class="v" id="eV4">0</div></div>
+    </div>
+    <p class="lead" id="eText"></p>
+    <div class="row"><button class="btn" id="bTour" type="button">Guarda la città dal drone</button><button class="btn ghost" id="bAgain" type="button">Gioca ancora</button><button class="btn ghost" id="bEndMenu" type="button">Cambia modalità</button><button class="btn ghost" id="bVisitE" type="button">Vai a vederla davvero</button></div>
+  </div>
+</section>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="../engine/tg-ponte.js"></script>
+<script>
+(function(){
+'use strict';
+const $=id=>document.getElementById(id);
+const PI=Math.PI;
+function mulberry(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;}}
+const rnd=mulberry(241);
+
+/* ---------- plan of Falerii Novi (BSR insulae plan, px) -> world units ---------- */
+const K=.28;const PX=px=>(px-752)*K, PZ=py=>(py-742)*K;
+const S=2.56, MW=1024, MH=768;
+const PLAN_POLY=[[60,605],[90,520],[185,415],[330,390],[470,350],[560,318],[668,288],[840,282],[1030,276],[1240,268],[1320,330],[1335,470],[1372,600],[1345,690],[1395,860],[1440,1100],[1445,1215],[1345,1165],[1260,1175],[1215,1195],[1110,1110],[935,1075],[905,1135],[760,1080],[660,1035],[540,990],[420,905],[300,820],[240,760],[150,700],[60,640]];
+const POLY=PLAN_POLY.map(p=>[PX(p[0]),PZ(p[1])]);
+function inPoly(x,z){let c=false;for(let i=0,j=POLY.length-1;i<POLY.length;j=i++){const[xi,zi]=POLY[i],[xj,zj]=POLY[j];if(((zi>z)!==(zj>z))&&(x<(xj-xi)*(z-zi)/(zj-zi)+xi))c=!c;}return c;}
+function segD(px,pz,ax,az,bx,bz){const dx=bx-ax,dz=bz-az;let t=((px-ax)*dx+(pz-az)*dz)/(dx*dx+dz*dz);t=Math.max(0,Math.min(1,t));const x=ax+t*dx-px,z=az+t*dz-pz;return Math.sqrt(x*x+z*z);}
+function edgeDist(x,z){let m=1e9;for(let i=0;i<POLY.length;i++){const a=POLY[i],b=POLY[(i+1)%POLY.length];m=Math.min(m,segD(x,z,a[0],a[1],b[0],b[1]));}return m;}
+/* gates snapped onto the wall line */
+const GATES=[[60,618,1],[668,288],[1240,268],[1372,600],[660,1035],[1238,1185]].map(g=>{const x=PX(g[0]),z=PZ(g[1]);let best=null,bd=1e9;
+  POLY.forEach((a,i)=>{const b=POLY[(i+1)%POLY.length],dx=b[0]-a[0],dz=b[1]-a[1];let t=((x-a[0])*dx+(z-a[1])*dz)/(dx*dx+dz*dz);t=Math.max(.05,Math.min(.95,t));const px=a[0]+t*dx,pz=a[1]+t*dz,d=Math.hypot(px-x,pz-z);if(d<bd){bd=d;best={x:px,z:pz,ang:Math.atan2(dz,dx),arch:!!g[2]};}});return best;});
+const ABBEY={x:PX(365),z:PZ(605),box:[-123,-90,-49,-9]};
+const AMPHI={x:PX(1020),z:PZ(150)};
+function inAbbey(x,z,m){m=m||0;const b=ABBEY.box;return x>b[0]-m&&x<b[1]+m&&z>b[2]-m&&z<b[3]+m;}
+function walkable(x,z){return inPoly(x,z)&&edgeDist(x,z)>=4&&!inAbbey(x,z);}
+
+/* ---------- renderer ---------- */
+const canvas=$('c');
+const renderer=new THREE.WebGLRenderer({canvas,antialias:true});
+renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
+renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.18;
+const scene=new THREE.Scene();
+const SKY=0xf0d3a8;
+scene.background=new THREE.Color(SKY);
+scene.fog=new THREE.Fog(SKY,170,760);
+const camera=new THREE.PerspectiveCamera(48,1,.5,2600);
+scene.add(new THREE.HemisphereLight(0xfff2da,0x6b5638,0.7));
+const sun=new THREE.DirectionalLight(0xffd9a2,1.05);
+/* sky dome with a warm late-afternoon gradient, sun disc and low-poly clouds */
+const sky=(function(){const g=new THREE.SphereGeometry(2000,32,18),c=[],top=new THREE.Color(0x5f8fc4),mid=new THREE.Color(0xa9c3d8),hor=new THREE.Color(SKY),pos=g.attributes.position;
+  for(let i=0;i<pos.count;i++){const t=pos.getY(i)/2000;const col=t>0?(t<.25?hor.clone().lerp(mid,t/.25):mid.clone().lerp(top,Math.min(1,(t-.25)/.6))):hor.clone();c.push(col.r,col.g,col.b);}
+  g.setAttribute('color',new THREE.Float32BufferAttribute(c,3));const m=new THREE.Mesh(g,new THREE.MeshBasicMaterial({vertexColors:true,side:THREE.BackSide,fog:false,depthWrite:false,toneMapped:false}));m.renderOrder=-10;scene.add(m);return m;})();
+const sunDisc=new THREE.Mesh(new THREE.CircleGeometry(60,32),new THREE.MeshBasicMaterial({color:0xfff4dc,fog:false,toneMapped:false}));scene.add(sunDisc);
+const sunGlow=new THREE.Mesh(new THREE.CircleGeometry(170,32),new THREE.MeshBasicMaterial({color:0xffe2b0,fog:false,transparent:true,opacity:.28,depthWrite:false,toneMapped:false}));scene.add(sunGlow);
+const SUNDIR=new THREE.Vector3(-.62,.38,.68).normalize();
+const clouds=[];(function(){const m=new THREE.MeshLambertMaterial({color:0xffffff,emissive:0x8a7f78,flatShading:true});for(let i=0;i<14;i++){const g=new THREE.Group();const n=3+Math.floor(Math.random()*4);
+  for(let k=0;k<n;k++){const b=new THREE.Mesh(new THREE.IcosahedronGeometry(1,0),m);b.position.set(k*16-n*8+(Math.random()-.5)*6,Math.random()*6,(Math.random()-.5)*12);b.scale.set(14+Math.random()*10,7+Math.random()*5,11+Math.random()*6);g.add(b);}
+  g.position.set(-700+Math.random()*1400,170+Math.random()*90,-700+Math.random()*1400);scene.add(g);clouds.push(g);}})();
+sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);
+const sc=sun.shadow.camera;sc.near=10;sc.far=500;sun.shadow.bias=-0.0006;
+function shadowSize(s){sc.left=-s;sc.right=s;sc.top=s;sc.bottom=-s;sc.updateProjectionMatrix();}shadowSize(80);
+scene.add(sun);scene.add(sun.target);
+function skyFollow(){sky.position.copy(camera.position);const d=SUNDIR.clone().multiplyScalar(1800).add(camera.position);sunDisc.position.copy(d);sunGlow.position.copy(d);sunDisc.lookAt(camera.position);sunGlow.lookAt(camera.position);}
+function resize(){const w=innerWidth,h=innerHeight;renderer.setSize(w,h,false);camera.aspect=w/h;camera.fov=w<h?62:48;camera.updateProjectionMatrix();}
+addEventListener('resize',resize);resize();
+
+/* ---------- ground ---------- */
+function mkCanvas(w,h){const c=document.createElement('canvas');c.width=w;c.height=h;return c;}
+function worldTf(ctx,s){ctx.setTransform(s,0,0,s,200*s,150*s);}
+function polyPath(ctx){ctx.beginPath();POLY.forEach((p,i)=>i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]));ctx.closePath();}
+const GRASS='#7b8a4c';
+function texFrom(w,h,draw,rep){const c=mkCanvas(w,h),x=c.getContext('2d');draw(x,w,h);const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.anisotropy=4;return t;}
+function noise(x,w,h,a){const d=x.getImageData(0,0,w,h);for(let i=0;i<d.data.length;i+=4){const n=(Math.random()-.5)*a;d.data[i]+=n;d.data[i+1]+=n;d.data[i+2]+=n;}x.putImageData(d,0,0);}
+/* plaster: darker base (grime) fading up, subtle mottling */
+const TEX_WALL=texFrom(64,64,(x,w,h)=>{const g=x.createLinearGradient(0,h,0,0);g.addColorStop(0,'#9c948a');g.addColorStop(.12,'#b9b1a6');g.addColorStop(.13,'#d9d2c8');g.addColorStop(.45,'#f4efe8');g.addColorStop(1,'#ffffff');x.fillStyle=g;x.fillRect(0,0,w,h);noise(x,w,h,22);});
+/* roof: rows of coppi */
+const TEX_ROOF=texFrom(64,64,(x,w,h)=>{x.fillStyle='#ffffff';x.fillRect(0,0,w,h);for(let y=0;y<h;y+=6.4){const g=x.createLinearGradient(0,y,0,y+6.4);g.addColorStop(0,'#c9c0b8');g.addColorStop(.5,'#ffffff');g.addColorStop(1,'#a89f97');x.fillStyle=g;x.fillRect(0,y,w,6.4);}
+  x.fillStyle='rgba(0,0,0,.08)';for(let xx=0;xx<w;xx+=8)x.fillRect(xx,0,1,h);noise(x,w,h,18);});
+/* tufo blocks for walls and gates */
+const TEX_TUFO=texFrom(128,128,(x,w,h)=>{x.fillStyle='#f2ece4';x.fillRect(0,0,w,h);const rows=6,rh=h/rows;for(let r=0;r<rows;r++){x.fillStyle='rgba(60,40,20,.28)';x.fillRect(0,r*rh,w,1.5);const off=(r%2)*w/4;for(let k=0;k<3;k++)x.fillRect((off+k*w/2)%w,r*rh,1.5,rh);
+  for(let k=0;k<5;k++){x.fillStyle='rgba(0,0,0,'+(Math.random()*.06)+')';x.fillRect(Math.random()*w,r*rh,w/3,rh);}}noise(x,w,h,26);});
+const fieldC=mkCanvas(MW,MH);
+(function(){const ctx=fieldC.getContext('2d');ctx.fillStyle=GRASS;ctx.fillRect(0,0,MW,MH);worldTf(ctx,S);
+  ctx.save();polyPath(ctx);ctx.clip();
+  const cols=['#a9955f','#9a8453','#869552','#b4a26f','#8f774c','#9f935a'];
+  for(let i=0;i<40;i++){const x=-190+rnd()*380,z=-130+rnd()*260,w=40+rnd()*80,d=30+rnd()*60,a=(rnd()-.5)*0.4;
+    ctx.save();ctx.translate(x,z);ctx.rotate(a);ctx.fillStyle=cols[i%cols.length];ctx.fillRect(-w/2,-d/2,w,d);
+    ctx.strokeStyle='rgba(60,45,25,.16)';ctx.lineWidth=.35;for(let k=-w/2;k<w/2;k+=1.3){ctx.beginPath();ctx.moveTo(k,-d/2);ctx.lineTo(k,d/2);ctx.stroke();}ctx.restore();}
+  ctx.strokeStyle='#cdb88e';ctx.lineWidth=2.4;ctx.beginPath();ctx.moveTo(GATES[0].x,GATES[0].z);ctx.bezierCurveTo(-170,-40,-140,-34,-122,-37);ctx.stroke();
+  ctx.restore();
+  ctx.strokeStyle='rgba(70,60,40,.35)';ctx.lineWidth=6;polyPath(ctx);ctx.stroke();
+})();
+const fieldTex=new THREE.CanvasTexture(fieldC);fieldTex.anisotropy=4;
+function hash2(i,j){const s=Math.sin(i*127.1+j*311.7)*43758.5453;return s-Math.floor(s);}
+function vnoise(x,z){const i=Math.floor(x),j=Math.floor(z),fx=x-i,fz=z-j,u=fx*fx*(3-2*fx),v=fz*fz*(3-2*fz);const a=hash2(i,j),b=hash2(i+1,j),c=hash2(i,j+1),d=hash2(i+1,j+1);return a+(b-a)*u+(c-a)*v+(a-b-c+d)*u*v;}
+function heightAt(x,z){if(inPoly(x,z))return 0;const d=edgeDist(x,z);if(d<14)return 0;
+  const drop=-Math.min(1,(d-14)/30)*9*(z>20?1.4:.8);const rise=Math.max(0,(d-90)/260);const n=vnoise(x*.012,z*.012)*.7+vnoise(x*.035,z*.035)*.3;
+  return drop*(1-Math.min(1,rise*1.3))+rise*rise*(28+n*60)+n*4*Math.min(1,(d-14)/40);}
+const terrain=(function(){let g=new THREE.PlaneGeometry(2400,2400,170,170);g.rotateX(-PI/2);const pos=g.attributes.position;
+  for(let i=0;i<pos.count;i++){const x=pos.getX(i),z=pos.getZ(i);pos.setY(i,inPoly(x,z)?-.4:heightAt(x,z));}
+  g=g.toNonIndexed();g.computeVertexNormals();const P=g.attributes.position,col=[],c=new THREE.Color();
+  const pal=[0x55703a,0x6d8446,0x7b8a4c,0x8e9656,0x9b9a5e,0x6a7d42];
+  for(let t=0;t<P.count;t+=3){const cx=(P.getX(t)+P.getX(t+1)+P.getX(t+2))/3,cy=(P.getY(t)+P.getY(t+1)+P.getY(t+2))/3,cz=(P.getZ(t)+P.getZ(t+1)+P.getZ(t+2))/3;
+    let k=Math.floor(vnoise(cx*.02,cz*.02)*4+hash2(Math.floor(cx),Math.floor(cz))*1.2);if(cy<-3)k=0;if(cy>25)k=4;c.setHex(pal[Math.max(0,Math.min(5,k))]);for(let q=0;q<3;q++)col.push(c.r,c.g,c.b);}
+  g.setAttribute('color',new THREE.Float32BufferAttribute(col,3));const m=new THREE.Mesh(g,new THREE.MeshLambertMaterial({vertexColors:true}));m.receiveShadow=true;scene.add(m);return m;})();
+function polyGeo(){const sh=new THREE.Shape();POLY.forEach((p,i)=>i?sh.lineTo(p[0],-p[1]):sh.moveTo(p[0],-p[1]));const g=new THREE.ShapeGeometry(sh);g.rotateX(-PI/2);
+  const pos=g.attributes.position,uv=g.attributes.uv;for(let i=0;i<pos.count;i++)uv.setXY(i,(pos.getX(i)+200)/400,1-(pos.getZ(i)+150)/300);uv.needsUpdate=true;return g;}
+const field=new THREE.Mesh(polyGeo(),new THREE.MeshLambertMaterial({map:fieldTex}));
+field.receiveShadow=true;scene.add(field);
+/* scanned ground: low-poly tiles of excavated earth */
+const revealC=mkCanvas(MW,MH),revealCtx=revealC.getContext('2d');
+const revealTex=new THREE.CanvasTexture(revealC);revealTex.anisotropy=4;revealTex.magFilter=THREE.NearestFilter;
+const overlay=new THREE.Mesh(polyGeo(),new THREE.MeshLambertMaterial({map:revealTex,transparent:true,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-2}));
+overlay.position.y=0.06;overlay.renderOrder=1;overlay.receiveShadow=true;scene.add(overlay);
+
+/* ---------- mesh helpers for the big buildings ---------- */
+const L=c=>new THREE.MeshLambertMaterial({color:c});
+function LM(c,t){return new THREE.MeshLambertMaterial({color:c,map:t});}
+function pal(){return{tufo:LM(0xc4905a,TEX_TUFO),trav:L(0xe6dfcf),plaster:LM(0xe9d7b5,TEX_WALL),roof:L(0xb65a36),basalt:L(0x55565c),water:L(0x5d9db0),green:L(0x6d8d46),dark:L(0x2f2620),bronze:L(0x58796a),vault:L(0xd9c19b)};}
+function sh(m){m.castShadow=true;m.receiveShadow=true;return m;}
+function box(g,m,w,h,d,x,y,z,ry){const me=sh(new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m));me.position.set(x,y+h/2,z);if(ry)me.rotation.y=ry;g.add(me);return me;}
+function cyl(g,m,r,h,x,y,z,seg){const me=sh(new THREE.Mesh(new THREE.CylinderGeometry(r,r,h,seg||10),m));me.position.set(x,y+h/2,z);g.add(me);return me;}
+function gable(g,m,w,h,d,x,y,z,ry){const s=new THREE.Shape();s.moveTo(-w/2,0);s.lineTo(w/2,0);s.lineTo(0,h);s.lineTo(-w/2,0);
+  const geo=new THREE.ExtrudeGeometry(s,{depth:d,bevelEnabled:false});geo.translate(0,0,-d/2);const me=sh(new THREE.Mesh(geo,m));me.position.set(x,y,z);if(ry)me.rotation.y=ry;g.add(me);return me;}
+function colRow(g,m,x1,z1,x2,z2,n,h,r,y){y=y||0;for(let i=0;i<n;i++){const t=n===1?.5:i/(n-1),x=x1+(x2-x1)*t,z=z1+(z2-z1)*t;cyl(g,m,r,h,x,y,z,8);box(g,m,r*2.5,.35,r*2.5,x,y+h-.35,z);box(g,m,r*2.4,.3,r*2.4,x,y,z);}}
+
+/* ---------- the big buildings ---------- */
+const B=[];
+function def(o){o.need=o.need||0.5;B.push(o);}
+
+def({id:'via',name:'Via Amerina',era:'III secolo a.C.',cx:PX(660),cz:PZ(661.5),rot:0,h:1.2,need:0.35,fp:[-4,4,-101,101],
+ text:"La strada che da Roma saliva verso Amelia e l'Umbria. Entrava da una porta ed usciva dall'altra: dentro le mura era l'asse principale della città, lastricato di basoli di lava.",
+ fun:"Traffico intenso di carri. Nessun semaforo per i prossimi duemila anni.",
+ plan:[['f',0,0,6,202]],
+ build(g,p){box(g,p.basalt,6,.35,202,0,0,0);box(g,p.trav,.8,.5,202,-3.4,0,0);box(g,p.trav,.8,.5,202,3.4,0,0);for(let z=-90;z<=90;z+=45)box(g,p.trav,.6,1.6,.6,-4.3,0,z);}});
+
+def({id:'foro',name:'Foro',era:'Età repubblicana e imperiale',cx:PX(775),cz:PZ(657),rot:0,sc:[1.55,1],h:6,fp:[-18,18,-12,12],
+ text:"La piazza pubblica, lastricata e chiusa da portici. Qui si votava, si commerciava e passavano le processioni. I rilievi geofisici l'hanno individuata al centro della città, accanto alla via Amerina.",
+ fun:"Punto d'incontro ufficiale. Il bar non è ancora stato inventato.",
+ plan:[['f',0,0,36,24],['r',0,0,36,24],['r',-16.3,0,3.8,22],['r',16.3,0,3.8,22],['r',0,2,2,3]],
+ build(g,p){box(g,p.trav,36,.4,24,0,0,0);[-1,1].forEach(s=>{colRow(g,p.trav,s*14.6,-10,s*14.6,10,7,5,.42,.4);box(g,p.plaster,.8,5.5,22,s*17.6,.4,0);box(g,p.roof,4.2,.45,22.6,s*16.2,5.6,0);});
+  box(g,p.trav,2,2,3,0,.4,2);cyl(g,p.bronze,.45,2.2,0,2.4,2);const hd=sh(new THREE.Mesh(new THREE.SphereGeometry(.45,10,8),p.bronze));hd.position.set(0,4.9,2);g.add(hd);}});
+
+def({id:'tempio',name:'Tempio monumentale repubblicano',era:'Insula XXXI · Area 4',cx:PX(605),cz:PZ(655),rot:PI/2,h:13,fp:[-6,6,-8,9],
+ text:"Subito a ovest della via Amerina, accanto al foro. È l'area scavata tra il 1969 e il 1975 e poi studiata dalla British School at Rome: qui sorgeva un grande tempio di età repubblicana, su alto podio, rivolto verso la strada.",
+ fun:"Offerte accettate tutto il giorno. Parcheggio carri vietato.",
+ plan:[['f',0,0,12,16],['r',0,0,12,16],['r',0,-2.5,10,9],['r',0,8.5,8,2]],
+ build(g,p){box(g,p.tufo,12,3,16,0,0,0);box(g,p.trav,8,1.5,3,0,0,9);box(g,p.plaster,10,7,9,0,3,-2.5);
+  [-4.5,-1.5,1.5,4.5].forEach(x=>colRow(g,p.trav,x,6.6,x,6.6,1,7,.5,3));[-4.5,4.5].forEach(x=>colRow(g,p.trav,x,3.4,x,3.4,1,7,.5,3));
+  box(g,p.trav,12.4,.6,16.4,0,10,0);gable(g,p.roof,12.8,2.8,16.6,0,10.6,0);}});
+
+const templeBuild=B.find(b=>b.id==='tempio').build,templePlan=B.find(b=>b.id==='tempio').plan;
+def({id:'tempioS',name:'Tempio presso le mura',era:'Età repubblicana',cx:PX(579),cz:PZ(963),rot:0,h:13,fp:[-6,6,-8,9],plan:templePlan,build:templeBuild,
+ text:"Un piccolo tempio rettangolare vicino alle mura meridionali. Il georadar ne mostra il podio con la cella, isolato in mezzo alle case.",
+ fun:"Tempio con vista sul Rio del Purgatorio. Nome poco rassicurante."});
+def({id:'tempioW',name:'Tempio del quartiere ovest',era:'Età repubblicana',cx:-168,cz:-62,rot:PI/2,h:13,fp:[-6,6,-8,9],plan:templePlan,build:templeBuild,
+ text:"Nel settore occidentale, tra l'abbazia e la porta ovest, il rilievo ha individuato un altro tempio: la città aveva più luoghi di culto distribuiti tra i quartieri.",
+ fun:"Tempio di periferia. Meno fila per le offerte."});
+def({id:'monumento',name:'Grande monumento pubblico',era:'Età imperiale',cx:-1.5,cz:PZ(345),rot:0,sc:[1.33,1.1],h:9,fp:[-15,15,-8,8],
+ text:"Vicino alla porta nord il georadar ha trovato un complesso di circa 90 per 40 metri: due grandi edifici uno di fronte all'altro, dentro un doppio portico diviso da un muro centrale, la porticus duplex. Gli archeologi non conoscono nessun altro monumento uguale.",
+ fun:"Due palazzi che si guardano in faccia da duemila anni. Nessuno dei due ha ancora salutato.",
+ plan:[['f',0,0,30,16],['r',0,0,30,16],['r',-12.5,0,5,14],['r',12.5,0,5,14],['l',-10,0,10,0],['l',-10,-3.8,10,-3.8],['l',-10,3.8,10,3.8]],
+ build(g,p){box(g,p.trav,30,.4,16,0,0,0);box(g,p.plaster,30,4.5,.7,0,.4,-7.7);box(g,p.plaster,30,4.5,.7,0,.4,7.7);
+  box(g,p.plaster,20,4.5,.6,0,.4,0);colRow(g,p.trav,-9,-3.8,9,-3.8,7,4,.3,.4);colRow(g,p.trav,-9,3.8,9,3.8,7,4,.3,.4);
+  box(g,p.roof,20.4,.35,7.6,0,4.9,-3.9);box(g,p.roof,20.4,.35,7.6,0,4.9,3.9);
+  [-1,1].forEach(k=>{box(g,p.plaster,5,7,14,k*12.5,.4,0);gable(g,p.roof,5.4,2,14.4,k*12.5,7.4,0);colRow(g,p.trav,k*9.6,-4.5,k*9.6,4.5,4,6,.35,.4);box(g,p.trav,.8,.5,11,k*9.6,6.4,0);});}});
+def({id:'basilica',name:'Basilica',era:'I secolo a.C.',cx:PX(950),cz:PZ(660),rot:0,sc:[.8,1],h:14,fp:[-17,17,-5,5],
+ text:"La sala coperta del foro: tribunale, uffici e affari al riparo dalla pioggia. Non è una chiesa: i cristiani presero in prestito questo tipo di edificio solo secoli dopo.",
+ fun:"Sala d'attesa del tribunale. Portarsi qualcosa da leggere, anzi un rotolo.",
+ plan:[['f',0,0,34,10],['r',0,0,34,10],['r',0,0,30,5],['d',-12,0,.5],['d',-6,0,.5],['d',0,0,.5],['d',6,0,.5],['d',12,0,.5]],
+ build(g,p){box(g,p.plaster,34,8,9,0,0,.5);box(g,p.plaster,30,3,5,0,8,.5);gable(g,p.roof,5.8,1.8,30.6,0,11,.5,PI/2);
+  box(g,p.roof,34.4,.4,2.6,0,8,-2.9);box(g,p.roof,34.4,.4,2.6,0,8,3.9);colRow(g,p.trav,-15,-4.6,15,-4.6,9,6,.4);}});
+
+def({id:'teatro',name:'Teatro',era:'I secolo a.C.',cx:PX(940),cz:PZ(932),rot:PI,h:11,fp:[-23.5,23.5,-7,23.5],
+ inside:(x,z)=>(z>=0&&x*x+z*z<=23.5*23.5)||(z<0&&z>-7&&Math.abs(x)<19.5),
+ text:"La cavea a semicerchio poggiava su muri di tufo e guardava verso la scena. Qui si recitavano commedie e si tenevano le cerimonie della città.",
+ fun:"Prima fila riservata ai notabili. Tu sei in piccionaia.",
+ plan:[['a',0,0,9,0,PI],['a',0,0,14,0,PI],['a',0,0,18.5,0,PI],['a',0,0,23,0,PI],['l',-23,0,23,0],['r',0,-2.5,36,5],['r',0,-6,36,1.5]],
+ build(g,p){const pts=[new THREE.Vector2(9,0)];let r=9,y=0;for(let i=0;i<9;i++){y+=.95;pts.push(new THREE.Vector2(r,y));r+=1.55;pts.push(new THREE.Vector2(r,y));}pts.push(new THREE.Vector2(r,0));
+  p.tufo.side=THREE.DoubleSide;const cav=sh(new THREE.Mesh(new THREE.LatheGeometry(pts,28,-PI/2,PI),p.tufo));g.add(cav);
+  box(g,p.tufo,14,8.6,1.2,-16,0,.6);box(g,p.tufo,14,8.6,1.2,16,0,.6);box(g,p.trav,18,.3,9,0,0,4.5);
+  box(g,p.trav,36,1.4,5,0,0,-2.5);box(g,p.plaster,36,10,1.5,0,0,-6);colRow(g,p.trav,-16,-4.7,16,-4.7,9,4.5,.35,1.4);colRow(g,p.trav,-16,-4.7,16,-4.7,9,3.8,.3,5.9);
+  box(g,p.tufo,1.5,9,6,-18.5,0,-3);box(g,p.tufo,1.5,9,6,18.5,0,-3);}});
+
+def({id:'terme',name:'Terme',era:'I–II secolo d.C.',cx:-50,cz:PZ(885),rot:0,h:10,fp:[-18,22,-7,7],
+ text:"Nel quartiere meridionale il georadar ha visto un complesso termale con una natatio, la piscina all'aperto, collegata alle condutture dell'acqua. I muri compaiono a due profondità, intorno a 40 cm e a 1,30 m: l'edificio ha più livelli. L'aria calda del forno passava sotto i pavimenti sospesi dell'ipocausto.",
+ fun:"Acqua a 40 gradi. Ciabatte non incluse.",
+ plan:[['f',-6,0,24,14],['r',-6,0,24,14],['l',-10,-7,-10,7],['l',-2,-7,-2,7],['r',14,0,16,14],['r',14,0,9,7],['d',-15,-4,.4],['d',-15,0,.4],['d',-15,4,.4],['d',-12,-4,.4],['d',-12,0,.4],['d',-12,4,.4]],
+ build(g,p){box(g,p.plaster,24,6,14,-6,0,0);[-14,-6,2].forEach(x=>{const v=sh(new THREE.Mesh(new THREE.CylinderGeometry(3.8,3.8,14,14,1,false,PI/2,PI),p.vault));v.rotation.x=PI/2;v.position.set(x,6,0);g.add(v);});
+  box(g,p.trav,16,.3,14,14,0,0);box(g,p.water,9,.36,7,14,0,0);colRow(g,p.trav,7,-6.2,21,-6.2,5,3.5,.3);colRow(g,p.trav,7,6.2,21,6.2,5,3.5,.3);colRow(g,p.trav,21.4,-3,21.4,3,3,3.5,.3);
+  box(g,p.dark,2,3,2,-17,0,5.5);}});
+
+def({id:'macellum',name:'Macellum',era:'I secolo d.C.',cx:PX(510),cz:PZ(677),rot:0,sc:[.9,.9],h:7,fp:[-12,12,-12,12],
+ text:"Il mercato alimentare: botteghe di carne, pesce e verdura attorno a un cortile, con un piccolo edificio rotondo al centro. Secondo gli archeologi di Cambridge l'edificio è più elaborato di quanto ci si aspetterebbe in una città di queste dimensioni.",
+ fun:"Oggi in offerta: garum, lenticchie e un cinghiale intero.",
+ plan:[['f',0,0,24,24],['r',0,0,24,24],['r',0,0,15,15],['c',0,0,4],['c',0,0,1.5],['l',-4,-12,-4,-7.5],['l',4,-12,4,-7.5],['l',-12,-4,-7.5,-4],['l',-12,4,-7.5,4],['l',12,-4,7.5,-4],['l',12,4,7.5,4]],
+ build(g,p){box(g,p.plaster,24,4,4.5,0,0,-9.75);box(g,p.plaster,9,4,4.5,-7.5,0,9.75);box(g,p.plaster,9,4,4.5,7.5,0,9.75);box(g,p.plaster,4.5,4,15,-9.75,0,0);box(g,p.plaster,4.5,4,15,9.75,0,0);
+  box(g,p.roof,25,.4,5.3,0,4,-9.75);box(g,p.roof,10,.4,5.3,-7.5,4,9.75);box(g,p.roof,10,.4,5.3,7.5,4,9.75);box(g,p.roof,5.3,.4,15,-9.75,4,0);box(g,p.roof,5.3,.4,15,9.75,4,0);
+  [-8,-4,0,4,8].forEach(x=>box(g,p.dark,2,2.6,.2,x,0,-7.45));[-4,0,4].forEach(z=>{box(g,p.dark,.2,2.6,2,-7.45,0,z);box(g,p.dark,.2,2.6,2,7.45,0,z);});
+  cyl(g,p.trav,4,.6,0,0,0,16);for(let i=0;i<8;i++){const a=i/8*PI*2;colRow(g,p.trav,Math.cos(a)*3.2,Math.sin(a)*3.2,0,0,1,4,.28,.6);}
+  const cone=sh(new THREE.Mesh(new THREE.ConeGeometry(4.4,2.2,16),p.roof));cone.position.set(0,5.7,0);g.add(cone);cyl(g,p.water,1.5,.9,0,.6,0,14);}});
+
+function domus(g,p){box(g,p.plaster,20,4,.6,0,0,-13);box(g,p.plaster,20,4,.6,0,0,13);box(g,p.plaster,.6,4,26,-10,0,0);box(g,p.plaster,.6,4,26,10,0,0);
+  box(g,p.dark,2,3,.3,0,0,-13.2);box(g,p.roof,20.6,.45,4.2,0,4,-11.1);box(g,p.roof,20.6,.45,4.2,0,4,-2.9);box(g,p.roof,6.2,.45,4,-6.9,4,-7);box(g,p.roof,6.2,.45,4,6.9,4,-7);
+  box(g,p.water,4,.3,2.6,0,0,-7);box(g,p.plaster,20,4,.5,0,0,-1);box(g,p.plaster,20,4,.5,0,0,3);box(g,p.roof,20.6,.45,4.6,0,4,1);
+  box(g,p.green,12,.3,7,0,0,8);colRow(g,p.trav,-6.5,4.5,6.5,4.5,5,3.2,.25);colRow(g,p.trav,-6.5,11.5,6.5,11.5,5,3.2,.25);
+  box(g,p.plaster,3.2,4,9.6,-8.4,0,8);box(g,p.plaster,3.2,4,9.6,8.4,0,8);box(g,p.roof,3.8,.45,10.4,-8.4,4,8);box(g,p.roof,3.8,.45,10.4,8.4,4,8);}
+const domusPlan=[['f',0,0,20,26],['r',0,0,20,26],['r',0,-7,20,12],['r',0,-7,4,2.6],['r',0,8,12,7],['l',-10,-1,10,-1],['l',-10,3,10,3],['r',-8.4,8,3.2,9.6],['r',8.4,8,3.2,9.6]];
+def({id:'domusA',name:'Domus ad atrio',era:'II–I secolo a.C.',cx:PX(480),cz:PZ(885),rot:0,sc:[.8,.8],h:6,fp:[-10,10,-13,13],plan:domusPlan,build:domus,
+ text:"La casa di una famiglia benestante. L'apertura nel tetto portava luce e pioggia nella vasca dell'impluvium; dietro c'era il giardino colonnato del peristilio.",
+ fun:"Cave canem. Il cane però dorme."});
+def({id:'domusB',name:'Domus del peristilio',era:'I secolo d.C.',cx:PX(478),cz:PZ(772),rot:0,sc:[.8,.8],h:6,fp:[-10,10,-13,13],plan:domusPlan,build:domus,
+ text:"Un'altra casa signorile, con le stanze attorno all'atrio e un giardino interno. Le pareti erano intonacate e dipinte a colori vivaci.",
+ fun:"Affittasi stanza con vista impluvium. Astenersi perditempo."});
+
+def({id:'tabernae',name:'Botteghe sulla via',era:'I secolo a.C. – I d.C.',cx:7,cz:-44.5,rot:-PI/2,h:6,fp:[-5,6.5,-20,20],
+ text:"Una fila di botteghe aperte sulla via Amerina, sotto un portico: fornai, fabbri, osterie. Si lavorava al piano terra e spesso si dormiva nel retro.",
+ fun:"Osteria aperta. Vino della casa: falerno, dicono.",
+ plan:[['f',-.5,0,9,40],['r',-.5,0,9,40],['l',-5,-15,4,-15],['l',-5,-10,4,-10],['l',-5,-5,4,-5],['l',-5,0,4,0],['l',-5,5,4,5],['l',-5,10,4,10],['l',-5,15,4,15],['l',5.6,-20,5.6,20]],
+ build(g,p){for(let i=0;i<8;i++){const z=-17.5+5*i;box(g,p.plaster,9,3.8,4.7,-.5,0,z);box(g,p.dark,.2,2.6,2,4.05,0,z);}
+  box(g,p.roof,10,.4,40.6,-.5,3.8,0);colRow(g,p.trav,5.8,-19.5,5.8,19.5,9,3.5,.25);box(g,p.roof,2.6,.3,40.6,5.2,3.5,0);
+  const am=new THREE.LatheGeometry([new THREE.Vector2(0,0),new THREE.Vector2(.25,.1),new THREE.Vector2(.4,.7),new THREE.Vector2(.18,1.2),new THREE.Vector2(.12,1.4)],8);
+  [-15,-5,10].forEach(z=>{const m=sh(new THREE.Mesh(am,p.tufo));m.position.set(4.7,0,z+1.4);g.add(m);});}});
+
+
+/* build big-building meshes, samples, bboxes */
+function l2w(b,lx,lz){const sx=b.sc?b.sc[0]:1,sz=b.sc?b.sc[1]:1;lx*=sx;lz*=sz;const c=Math.cos(b.rot),s=Math.sin(b.rot);return[b.cx+lx*c+lz*s,b.cz-lx*s+lz*c];}
+B.forEach(b=>{
+  const g=new THREE.Group();const p=pal();b.build(g,p);g.position.set(b.cx,-b.h,b.cz);g.rotation.y=b.rot;if(b.sc)g.scale.set(b.sc[0],1,b.sc[1]);g.visible=false;scene.add(g);b.group=g;
+  b.mats=[];g.traverse(o=>{if(o.isMesh&&b.mats.indexOf(o.material)<0)b.mats.push(o.material);});
+  b.samples=[];const[x0,x1,z0,z1]=b.fp;
+  for(let x=x0+1.25;x<x1;x+=2.5)for(let z=z0+1.25;z<z1;z+=2.5){if(b.inside&&!b.inside(x,z))continue;const w=l2w(b,x,z);b.samples.push({x:w[0],z:w[1],hit:false});}
+  const cs=[[x0,z0],[x1,z0],[x0,z1],[x1,z1]].map(c=>l2w(b,c[0],c[1]));
+  b.bb=[Math.min(...cs.map(c=>c[0])),Math.max(...cs.map(c=>c[0])),Math.min(...cs.map(c=>c[1])),Math.max(...cs.map(c=>c[1]))];
+  b.hits=0;b.revealed=false;b.t=0;b.fade=1;
+});
+function inMajor(x0,x1,z0,z1,m){for(const b of B){if(x1>b.bb[0]-m&&x0<b.bb[1]+m&&z1>b.bb[2]-m&&z0<b.bb[3]+m)return true;}return false;}
+
+/* ---------- instanced low-poly parts for the whole city ---------- */
+const GEO={
+  box:(()=>{const g=new THREE.BoxGeometry(1,1,1);g.translate(0,.5,0);return g;})(),
+  gable:(()=>{const s=new THREE.Shape();s.moveTo(-.5,0);s.lineTo(.5,0);s.lineTo(0,1);s.lineTo(-.5,0);const g=new THREE.ExtrudeGeometry(s,{depth:1,bevelEnabled:false});g.translate(0,0,-.5);return g;})(),
+  cyl:(()=>{const g=new THREE.CylinderGeometry(.5,.5,1,9);g.translate(0,.5,0);return g;})(),
+  cone:(()=>{const g=new THREE.ConeGeometry(.5,1,8);g.translate(0,.5,0);return g;})(),
+  ball:(()=>{const g=new THREE.IcosahedronGeometry(.5,1);g.translate(0,.5,0);return g;})()
+};
+const parts=[];const items=[];
+function mkItem(kind,cx,cz,rot,extra){const it=Object.assign({kind,cx,cz,rot:rot||0,parts:[],h:1,r:3,revealed:false,t:1},extra||{});items.push(it);return it;}
+function P(it,type,lx,y,lz,sx,sy,sz,color,ry,rz){const c=Math.cos(it.rot),s=Math.sin(it.rot);
+  parts.push({type,x:it.cx+lx*c+lz*s,y,z:it.cz-lx*s+lz*c,sx,sy,sz,ry:(ry||0)+it.rot,rz:rz||0,color});it.parts.push(parts.length-1);it.h=Math.max(it.h,y+sy+.3);}
+const pick=a=>a[Math.floor(rnd()*a.length)];
+const WALL=[0xe9d7b5,0xe2cba2,0xd9bf94,0xeadfc8,0xdcc6a4,0xe6c9a0],ROOF=[0xa9573a,0x9b4f35,0xb2633f,0xa45c40],STONE=[0xd8cfbd,0xcfc3ab,0xe0d6c4],
+      CLOTH=[0xa33b2a,0x3f6f8f,0xd9a441,0x6f8f48,0x8a4f7d],GREENS=[0x5f7f3c,0x6d8d46,0x57733a],BASALT=[0x5a5a60,0x626168,0x55545b,0x6a6860],
+      DARK=0x2f2620,WATER=0x5d9db0,TERRA=0xb8683c,WOOD=0x8a6440,BRONZE=0x58796a;
+
+/* streets from the insulae plan (Via Amerina is its own big building) */
+const VST=[[300,400,820],[440,380,860],[550,330,1000],[780,285,1080],[890,282,1090],[1000,278,1090],[1110,276,1110],[1215,270,1170]];
+const HST=[{y:525,x1:150,x2:1335},{y:615,x1:60,x2:1372},{y:700,x1:80,x2:1350},{y:845,x1:380,x2:1400},{y:965,x1:520,x2:1430},{diag:1,x1:440,y1:395,x2:1240,y2:280}];
+function hAt(h,x){if(x<h.x1||x>h.x2)return null;return h.diag?h.y1+(x-h.x1)*(h.y2-h.y1)/(h.x2-h.x1):h.y;}
+function tileRun(ax,az,bx,bz,w){const len=Math.hypot(bx-ax,bz-az),n=Math.floor(len/3.2),ang=Math.atan2(bz-az,bx-ax);
+  for(let k=0;k<n;k++){const t=(k+.5)/n,x=ax+(bx-ax)*t,z=az+(bz-az)*t;
+    if(!inPoly(x,z)||edgeDist(x,z)<2.5||inAbbey(x,z,1)||inMajor(x-1.5,x+1.5,z-1.5,z+1.5,.2))continue;
+    const it=mkItem('tile',x,z,-ang,{r:1.8});P(it,'box',0,0,0,3.15,.28,w,pick(BASALT));if(rnd()<.18)P(it,'box',0,.28,w/2-.25,3.15,.18,.45,pick(STONE));}}
+VST.forEach(v=>tileRun(PX(v[0]),PZ(v[1]),PX(v[0]),PZ(v[2]),3.2));
+HST.forEach(h=>h.diag?tileRun(PX(h.x1),PZ(h.y1),PX(h.x2),PZ(h.y2),3.2):tileRun(PX(h.x1),PZ(h.y),PX(h.x2),PZ(h.y),3.2));
+
+/* insulae: labels from the BSR plan, blocks bounded by the streets */
+const INS=[['I',145,510],['II',200,500],['III',355,510],['IV',478,445],['V',578,478],['VI',690,490],['VII',820,490],['VIII',918,475],['IX',1030,475],['X',1120,490],['XI',1235,495],['LXXI',1270,430],
+ ['XII',740,378],['XIII',862,370],['XIV',970,390],['XV',1075,380],['XVI',1160,385],['LXXII',620,358],['LXXIII',815,330],
+ ['XVII',255,592],['XVIII',372,558],['XIX',470,595],['XX',582,588],['XXI',693,597],['XXII',835,560],['XXIII',925,587],['XXIV',1050,592],['XXV',1150,587],['XXVI',1265,598],
+ ['XXVII',100,650],['XXVIII',215,660],['XXIX',260,690],['XXX',495,665],['XXXI',605,655],['XXXIV',935,660],['XXXV',1045,654],['XXXVI',1160,660],['XXXVII',1270,655],
+ ['XXXVIII',110,685],['XXXIX',200,730],['XL',360,760],['XLI',495,760],['XLII',600,760],['XLIII',720,770],['XLIV',835,770],['XLV',945,770],['XLVI',1060,770],['XLVII',1160,770],['XLVIII',1270,760],
+ ['XLIX',410,880],['L',495,900],['LI',600,900],['LII',715,900],['LIII',835,900],['LIV',945,900],['LV',1055,900],['LVI',1160,900],['LVII',1270,900],['LXX',1340,880],
+ ['LVIII',600,1000],['LIX',715,1010],['LX',835,1010],['LXI',945,1020],['LXII',1055,1010],['LXIII',1160,1020],['LXIV',1270,1010],['LXIX',1380,1040],
+ ['LXV',850,1090],['LXVI',930,1100],['LXVII',1160,1100],['LXVIII',1270,1100]];
+const VB=VST.concat([[660,288,1035]]);
+const insulae=[];
+INS.forEach(([name,lx,ly])=>{
+  let l=-1e9,r=1e9,t=-1e9,bt=1e9;
+  VB.forEach(v=>{if(ly<v[1]||ly>v[2])return;if(v[0]<lx&&v[0]>l)l=v[0];if(v[0]>lx&&v[0]<r)r=v[0];});
+  HST.forEach(h=>{const y=hAt(h,lx);if(y==null)return;if(y<ly&&y>t)t=y;if(y>ly&&y<bt)bt=y;});
+  if(l<-1e8)l=lx-75;if(r>1e8)r=lx+75;if(t<-1e8)t=ly-70;if(bt>1e8)bt=ly+70;
+  l=Math.max(l,lx-130);r=Math.min(r,lx+130);t=Math.max(t,ly-110);bt=Math.min(bt,ly+110);
+  const x0=PX(l)+2.6,x1=PX(r)-2.6,z0=PZ(t)+2.6,z1=PZ(bt)-2.6;if(x1-x0<5||z1-z0<5)return;
+  const cx=(x0+x1)/2,cz=(z0+z1)/2;if(insulae.some(q=>cx>q.x0&&cx<q.x1&&cz>q.z0&&cz<q.z1))return;
+  const ins={name,x0,x1,z0,z1,lots:[],done:0};insulae.push(ins);
+  const nx=Math.max(1,Math.round((x1-x0)/10)),nz=Math.max(1,Math.round((z1-z0)/11)),lw=(x1-x0)/nx,ld=(z1-z0)/nz;
+  for(let i=0;i<nx;i++)for(let j=0;j<nz;j++){
+    const ax=x0+i*lw,az=z0+j*ld,bx=ax+lw,bz=az+ld,mx=(ax+bx)/2,mz=(az+bz)/2;
+    const ok=[[ax,az],[bx,az],[ax,bz],[bx,bz]].every(c=>inPoly(c[0],c[1])&&edgeDist(c[0],c[1])>3.5);
+    if(!ok||inAbbey(mx,mz,(lw+ld)/4+2)||inMajor(ax,bx,az,bz,1.2)||Math.hypot(mx-AMPHI.x,mz-AMPHI.z)<30)continue;
+    const edge=j===0?-1:(j===nz-1?1:0);
+    ins.lots.push({x:mx,z:mz,w:lw-.8,d:ld-.8,edge});
+  }
+});
+function house(it,w,d){const H=2.8+rnd()*1.8,c=pick(WALL),rf=pick(ROOF);P(it,'box',0,0,0,w-.9,H,d-.9,c);
+  if(w>=d)P(it,'gable',0,H,0,d-.4,1.3+rnd()*.6,w-.3,rf,PI/2);else P(it,'gable',0,H,0,w-.4,1.3+rnd()*.6,d-.3,rf);
+  P(it,'box',0,0,d/2-.45,1.2,2,.12,DARK);P(it,'box',-w/4,H*.62,d/2-.45,.7,.7,.12,DARK);if(rnd()<.6)P(it,'box',w/4,H*.62,d/2-.45,.7,.7,.12,DARK);if(rnd()<.5)P(it,'box',w/2-.45,H*.6,0,.12,.7,.7,DARK);P(it,'box',0,H-.05,0,w-.5,.12,d-.5,0xf2e8d8);}
+function court(it,w,d){const H=3.2,c=pick(WALL),rf=pick(ROOF),t=Math.min(3,w/3.2);
+  P(it,'box',0,0,-d/2+t/2+.4,w-.8,H,t,c);P(it,'gable',0,H,-d/2+t/2+.4,t+.4,1.2,w-.6,rf,PI/2);
+  P(it,'box',0,0,d/2-t/2-.4,w-.8,H,t,c);P(it,'gable',0,H,d/2-t/2-.4,t+.4,1.2,w-.6,rf,PI/2);
+  P(it,'box',-w/2+t/2+.4,0,0,t,H,d-2*t-.8,c);P(it,'box',w/2-t/2-.4,0,0,t,H,d-2*t-.8,c);
+  P(it,'box',0,0,0,w-2*t-.8,.12,d-2*t-.8,0xcdbd9c);P(it,'box',0,.12,0,Math.min(2,w/4),.15,Math.min(1.4,d/4),WATER);}
+function shop(it,w,d){const H=3+rnd(),c=pick(WALL);P(it,'box',0,0,-.5,w-.9,H,d-1.9,c);
+  if(w>=d)P(it,'gable',0,H,-.5,d-1.5,1.1,w-.3,pick(ROOF),PI/2);else P(it,'gable',0,H,-.5,w-.4,1.1,d-1.4,pick(ROOF));
+  P(it,'box',0,0,d/2-1.45,Math.min(3,w-2),2.2,.14,DARK);P(it,'box',0,2.5,d/2-.9,w-1.2,.12,1.4,pick(CLOTH));
+  P(it,'box',-w/2+1.4,0,d/2-.7,1.6,.9,.7,pick(STONE));P(it,'cyl',w/2-1.3,0,d/2-.7,.55,1.1,.55,TERRA);P(it,'cyl',w/2-2.1,0,d/2-.6,.5,.95,.5,TERRA);}
+function garden(it,w,d){P(it,'box',0,0,0,w-.9,.14,d-.9,pick(GREENS));const c=pick(WALL);
+  P(it,'box',0,0,-d/2+.5,w-.9,.9,.3,c);P(it,'box',0,0,d/2-.5,w-.9,.9,.3,c);P(it,'box',-w/2+.5,0,0,.3,.9,d-.9,c);P(it,'box',w/2-.5,0,0,.3,.9,d-.9,c);
+  const n=1+Math.floor(rnd()*3);for(let k=0;k<n;k++){const x=(rnd()-.5)*(w-4),z=(rnd()-.5)*(d-4),s=1.6+rnd()*1.4;P(it,'cyl',x,0,z,.35,1.6,.35,WOOD);P(it,'ball',x,1.2,z,s*1.3,s,s*1.3,pick(GREENS));}}
+
+/* small discoveries: simple things of daily life */
+const POIS={
+ pozzo:['Pozzo',"Un pozzo scavato nel tufo fino alla falda. Pozzi e cisterne erano la riserva d'acqua quotidiana di ogni quartiere.","Acqua fresca. Il secchio però è in prestito dal vicino.",
+  it=>{P(it,'box',0,0,0,4.5,.15,4.5,pick(STONE));P(it,'cyl',0,.15,0,2,1,2,0xcfc3ab);P(it,'cyl',0,1.15,0,1.4,.05,1.4,DARK);P(it,'box',-1.2,.15,0,.25,2.6,.25,WOOD);P(it,'box',1.2,.15,0,.25,2.6,.25,WOOD);P(it,'box',0,2.75,0,2.8,.25,.25,WOOD);P(it,'cyl',.3,1.5,0,.4,.5,.4,WOOD);}],
+ forno:['Forno e macine',"Un forno a cupola con le macine a clessidra per il grano: il fornaio preparava il pane per tutto l'isolato.","Profumo di pane appena sfornato. Da duemila anni.",
+  it=>{P(it,'box',0,0,0,7,.18,6,0xcdbd9c);P(it,'ball',-1.2,-1.4,-.5,4,3.6,4,0xb0643a);P(it,'box',-1.2,.18,1.4,1.1,1,.3,DARK);P(it,'cone',2.2,.18,1,1.4,1.3,1.4,0x8e8a82);P(it,'cone',2.2,2.6,1,1.4,1.3,1.4,0x8e8a82,0,PI);P(it,'cone',2.4,.18,-1.6,1.3,1.2,1.3,0x8e8a82);P(it,'cone',2.4,2.4,-1.6,1.3,1.2,1.3,0x8e8a82,0,PI);}],
+ fontana:['Fontana di quartiere',"Una vasca pubblica all'incrocio, dove si prendeva l'acqua e ci si scambiava le notizie del giorno.","Punto d'incontro per chiacchiere. Il segnale è debole.",
+  it=>{P(it,'box',0,0,0,5,.15,4,pick(STONE));P(it,'box',0,.15,0,4,.9,2.6,0xd8cfbd);P(it,'box',0,.95,0,3.4,.12,2,WATER);P(it,'box',0,.15,-1.4,.7,2.2,.6,0xcfc3ab);P(it,'ball',0,2.2,-1.4,.7,.7,.7,BRONZE);}],
+ mosaico:['Pavimento a mosaico',"Il pavimento di una sala di rappresentanza, fatto di migliaia di tessere. Le famiglie ricche li ordinavano a botteghe specializzate.","Tappeto antiscivolo di lusso. Vietato entrare con i sandali sporchi.",
+  it=>{P(it,'box',0,0,0,7.4,.14,7.4,0xe6d7a8);const C=[0x2d2a27,0xe6d7a8,0xa33b2a,0x3f6f8f];for(let i=0;i<5;i++)for(let j=0;j<5;j++){const edge=i===0||j===0||i===4||j===4;const c=edge?C[0]:((i+j)%2?C[2]:(i===2&&j===2?C[3]:C[1]));P(it,'box',(i-2)*1.3,.14,(j-2)*1.3,1.22,.08,1.22,c);}}],
+ altare:['Altare dei Lari compitali',"Un piccolo altare all'aperto per gli dèi protettori degli incroci, onorati con feste di quartiere.","Offerte gradite: focacce e fiori. Monete false no.",
+  it=>{P(it,'box',0,0,0,3.4,.4,3.4,pick(STONE));P(it,'box',0,.4,0,1.7,1.4,1.2,0xe6dfcf);P(it,'box',0,1.8,0,2.1,.3,1.6,0xd8cfbd);P(it,'cone',0,2.1,0,.6,.9,.6,0xf08a2c);}],
+ cisterna:['Cisterna',"Una cisterna a volta raccoglieva la pioggia dei tetti e dei cortili, per i mesi secchi dell'estate.","Piscina privata. Molto privata. E molto buia.",
+  it=>{P(it,'box',0,0,0,7,.8,4.4,0xcfc3ab);P(it,'gable',0,.8,0,4.6,1.2,7.2,0xd8cfbd,PI/2);P(it,'cyl',1.8,1.3,0,.8,.8,.8,DARK);}],
+ colonna:['Colonna caduta',"Il fusto di una colonna crollata, rimasto dove è caduto. Molte pietre della città finirono riusate nell'abbazia.","Colonna in offerta. Rimontaggio a carico del cliente.",
+  it=>{P(it,'cyl',3,.6,0,1.2,6,1.2,0xe6dfcf,0,PI/2);P(it,'cyl',-3.4,0,2,1.4,1.2,1.4,0xe6dfcf);P(it,'box',-3.4,1.2,2,1.8,.4,1.8,0xd8cfbd);P(it,'box',2.6,0,-2,1.5,.9,1.5,0xd8cfbd);}],
+ statua:['Base di statua',"Il basamento di una statua onoraria, dedicata a un magistrato o a un benefattore della città.","Statua di un notabile. Il naso non è venuto benissimo.",
+  it=>{P(it,'box',0,0,0,2.4,.3,2.4,pick(STONE));P(it,'box',0,.3,0,1.8,1.6,1.8,0xe6dfcf);P(it,'cyl',0,1.9,0,.9,2,.9,BRONZE);P(it,'ball',0,3.8,0,.7,.7,.7,BRONZE);P(it,'box',.55,3,0,.9,.25,.25,BRONZE);}],
+ fullonica:['Fullonica',"La lavanderia romana: vasche per lavare, sgrassare e tingere i tessuti. Un mestiere rumoroso e poco profumato.","Lavaggio a mano, a piedi e con ingredienti che è meglio non sapere.",
+  it=>{P(it,'box',0,0,0,8,.14,5,0xcdbd9c);[[-2.6,0x5d9db0],[0,0x8a4f7d],[2.6,0xd9a441]].forEach(v=>{P(it,'box',v[0],.14,.8,2.2,.8,2.2,0xd8cfbd);P(it,'box',v[0],.9,.8,1.8,.1,1.8,v[1]);});
+   P(it,'box',-3.6,0,-1.8,.2,2.4,.2,WOOD);P(it,'box',3.6,0,-1.8,.2,2.4,.2,WOOD);P(it,'box',0,2.3,-1.8,7.4,.08,.08,WOOD);P(it,'box',-1.6,1.1,-1.8,1.6,1.2,.06,0xa33b2a);P(it,'box',1.2,1.2,-1.8,1.4,1.1,.06,0x3f6f8f);}],
+ fabbro:["Officina del fabbro","Una forgia con l'incudine: qui si riparavano attrezzi agricoli, chiodi e cerchioni dei carri.","Riparazioni rapide. Consegna: alla prossima luna.",
+  it=>{P(it,'box',0,0,0,6,.14,5,0x9a8b76);[[-2.6,-2],[2.6,-2],[-2.6,2],[2.6,2]].forEach(q=>P(it,'box',q[0],0,q[1],.25,2.8,.25,WOOD));P(it,'box',0,2.8,0,6.2,.25,5.2,pick(ROOF));
+   P(it,'box',-1.3,0,-1,1.8,1.1,1.6,0x6a5f55);P(it,'box',-1.3,1.1,-1.3,.8,2.2,.8,0x6a5f55);P(it,'cone',-1.3,1.1,-.6,.8,.3,.8,0xf08a2c);P(it,'box',1.3,0,.6,.5,.7,.5,WOOD);P(it,'box',1.3,.7,.6,1,.35,.45,0x3a3a3c);}],
+ torchio:['Frantoio',"Una vasca circolare con la mola di pietra per schiacciare le olive. L'olio era cibo, luce e cosmetico.","Olio extravergine, raccolto del 50 a.C.",
+  it=>{P(it,'box',0,0,0,6,.14,6,0xcdbd9c);P(it,'cyl',0,.14,0,3.6,.9,3.6,0xcfc3ab);P(it,'cyl',0,1.04,0,.4,1.5,.4,WOOD);P(it,'cyl',1.1,1.55,0,1.6,.8,1.6,0x9a948a,0,PI/2);P(it,'box',-.5,2.3,0,4,.2,.2,WOOD);P(it,'cyl',-2.4,0,2.2,.9,1.2,.9,TERRA);}],
+ meridiana:['Meridiana',"Uno gnomone su una base di pietra: l'ombra divideva il giorno in dodici ore, lunghe d'estate e corte d'inverno.","Orologio a energia solare. Con le nuvole è in pausa pranzo.",
+  it=>{P(it,'box',0,0,0,3.6,.14,3.6,pick(STONE));P(it,'cyl',0,.14,0,1.3,1.1,1.3,0xe6dfcf);P(it,'box',0,1.24,0,1.6,.2,1.4,0xd8cfbd);P(it,'box',0,1.44,0,.08,.8,.7,BRONZE);}],
+ latrina:['Latrina pubblica',"Una fila di sedili sopra un canale d'acqua corrente. Ci si sedeva uno accanto all'altro, chiacchierando.","Sala riunioni con vista. Porta la tua spugna.",
+  it=>{P(it,'box',0,0,0,7,.14,4,0xcdbd9c);P(it,'box',0,.14,-.5,6,.8,1.4,0xe6dfcf);for(let i=-2;i<=2;i++)P(it,'box',i*1.2,.94,-.5,.45,.04,.5,DARK);P(it,'box',0,.14,.8,6,.06,.5,WATER);P(it,'box',0,0,-1.7,6.6,2.4,.3,pick(WALL));}],
+ orto:['Orto urbano',"Un orto dentro le mura: cavoli, porri, fave ed erbe aromatiche per la cucina di casa.","Cavoli pronti. La lattuga se la sono mangiata le lumache.",
+  it=>{P(it,'box',0,0,0,7,.2,6,0x6a4d31);for(let i=0;i<5;i++)for(let j=0;j<4;j++)P(it,'ball',-2.6+i*1.3,.2,-2+j*1.3,.8,.6,.8,pick(GREENS));P(it,'box',3,0,2.4,.15,2.2,.15,WOOD);P(it,'box',3,1.6,2.4,1.4,.12,.12,WOOD);P(it,'ball',3,2.1,2.4,.6,.6,.6,0xd9c28a);}],
+ thermo:['Thermopolium',"Un bancone di mescita con le giare incassate: il cibo di strada romano, con zuppe, legumi e vino caldo.","Menu del giorno: lenticchie. Anche domani.",
+  it=>{P(it,'box',0,0,-1,6,3.4,3,pick(WALL));P(it,'gable',0,3.4,-1,3.4,1,6.3,pick(ROOF),PI/2);P(it,'box',0,0,1.6,5,1.1,1.2,0xc9a36b);for(let i=-1;i<=1;i++)P(it,'cyl',i*1.5,.9,1.6,.8,.25,.8,DARK);P(it,'box',0,2.6,2.2,6,.12,1.6,pick(CLOTH));}],
+ carro:['Rimessa dei carri',"Un cortile con un carro agricolo. Da qui partivano grano, vino e olio verso Roma lungo la via Amerina.","Carro con trecentomila miglia. Mai fatto il tagliando.",
+  it=>{P(it,'box',0,0,0,7,.14,6,0xa8946e);P(it,'box',0,.7,0,2.4,.7,3.8,WOOD);[[1.35,-1.1],[1.35,1.1],[-1.1,-1.1],[-1.1,1.1]].forEach(q=>P(it,'cyl',q[0],.75,q[1],1.5,.25,1.5,0x5a4330,0,PI/2));P(it,'ball',0,1.2,.4,1.8,1.2,2,0xd9c28a);P(it,'box',0,.9,-2.6,.2,.2,1.6,WOOD);}],
+ lararium:['Larario',"Il piccolo tempio di casa, dove la famiglia pregava ogni giorno i Lari e i Penati, protettori del focolare.","Divinità di casa. Controllano anche se hai lavato i piatti.",
+  it=>{P(it,'box',0,0,0,5,.14,4,0xcdbd9c);P(it,'box',0,0,-1,2,1.1,1.2,0xe6dfcf);P(it,'box',0,1.1,-1,1.7,1.4,1,0xa33b2a);P(it,'gable',0,2.5,-1,2.1,.7,1.3,0xe6dfcf);P(it,'cyl',0,1.1,-.4,.3,.8,.3,BRONZE);P(it,'box',0,0,-2,5,2.6,.3,pick(WALL));}],
+ vasche:['Vasche dei ceramisti',"Vasche in serie per far depositare l'argilla: servivano a una bottega di vasi e tegole.","Fango di prima qualità. Ottimo anche come maschera di bellezza.",
+  it=>{P(it,'box',0,0,0,8,.14,4.5,0xcdbd9c);for(let i=-1;i<=1;i++){P(it,'box',i*2.5,.14,0,2.2,.7,3,0xd8cfbd);P(it,'box',i*2.5,.8,0,1.8,.06,2.6,0x9a6b44);}P(it,'cyl',3.4,0,-2,.9,1.1,.9,TERRA);P(it,'cyl',-3.4,0,-2,.7,.8,.7,TERRA);}]
+};
+/* assign lots: most become houses, shops, gardens; some become special discoveries */
+const allLots=[];insulae.forEach(ins=>ins.lots.forEach(l=>{l.ins=ins;allLots.push(l);}));
+const shuffled=allLots.slice().sort(()=>rnd()-.5),poiKeys=Object.keys(POIS),poiLots=[];
+for(const l of shuffled){if(poiLots.length>=poiKeys.length*2)break;if(l.w<6.5||l.d<6.5)continue;if(poiLots.some(q=>Math.hypot(q.x-l.x,q.z-l.z)<22))continue;poiLots.push(l);l.poi=poiKeys[poiLots.length%poiKeys.length];}
+allLots.forEach(l=>{
+  if(l.poi){const d=POIS[l.poi];const it=mkItem('poi',l.x,l.z,0,{w:l.w,d:l.d,r:Math.hypot(l.w,l.d)/2,name:d[0],text:d[1],fun:d[2],ins:l.ins});P(it,'box',0,0,0,l.w-.6,.1,l.d-.6,0xcdbd9c);d[3](it);l.ins.lots.length;return;}
+  const r=rnd();let kind='house';if(l.w>=9&&l.d>=9&&r<.18)kind='court';else if(l.edge!==0&&r<.45)kind='shop';else if(r>.82)kind='garden';
+  const it=mkItem(kind,l.x,l.z,(kind==='shop'&&l.edge<0)?PI:0,{w:l.w,d:l.d,r:Math.hypot(l.w,l.d)/2,ins:l.ins});
+  if(kind==='house')house(it,l.w,l.d);else if(kind==='court')court(it,l.w,l.d);else if(kind==='shop')shop(it,l.w,l.d);else garden(it,l.w,l.d);
+});
+insulae.forEach(ins=>{ins.total=items.filter(i=>i.ins===ins).length;});
+const nLots=items.filter(i=>i.kind!=='tile'&&i.kind!=='poi').length,nPoi=items.filter(i=>i.kind==='poi').length;
+
+/* instanced meshes */
+const IM={};
+(function(){const cnt={};parts.forEach(p=>{p.idx=cnt[p.type]=(cnt[p.type]||0);cnt[p.type]++;});
+  const col=new THREE.Color();
+  for(const t in cnt){const m=new THREE.InstancedMesh(GEO[t],new THREE.MeshLambertMaterial({color:0xffffff,map:t==='box'?TEX_WALL:(t==='gable'?TEX_ROOF:null)}),cnt[t]);m.castShadow=t!=='box'||true;m.receiveShadow=true;m.frustumCulled=false;scene.add(m);IM[t]=m;}
+  parts.forEach(p=>{col.setHex(p.color);IM[p.type].setColorAt(p.idx,col);});
+  for(const t in IM)IM[t].instanceColor.needsUpdate=true;
+})();
+const _m=new THREE.Matrix4(),_q=new THREE.Quaternion(),_e=new THREE.Euler(0,0,0,'YXZ'),_p=new THREE.Vector3(),_s=new THREE.Vector3();
+const dirtyT={};
+function placeItem(it,dy,hide){for(const pi of it.parts){const p=parts[pi];if(hide)_s.set(0,0,0);else _s.set(p.sx,p.sy,p.sz);_p.set(p.x,p.y+dy,p.z);_q.setFromEuler(_e.set(0,p.ry,p.rz));_m.compose(_p,_q,_s);IM[p.type].setMatrixAt(p.idx,_m);dirtyT[p.type]=1;}}
+function flushParts(){for(const t in dirtyT){IM[t].instanceMatrix.needsUpdate=true;delete dirtyT[t];}}
+items.forEach(it=>placeItem(it,0,true));flushParts();
+
+/* radar signal map: every buried thing leaves an echo */
+const featC=mkCanvas(MW/2,MH/2);
+const featData=(function(){const f=featC.getContext('2d');f.fillStyle='#000';f.fillRect(0,0,MW/2,MH/2);worldTf(f,S/2);
+  for(const it of items){f.fillStyle=it.kind==='tile'?'#707070':(it.kind==='poi'?'#ffffff':'#c8c8c8');const r=it.kind==='tile'?1.6:it.r*.62;f.fillRect(it.cx-r,it.cz-r,r*2,r*2);}
+  for(const b of B){f.fillStyle='#ffffff';f.fillRect(b.bb[0],b.bb[2],b.bb[1]-b.bb[0],b.bb[3]-b.bb[2]);}
+  return f.getImageData(0,0,MW/2,MH/2).data;})();
+function featAt(x,z){const px=Math.round((x+200)*S/2),py=Math.round((z+150)*S/2);if(px<0||py<0||px>=MW/2||py>=MH/2)return 0;return featData[(py*MW/2+px)*4]/255;}
+function signalAt(x,z){let m=0;for(const o of [[0,0],[2,0],[-2,0],[0,2],[0,-2]])m=Math.max(m,featAt(x+o[0],z+o[1]));return m;}
+
+/* ---------- coverage grid (also paints the excavated tiles) ---------- */
+const GX0=-196,GZ0=-136,GS=4,GW=99,GH=69;
+const cellOK=new Uint8Array(GW*GH),cellHit=new Uint8Array(GW*GH);let cellTotal=0,cellCount=0;
+const cellBorder=new Uint8Array(GW*GH),cellTrail=new Uint8Array(GW*GH);let borderCount=0;
+for(let j=0;j<GH;j++)for(let i=0;i<GW;i++){const x=GX0+i*GS,z=GZ0+j*GS;if(inPoly(x,z)&&edgeDist(x,z)>2){cellOK[j*GW+i]=1;cellTotal++;if(edgeDist(x,z)<9.5){cellBorder[j*GW+i]=1;borderCount++;}}}
+const EARTH=['#8f7352','#977a57','#86694a','#9e815c','#8a6d4c'];
+function paintCell(i,j){const x=(GX0+i*GS-GS/2+200)*S,z=(GZ0+j*GS-GS/2+150)*S,s=GS*S;revealCtx.fillStyle=EARTH[(i*7+j*13)%5];revealCtx.fillRect(x,z,s,s);revealCtx.strokeStyle='rgba(50,35,20,.18)';revealCtx.lineWidth=1;revealCtx.strokeRect(x+.5,z+.5,s-1,s-1);}
+
+/* ---------- walls, gates, abbey, amphitheatre ---------- */
+(function(){
+  const tufoW=LM(0xc08a55,TEX_TUFO),unit=new THREE.BoxGeometry(1,1,1);unit.translate(0,.5,0);
+  const segs=[],towers=[];let acc=0;
+  for(let i=0;i<POLY.length;i++){const a=POLY[i],b=POLY[(i+1)%POLY.length];const dx=b[0]-a[0],dz=b[1]-a[1],len=Math.hypot(dx,dz),ang=Math.atan2(dz,dx);
+    const n=Math.max(1,Math.round(len/4));for(let k=0;k<n;k++){const t=(k+.5)/n,x=a[0]+dx*t,z=a[1]+dz*t;
+      if(GATES.some(gt=>Math.hypot(gt.x-x,gt.z-z)<5.5))continue;
+      segs.push([x,z,-ang,len/n+.3,5.8+rnd()*1.8]);acc++;if(acc%6===0){const nx=dz/len,nz=-dx/len;towers.push([x+nx*1.2,z+nz*1.2,-ang,8.5+rnd()*1.5]);}}}
+  const wm=new THREE.InstancedMesh(unit,tufoW,segs.length),tm=new THREE.InstancedMesh(unit,tufoW,towers.length);
+  const M=new THREE.Matrix4(),Q=new THREE.Quaternion(),E=new THREE.Euler();
+  segs.forEach((s,i)=>{Q.setFromEuler(E.set(0,s[2],0));M.compose(new THREE.Vector3(s[0],0,s[1]),Q,new THREE.Vector3(s[3],s[4],2.3));wm.setMatrixAt(i,M);});
+  towers.forEach((s,i)=>{Q.setFromEuler(E.set(0,s[2],0));M.compose(new THREE.Vector3(s[0],0,s[1]),Q,new THREE.Vector3(5.2,s[3],5.2));tm.setMatrixAt(i,M);});
+  [wm,tm].forEach(m=>{m.castShadow=true;m.receiveShadow=true;scene.add(m);});
+  GATES.forEach(gt=>{const g=new THREE.Group();g.position.set(gt.x,0,gt.z);g.rotation.y=-gt.ang;scene.add(g);
+    box(g,tufoW,3,9,3.2,-5.6,0,0);box(g,tufoW,3,9,3.2,5.6,0,0);
+    if(gt.arch){const ar=sh(new THREE.Mesh(new THREE.TorusGeometry(5.1,1.1,6,16,PI),tufoW));ar.position.set(0,6.4,0);ar.scale.z=1.4;g.add(ar);box(g,tufoW,14,2.2,3.2,0,9,0);
+      const head=sh(new THREE.Mesh(new THREE.SphereGeometry(.7,10,8),L(0xd8c3a0)));head.position.set(0,11.1,1.75);g.add(head);head.position.z=-1.75;}
+    else box(g,tufoW,14.2,1.8,3.2,0,7.4,0);});
+  /* Santa Maria di Falleri */
+  const g=new THREE.Group();g.position.set(ABBEY.x,0,ABBEY.z);g.scale.setScalar(.75);scene.add(g);
+  const st=LM(0xc29a6e,TEX_TUFO),stL=LM(0xd6b78e,TEX_TUFO),rf=L(0xa9563a),dk=L(0x2a211a);
+  box(g,st,30,9,1.2,0,0,-5.5);box(g,st,30,9,1.2,0,0,5.5);box(g,stL,24,5,1,1,0,-9.5);box(g,stL,24,5,1,1,0,9.5);
+  box(g,stL,1.4,11,20,-15,0,0);gable(g,stL,12.2,4,1.4,-15,11,0,PI/2);box(g,stL,1,3.2,3,-15,15,0);
+  box(g,dk,.4,4.5,2.8,-15.8,0,0);const rose=new THREE.Mesh(new THREE.CylinderGeometry(1.2,1.2,.4,16),dk);rose.rotation.z=PI/2;rose.position.set(-15.8,8.5,0);g.add(rose);
+  for(let i=0;i<6;i++){box(g,stL,1.2,7,1.2,-11+i*4.4,0,-3.2);box(g,stL,1.2,7,1.2,-11+i*4.4,0,3.2);}
+  const ap=sh(new THREE.Mesh(new THREE.CylinderGeometry(5,5,9,14,1,false,0,PI),st));ap.position.set(15,4.5,0);ap.material.side=THREE.DoubleSide;g.add(ap);
+  box(g,L(0xd8c4a0),26,6,8,0,0,17);gable(g,rf,8.8,2.6,26.6,0,6,17,PI/2);box(g,L(0xd8c4a0),8,6,14,-9,0,28);gable(g,rf,8.6,2.4,14.4,-9,6,28);
+  const cy=L(0x3c5230);[[-22,-8],[-22,8],[-24,20],[20,-10]].forEach(c=>{const m=sh(new THREE.Mesh(new THREE.ConeGeometry(1.4,11,7),cy));m.position.set(c[0],5.5,c[1]);g.add(m);});
+  /* amphitheatre outside the north-east walls, grassy ruin */
+  const pts=[new THREE.Vector2(16,0),new THREE.Vector2(16,.6)];let r=16,y=.6;for(let i=0;i<6;i++){r+=1.6;y+=.8;pts.push(new THREE.Vector2(r,y));}pts.push(new THREE.Vector2(r+1.5,y),new THREE.Vector2(r+2,0));
+  const am=sh(new THREE.Mesh(new THREE.LatheGeometry(pts,40),L(0x8d9352)));am.material.side=THREE.DoubleSide;am.position.set(AMPHI.x,0,AMPHI.z);am.scale.set(1.25,1,.85);scene.add(am);
+})();
+
+/* hazel orchards and hills */
+(function(){
+  const pts=[];for(let x=-360;x<=360;x+=7.5)for(let z=-290;z<=290;z+=7.5){if(Math.abs(Math.sin(x*.013)+Math.cos(z*.017))<.35)continue;const jx=x+(rnd()-.5)*1.2,jz=z+(rnd()-.5)*1.2;
+    if(inPoly(jx,jz)||edgeDist(jx,jz)<14||Math.hypot(jx-AMPHI.x,jz-AMPHI.z)<40)continue;pts.push([jx,jz,.8+rnd()*.5]);}
+  const trunk=new THREE.CylinderGeometry(.22,.3,1.8,5);trunk.translate(0,.9,0);const crown=new THREE.IcosahedronGeometry(1,0);
+  const tm=new THREE.InstancedMesh(trunk,L(0x5a4330),pts.length),cm=new THREE.InstancedMesh(crown,new THREE.MeshLambertMaterial({color:0xffffff}),pts.length);
+  const M=new THREE.Matrix4(),Q=new THREE.Quaternion(),C=new THREE.Color(),TC=[0x4f6a33,0x5b7a3a,0x668540,0x4a6130];
+  pts.forEach((p,i)=>{const y=heightAt(p[0],p[1]);Q.setFromEuler(new THREE.Euler(0,rnd()*6,0));M.compose(new THREE.Vector3(p[0],y,p[1]),Q,new THREE.Vector3(1,p[2],1));tm.setMatrixAt(i,M);M.compose(new THREE.Vector3(p[0],y+1.7+p[2]*1.6,p[1]),Q,new THREE.Vector3(2.4*p[2],2*p[2],2.4*p[2]));cm.setMatrixAt(i,M);cm.setColorAt(i,C.setHex(TC[i%4]));});
+  cm.castShadow=true;scene.add(tm);scene.add(cm);
+  const cyp=[];for(let k=0;k<26;k++){cyp.push([GATES[0].x-12-k*7,GATES[0].z-6]);cyp.push([GATES[0].x-12-k*7,GATES[0].z+6]);}
+  for(let k=0;k<18;k++){const a=k/18*PI*2;cyp.push([AMPHI.x+Math.cos(a)*34,AMPHI.z+Math.sin(a)*24]);}
+  const cg=new THREE.ConeGeometry(1,1,7);cg.translate(0,.5,0);const cypM=new THREE.InstancedMesh(cg,L(0x33492a),cyp.length);
+  cyp.forEach((q,i)=>{const h=8+rnd()*4;M.compose(new THREE.Vector3(q[0],heightAt(q[0],q[1])-.5,q[1]),new THREE.Quaternion(),new THREE.Vector3(1.4,h,1.4));cypM.setMatrixAt(i,M);});cypM.castShadow=true;scene.add(cypM);
+  const hill=new THREE.MeshLambertMaterial({color:0x8d9aa8,flatShading:true});[[-900,-800,420,160],[-400,-1050,380,110],[900,700,300,120],[1050,200,260,80],[-1000,300,300,90]].forEach(h=>{const m=new THREE.Mesh(new THREE.IcosahedronGeometry(1,2),hill);m.position.set(h[0],-8,h[1]);m.scale.set(h[2],h[3],h[2]*.45);scene.add(m);});
+})();
+
+/* ---------- player: quad towing the GPR antenna array ---------- */
+const player=new THREE.Group();scene.add(player);
+(function(){const khaki=L(0x8f7f55),skin=L(0xe0b48c),hat=L(0xe7dcc0),green=L(0x3d4a32),blk=L(0x1d1a17),wood=L(0xb58a57),yel=L(0xf0c419),crate=L(0xc9a36b);
+  const body=new THREE.Group();player.add(body);player.userData.body=body;
+  box(body,green,1.9,.7,2.8,0,.7,.2);box(body,blk,1.2,.35,1.3,0,1.4,-.3);box(body,crate,1.7,.8,1.1,0,1.4,-1.2);box(body,L(0x4f7fb0),.6,.5,.6,.4,2.2,-1.2);box(body,blk,2.2,.2,.9,0,1.3,1.35);
+  const bl=sh(new THREE.Mesh(new THREE.SphereGeometry(.18,8,6),L(0xf07a1a)));bl.position.set(-.5,2.4,-1.2);body.add(bl);
+  [[-1.05,1.1],[1.05,1.1],[-1.05,-.8],[1.05,-.8]].forEach(w=>{const m=sh(new THREE.Mesh(new THREE.CylinderGeometry(.55,.55,.45,12),blk));m.rotation.z=PI/2;m.position.set(w[0],.55,w[1]);body.add(m);});
+  cyl(body,khaki,.42,1.1,0,1.55,-.1);const hd=sh(new THREE.Mesh(new THREE.SphereGeometry(.34,12,10),skin));hd.position.set(0,3.0,-.1);body.add(hd);cyl(body,hat,.7,.07,0,3.22,-.1,14);cyl(body,hat,.36,.3,0,3.26,-.1,12);
+  const arr=new THREE.Group();arr.position.z=-4.2;player.add(arr);
+  box(arr,wood,.15,.15,2.4,0,.8,1.3);
+  [-.9,0,.9].forEach(z=>box(arr,wood,5.6,.16,.16,0,.75,z));[-2.6,2.6].forEach(x=>box(arr,wood,.16,.16,2,x,.75,0));
+  for(let i=0;i<8;i++){box(arr,yel,.55,.35,.7,-2.45+i*.7,.12,-.2);}
+  [[-2.8,-.9],[2.8,-.9],[-2.8,.9],[2.8,.9]].forEach(w=>{const m=sh(new THREE.Mesh(new THREE.CylinderGeometry(.35,.35,.2,12),yel));m.rotation.z=PI/2;m.position.set(w[0],.35,w[1]);arr.add(m);});
+})();
+
+player.scale.setScalar(.42);
+/* sheep */
+const sheep=[];
+(function(){const w=L(0xefe9dc),k=L(0x2a2521);for(let i=0;i<10;i++){let x,z;do{x=-170+rnd()*340;z=-110+rnd()*220;}while(!walkable(x,z));
+  const g=new THREE.Group();box(g,w,1.4,1.1,2.2,0,.55,0);box(g,k,.7,.7,.8,0,1.2,1.3);[[-.45,-.7],[.45,-.7],[-.45,.7],[.45,.7]].forEach(l=>box(g,k,.22,.6,.22,l[0],0,l[1]));
+  g.position.set(x,0,z);scene.add(g);sheep.push({g,tx:x,tz:z,vy:0,wait:rnd()*4});}})();
+
+/* ---------- finds (floating objects) ---------- */
+const FINDS=[
+ ['amphora','Anfora vinaria',"Anfora di garum dimenticata. Profuma ancora, purtroppo."],
+ ['coin','Moneta di bronzo',"Moneta di un legionario distratto. Il resto dello stipendio è qui sotto?"],
+ ['lamp','Lucerna in terracotta',"Lucerna ancora tiepida. Qualcuno è appena uscito."],
+ ['die','Dado in osso',"Dado truccato: esce sempre sei."],
+ ['fibula','Fibula in bronzo',"Spilla da mantello. Il mantello è scappato."],
+ ['sandal','Chiodi di una calzatura',"Sandalo sinistro. Il destro è a Civita Castellana."],
+ ['tesserae','Tessere di mosaico',"Mosaico in kit. Istruzioni non incluse."],
+ ['statue','Statuetta votiva',"Statuetta votiva che ti fa l'occhiolino."],
+ ['stylus','Stilo per tavolette di cera',"Tavoletta di cera: «Marco, ricordati il pane»."],
+ ['tile','Tegola con bollo di fabbrica',"Tegola firmata: «Made in Falerii»."]
+];
+let finds=[];
+function placeFinds(){finds.forEach(f=>f.mesh&&scene.remove(f.mesh));const r=mulberry(Math.floor(Math.random()*1e9));
+  finds=FINDS.map(d=>{let x,z;do{x=-175+r()*350;z=-115+r()*230;}while(!walkable(x,z));return{kind:d[0],name:d[1],fun:d[2],x,z,found:false,mesh:null,t:0};});}
+function findMesh(kind){const g=new THREE.Group(),terra=L(0xb8683c),bro=L(0x8a6a36),gold=L(0xd7a93b),bone=L(0xeee4cc);
+  if(kind==='amphora'){const m=new THREE.Mesh(new THREE.LatheGeometry([new THREE.Vector2(0,0),new THREE.Vector2(.3,.2),new THREE.Vector2(.55,1),new THREE.Vector2(.25,1.6),new THREE.Vector2(.2,1.9)],10),terra);m.position.y=-.9;g.add(m);}
+  else if(kind==='coin'){const m=new THREE.Mesh(new THREE.CylinderGeometry(.55,.55,.1,18),gold);m.rotation.x=PI/2;g.add(m);}
+  else if(kind==='lamp'){const m=new THREE.Mesh(new THREE.SphereGeometry(.5,12,8),terra);m.scale.set(1,.45,1.4);g.add(m);}
+  else if(kind==='die'){g.add(new THREE.Mesh(new THREE.BoxGeometry(.7,.7,.7),bone));}
+  else if(kind==='fibula'){g.add(new THREE.Mesh(new THREE.TorusGeometry(.45,.1,6,14,PI*1.6),bro));}
+  else if(kind==='sandal'){g.add(new THREE.Mesh(new THREE.BoxGeometry(.5,.12,1.3),L(0x6b4a2e)));}
+  else if(kind==='tesserae'){const c=[0xb33a2a,0x2f5d8a,0xe6d7a8,0x2f2a26];for(let i=0;i<9;i++){const m=new THREE.Mesh(new THREE.BoxGeometry(.22,.22,.22),L(c[i%4]));m.position.set((i%3-1)*.26,0,(Math.floor(i/3)-1)*.26);g.add(m);}}
+  else if(kind==='statue'){const b=new THREE.Mesh(new THREE.CylinderGeometry(.18,.28,1,8),bro);g.add(b);const h=new THREE.Mesh(new THREE.SphereGeometry(.2,8,6),bro);h.position.y=.65;g.add(h);}
+  else if(kind==='stylus'){const m=new THREE.Mesh(new THREE.CylinderGeometry(.05,.05,1.4,6),bro);m.rotation.z=PI/3;g.add(m);}
+  else{g.add(new THREE.Mesh(new THREE.BoxGeometry(1.1,.12,.8),terra));}
+  g.scale.setScalar(1.6);g.traverse(o=>{if(o.isMesh)o.castShadow=true;});return g;}
+
+/* ---------- particles ---------- */
+const bursts=[];
+function burst(x,z,w,d,color,confetti,n){if(!confetti)n=Math.min(n||60,60);n=n||(confetti?160:110);const geo=new THREE.BufferGeometry(),pos=new Float32Array(n*3),col=new Float32Array(n*3),vel=[];
+  const pl=[[.95,.55,.25],[.95,.8,.3],[.45,.7,.9],[.6,.8,.4],[.9,.4,.5]];
+  for(let i=0;i<n;i++){pos[i*3]=x+(Math.random()-.5)*w;pos[i*3+1]=.5+Math.random()*2;pos[i*3+2]=z+(Math.random()-.5)*d;vel.push([(Math.random()-.5)*(confetti?10:3),(confetti?8:2)+Math.random()*5,(Math.random()-.5)*(confetti?10:3)]);
+    const c=confetti?pl[i%5]:color;col[i*3]=c[0];col[i*3+1]=c[1];col[i*3+2]=c[2];}
+  geo.setAttribute('position',new THREE.BufferAttribute(pos,3));geo.setAttribute('color',new THREE.BufferAttribute(col,3));
+  const pts=new THREE.Points(geo,new THREE.PointsMaterial({size:confetti?.7:.7,vertexColors:true,transparent:true,opacity:.9,depthWrite:false}));scene.add(pts);bursts.push({pts,vel,life:0,confetti});}
+
+/* ---------- audio ---------- */
+let AC=null,audioOn=true;
+function initAudio(){if(AC)return;try{AC=new (window.AudioContext||window.webkitAudioContext)();}catch(e){AC=null;}}
+function tone(f,dur,type,vol,slide){if(!AC||!audioOn)return;try{const t=AC.currentTime,o=AC.createOscillator(),g=AC.createGain();o.type=type||'sine';o.frequency.setValueAtTime(f,t);if(slide)o.frequency.exponentialRampToValueAtTime(slide,t+dur);
+  g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol||.08,t+.01);g.gain.exponentialRampToValueAtTime(.0001,t+dur);o.connect(g);g.connect(AC.destination);o.start(t);o.stop(t+dur+.02);}catch(e){}}
+function chord(){[392,494,587,784].forEach((f,i)=>setTimeout(()=>tone(f,.9,'triangle',.06),i*90));}
+
+/* ---------- game state ---------- */
+const MODES={walk:{speed:17,swath:4.8},race:{speed:17,swath:4.8,time:240},fun:{speed:24,swath:6.4}};
+let G={mode:null,running:false,started:false,tour:false,time:0,revealed:0,found:0,pois:0,lots:0,tiles:0,ins:0,seen:{},stuns:0,buried:0,quizOk:0,quizN:0,conga:0,bestConga:0};
+let best=0;try{best=+localStorage.getItem('falerii-best')||0;}catch(e){}
+function setBest(){$('bestTag').textContent=best?'Record: '+best+' punti':'Record: nessuno';}setBest();
+const heading={v:PI/2};
+
+/* ---------- scan ring under the antenna array ---------- */
+const ring=new THREE.Mesh(new THREE.RingGeometry(1,1.12,48),new THREE.MeshBasicMaterial({color:0xf2c166,transparent:true,opacity:.55,depthWrite:false}));
+ring.rotation.x=-PI/2;ring.position.y=.15;ring.renderOrder=2;scene.add(ring);ring.visible=false;
+
+/* ---------- learning: lessons, quiz, notebook ---------- */
+const LESSONS={
+ georadar:['Come funziona il georadar',"Le antenne gialle inviano impulsi radio nel terreno. Muri, pavimenti e fosse riflettono l'onda in modo diverso dalla terra: misurando il tempo dell'eco si calcola la profondità. A Falerii Novi le antenne erano trainate da un quad, proprio come qui, e hanno preso una misura ogni 12,5 cm su tutta la città."],
+ basolato:['Il basolato',"Le strade romane erano lastricate di basoli, grandi pietre di lava vulcanica ben incastrate e leggermente bombate per far scolare la pioggia. Ai lati correvano i marciapiedi, più alti della carreggiata."],
+ domus:['Case di città',"Le case si affacciavano sulla strada con muri quasi ciechi: la vita si svolgeva all'interno, attorno a un atrio o a un cortile. I tetti erano coperti di tegole piane e coppi in terracotta."],
+ taberna:['Le tabernae',"Le botteghe si aprivano sulla strada con un largo ingresso, chiuso di notte da assi di legno. Spesso il bottegaio viveva nel retro o in un soppalco sopra il negozio."],
+ court:['Atrio e impluvium',"Il tetto dell'atrio era inclinato verso l'interno: la pioggia cadeva nella vasca dell'impluvium e da lì finiva in una cisterna sotterranea, la riserva d'acqua della famiglia."],
+ garden:['Orti e giardini',"Dentro le mura non c'erano solo case: molti lotti erano orti, giardini e cortili. Nel rilievo appaiono come spazi vuoti tra i muri."],
+ insula:["L'insula","La città è divisa in isolati regolari, le insulae, separati da strade che si incrociano ad angolo retto. Gli archeologi li numerano con i numeri romani: a Falerii Novi superano i settanta."],
+ mura:['Le mura',"Le mura di Falerii Novi, in grandi blocchi squadrati di tufo, corrono per oltre due chilometri attorno al pianoro. In origine le torri erano circa ottanta: ne restano una cinquantina. Sono tra le cinte romane meglio conservate d'Italia."],
+ falisci:['I Falisci',"Erano un popolo vicino agli Etruschi ma con una lingua propria, parente del latino. Nel 241 a.C. si ribellarono a Roma: la loro città sulla rupe fu presa e gli abitanti trasferiti qui, in pianura, dove era più difficile difendersi."],
+ abbandono:['Perché la città è sparita?',"La città fu abitata dal 241 a.C. fino al 700 d.C. circa; poi si svuotò lentamente e intorno all'anno Mille gli ultimi abitanti tornarono sulla rupe dell'odierna Civita Castellana, più sicura. Le case crollarono, le pietre furono riusate e i campi coprirono tutto. Proprio per questo la pianta è rimasta quasi intatta sotto terra."],
+ rilievo:['Leggere il sottosuolo',"Nel 1997–98 il magnetometro della British School at Rome disegnò per la prima volta tutta la rete delle strade. Nel 2020 il georadar delle università di Cambridge e di Gand ha aggiunto profondità e dettagli, edificio per edificio, e ha visto perfino le buche lasciate da chi nei secoli ha portato via le pietre. Analizzare i dati a mano richiede circa 20 ore per ogni ettaro."],
+ acqua:['Acqua sotto le case',"Il georadar ha seguito una rete di condutture d'acqua in gran parte della città, collegata a un acquedotto. La sorpresa: i tubi passano sotto gli isolati, non solo sotto le strade come succede di solito."],
+ pompei:['Quanto è grande?',"Dentro le mura Falerii Novi misura 30,5 ettari: poco meno della metà di Pompei. Ma la sua pianta è meno regolare di quella di Pompei, e questo la rende preziosa per capire come crescevano le città romane."],
+ cardo:['Cardo e decumano',"Le città romane si organizzavano su due assi: il cardo, da nord a sud, e il decumano, da est a ovest. Qui il ruolo del cardo lo svolge la via Amerina; il decumano va dalla porta ovest alla porta est."]
+};
+const QUIZ={
+ via:["Di che materiale erano i basoli delle strade romane?",["Lava vulcanica","Marmo bianco","Mattoni cotti"],0,"I basoli erano di lava, durissima: resisteva ai carri per secoli."],
+ foro:["A cosa serviva il foro?",["Era la piazza della politica e del mercato","Era lo stadio per le corse dei carri","Era il cimitero della città"],0,"Nel foro si votava, si giudicava e si commerciava."],
+ tempio:["Dove si trova il grande tempio repubblicano?",["Nell'insula XXXI, accanto al foro","Fuori dalle mura, vicino all'anfiteatro","Sotto l'abbazia"],0,"È l'area scavata tra il 1969 e il 1975, subito a ovest della via Amerina."],
+ tempioS:["Cosa riesce a vedere il georadar di un tempio?",["Il podio e i muri della cella","I colori delle pareti","Il nome del dio"],0,"Il georadar vede le strutture sepolte, non i colori né le iscrizioni."],
+ tempioW:["Perché la città aveva più templi?",["Ogni quartiere aveva i suoi culti","Uno solo non bastava per la pioggia","Erano magazzini travestiti"],0,"Dèi diversi, feste diverse: i luoghi di culto erano sparsi nei quartieri."],
+ monumento:["Cosa ha di speciale il monumento vicino alla porta nord?",["Non se ne conosce un altro uguale","È il tempio più grande d'Italia","È una tomba etrusca"],0,"Due grandi edifici affacciati dentro una porticus duplex: per ora è un caso unico."],
+ basilica:["Cos'era una basilica romana?",["Una sala per tribunali e affari","Una chiesa cristiana","Un granaio pubblico"],0,"Solo più tardi i cristiani ripresero questa forma per le chiese."],
+ teatro:["Come si chiama la gradinata del teatro?",["Cavea","Orchestra","Scena"],0,"La cavea ospitava il pubblico; l'orchestra era lo spazio semicircolare davanti alla scena."],
+ terme:["Come si scaldavano i pavimenti delle terme?",["Con l'aria calda che passava nell'ipocausto","Con acqua bollente in tubi di piombo","Con bracieri sotto i tappeti"],0,"I pavimenti poggiavano su pilastrini di mattoni: sotto circolava l'aria calda del forno."],
+ macellum:["Cosa si vendeva nel macellum?",["Carne, pesce e verdura","Armi e armature","Libri e papiri"],0,"Era il mercato alimentare coperto della città."],
+ domusA:["Cos'è l'impluvium?",["La vasca che raccoglie la pioggia nell'atrio","La cucina della casa","Il letto del padrone"],0,"L'acqua dell'impluvium finiva in una cisterna sotto il pavimento."],
+ domusB:["Cos'è il peristilio?",["Un giardino circondato da colonne","Una camera da letto","Un tipo di tegola"],0,"Il peristilio era il giardino privato, fresco e ombreggiato."],
+ tabernae:["Cosa erano le tabernae?",["Botteghe aperte sulla strada","Osterie solo per soldati","Tombe di famiglia"],0,"Da taberna viene la nostra parola taverna, ma voleva dire bottega in generale."]
+};
+const GLOSS=[['Insula','Isolato della città, delimitato da quattro strade.'],['Cardo','Strada principale da nord a sud.'],['Decumano','Strada principale da est a ovest.'],['Basoli','Blocchi di lava che lastricano le strade.'],['Foro','Piazza pubblica per politica, giustizia e commercio.'],['Taberna','Bottega aperta sulla strada.'],['Domus','Casa unifamiliare di città.'],['Atrio','Sala centrale della domus, aperta verso il cielo.'],['Impluvium','Vasca dell\'atrio che raccoglie la pioggia.'],['Peristilio','Giardino interno circondato da colonne.'],['Ipocausto','Pavimento sospeso riscaldato dall\'aria calda.'],['Cavea','Gradinata semicircolare del teatro.'],['Macellum','Mercato alimentare.'],['Larario','Piccolo altare domestico per i Lari.'],['Georadar','Strumento che vede sotto terra con le onde radio.'],['Magnetometro','Strumento che misura le piccole variazioni del campo magnetico del suolo.']];
+const TIMELINE=[['241 a.C.','Roma distrugge Falerii Veteres, sulla rupe di Civita Castellana, e trasferisce i Falisci su questo pianoro: nasce Falerii Novi.'],['III–II sec. a.C.','Si costruiscono le mura in tufo, la via Amerina e i primi edifici pubblici.'],['I sec. a.C. – II d.C.','La città cresce: foro, teatro, terme, case e botteghe riempiono le insulae.'],['700 d.C. circa','Finisce la vita della città romana. Intorno all\'anno Mille gli ultimi abitanti tornano sulla rupe, più sicura.'],['1143','Nasce l\'abbazia di Santa Maria di Falleri, costruita anche con pietre romane.'],['1649','L\'abbazia viene chiusa e cade in abbandono.'],['1990','Il Comune di Fabrica di Roma avvia i restauri dell\'abbazia.'],['1969–1975','Scavi nell\'insula XXXI, dove sorgeva il tempio repubblicano.'],['1997–1998','Il magnetometro della British School at Rome disegna la rete delle strade.'],['2020','Il 9 giugno la rivista Antiquity pubblica il georadar di Cambridge e Gand (Martin Millett, Lieven Verdonck): la città intera, senza scavare.']];
+const MAPS={city:'https://www.google.com/maps/search/?api=1&query=42.2996,12.3584',abbey:'https://www.google.com/maps/search/?api=1&query=Abbazia+di+Santa+Maria+di+Falleri',porta:'https://www.google.com/maps/search/?api=1&query=Porta+di+Giove+Falerii+Novi'};
+const L_CAM=['Le immagini del georadar','https://www.cam.ac.uk/stories/roman-city-rises'],L_ANT=['Lo studio su Antiquity','https://www.cambridge.org/core/journals/antiquity/article/groundpenetrating-radar-survey-at-falerii-novi-a-new-approach-to-the-study-of-roman-cities/BE7B8E3AE55DB6E03225B01C54CDD09B'];
+const REAL={
+ _buried:{see:"Oggi qui c'è un campo coltivato. Questo edificio lo conosciamo solo grazie al georadar, senza aver scavato: puoi vedere le immagini originali del rilievo.",links:[L_CAM,L_ANT,['Portami sul pianoro',MAPS.city]]},
+ via:{see:"Dentro le mura la via Amerina è sotto i campi, ma nell'Agro Falisco se ne percorrono ancora a piedi alcuni tratti.",links:[['La via Amerina','https://it.wikipedia.org/wiki/Via_Amerina'],['Portami lì',MAPS.city]]},
+ tempio:{see:"L'area del tempio fu scavata tra il 1969 e il 1975 e poi ricoperta. Le ricerche sono pubblicate dalla British School at Rome.",links:[['Articolo sul tempio','https://www.cambridge.org/core/journals/papers-of-the-british-school-at-rome/article/il-tempio-monumentale-repubblicano-di-falerii-novi-ricerche-storicotopografiche-sullinsula-xxxi-area-4/36F0C20D0C9DCEE17B94BFF027F2FBFF'],['Portami lì',MAPS.city]]},
+ teatro:{see:"Nel rilievo georadar il teatro si riconosce benissimo: un grande arco chiaro nel mezzo della città. Oggi, in superficie, è un campo.",links:[L_CAM,['Portami lì',MAPS.city]]},
+ abbey:{see:"L'abbazia è in piedi e si visita: la chiesa del 1143 ha tre navate e cinque absidi. Chiusa nel 1649, è stata restaurata dal Comune a partire dal 1990.",links:[['Scheda dell\'abbazia','https://www.lazionascosto.it/abbazie-del-lazio/abbazia-di-santa-maria-in-falleri/'],['Portami lì',MAPS.abbey]]},
+ porta:{see:"La porta esiste davvero ed è ancora l'ingresso al sito. Quando ci vai, alza lo sguardo e cerca la testa di Giove.",links:[['La Porta di Giove','http://www.e-choose.it/la-porta-di-giove-falerii-novi/'],['Portami lì',MAPS.porta]]},
+ mura:{see:"Le mura si possono percorrere quasi per intero, dall'esterno, con un giro a piedi attorno al pianoro.",links:[['Falerii Novi','https://en.wikipedia.org/wiki/Falerii_Novi'],['Portami lì',MAPS.porta]]},
+ rilievo:{see:"Il rilievo del 2020 delle università di Cambridge e di Gand ha mappato l'intera città. Le immagini sono pubbliche.",links:[L_CAM,L_ANT]},
+ acqua:{see:"Nel sito dell'Università di Cambridge trovi la mappa delle condutture e delle terme.",links:[L_CAM]},
+ pompei:{see:"Falerii Novi è un raro caso di città romana non coperta da un abitato moderno: per questo si può studiare per intero.",links:[L_CAM,['Portami lì',MAPS.city]]},
+ georadar:{see:"Il vero rilievo di Falerii Novi è stato fatto con antenne trainate da un quad, come nel gioco.",links:[L_CAM,L_ANT]},
+ monumento:{see:"Oggi è sotto un campo vicino alla porta nord. Nell'articolo di Cambridge c'è l'immagine georadar di questo monumento.",links:[L_CAM,L_ANT]}
+};
+let visitHid=[];function openVisit(){wasRunning=G.running||wasRunning;G.running=false;joyEnd();visitHid=['menu','end','journal'].filter(id=>!$(id).hidden);visitHid.forEach(id=>$(id).hidden=true);$('visit').hidden=false;$('visit').scrollTop=0;}
+['bVisitM','bVisitE','bVisitJ'].forEach(id=>$(id).addEventListener('click',openVisit));
+$('bVClose').addEventListener('click',()=>{$('visit').hidden=true;visitHid.forEach(id=>$(id).hidden=false);if(!visitHid.length&&G.started){G.running=wasRunning;}visitHid=[];canvas.focus();});
+try{const ms=JSON.parse(localStorage.getItem('falerii-missioni')||'{}');document.querySelectorAll('#mis input').forEach(i=>{i.checked=!!ms[i.id];i.addEventListener('change',()=>{ms[i.id]=i.checked;try{localStorage.setItem('falerii-missioni',JSON.stringify(ms));}catch(e){}});});}catch(e){}
+$('cardMin').addEventListener('click',()=>{const c=$('card');c.classList.toggle('open');const o=c.classList.contains('open');$('cardMin').textContent=o?'Meno':'Altro';if(o&&cardT<40)cardT=40;});
+const journal=[];const jSeen={};
+function jAdd(cat,title,text){if(jSeen[cat+title])return;jSeen[cat+title]=1;journal.push({cat,title,text});}
+function lesson(id){if((G.mode!=='walk'&&!G.tour)||G.seen['L'+id])return;G.seen['L'+id]=1;const l=LESSONS[id];jAdd('Lezioni',l[0],l[1]);showCard('Lezione',l[0],l[1],18,null,REAL[id]);}
+
+/* card queue, so lessons and quizzes never overwrite each other */
+const cardQ=[];let cardCur=null,cardT=0;
+function showCard(era,title,text,dur,quiz,real){cardQ.push({era,title,text,dur:dur||12,quiz,real});if(!cardCur)nextCard();}
+function nextCard(){cardCur=cardQ.shift()||null;const c=$('card');if(!cardCur){c.classList.remove('on');document.body.classList.remove('cardon');cardT=0;return;}
+  document.body.classList.add('cardon');c.classList.remove('open');$('cardMin').textContent='Altro';c.scrollTop=0;
+  const R=$('cReal');if(cardCur.real){R.hidden=false;$('cRealT').textContent=cardCur.real.see;const L2=$('cRealL');L2.innerHTML='';cardCur.real.links.forEach((l,i)=>{const a=document.createElement('a');a.className='rl'+(i?' alt':'');a.href=l[1];a.target='_blank';a.rel='noopener';a.textContent=l[0]+' ↗';L2.appendChild(a);});}else R.hidden=true;
+  $('cEra').textContent=cardCur.era;$('cTitle').textContent=cardCur.title;$('cText').textContent=cardCur.text;$('cFb').textContent='';const q=$('cQuiz');q.innerHTML='';
+  if(cardCur.quiz){const [qq,opts,ok,expl]=cardCur.quiz;const h=document.createElement('p');h.className='qq';h.textContent=qq;q.appendChild(h);
+    const order=[0,1,2].sort(()=>Math.random()-.5);order.forEach(i=>{const b=document.createElement('button');b.type='button';b.className='qa';b.textContent=opts[i];
+      b.addEventListener('click',()=>{if(cardCur.answered)return;cardCur.answered=true;G.quizN++;const right=i===ok;if(right){G.quizOk++;tone(784,.25,'triangle',.06);}else tone(196,.35,'sawtooth',.04);
+        q.querySelectorAll('.qa').forEach((x,k)=>{x.disabled=true;if(order[k]===ok)x.classList.add('ok');else if(x===b)x.classList.add('no');});
+        $('cFb').textContent=(right?'Esatto. ':'Non proprio. ')+expl;cardT=7;});q.appendChild(b);});cardT=1e9;}
+  else cardT=cardCur.dur;
+  c.classList.add('on');}
+function hideCard(){nextCard();}
+function clearCards(){cardQ.length=0;cardCur=null;$('card').classList.remove('on');document.body.classList.remove('cardon');cardT=0;}
+
+/* notebook */
+function renderJournal(){const el=$('jBody');el.innerHTML='';
+  const sec=(t,rows)=>{const h=document.createElement('h3');h.textContent=t;el.appendChild(h);if(!rows.length){const p=document.createElement('p');p.className='empty';p.textContent='Ancora niente: continua a esplorare.';el.appendChild(p);return;}
+    rows.forEach(r=>{const d=document.createElement('div');d.className='je';const b=document.createElement('b');b.textContent=r[0];const s=document.createElement('span');s.textContent=r[1];d.appendChild(b);d.appendChild(s);el.appendChild(d);});};
+  $('jQuiz').textContent='Quiz: '+G.quizOk+' risposte giuste su '+G.quizN+' · Voci nel quaderno: '+journal.length;
+  ['Lezioni','Edifici','Scoperte'].forEach(c=>sec(c,journal.filter(j=>j.cat===c).map(j=>[j.title,j.text])));
+  sec('Linea del tempo',TIMELINE);sec('Glossario',GLOSS);}
+let wasRunning=false;
+function openJournal(){wasRunning=G.running;G.running=false;joyEnd();renderJournal();$('journal').hidden=false;}
+$('bBook').addEventListener('click',openJournal);
+$('bJClose').addEventListener('click',()=>{$('journal').hidden=true;G.running=wasRunning;canvas.focus();});
+
+/* ---------- competition: the farmer who wants to plough everything back ---------- */
+const farmers=[];
+const FARM_LINES=["Qui ci semino le fave!","Questi sassi mi rompono l'aratro!","Nonno diceva: sotto c'è solo terra!","Le rovine non si mangiano!","Via, via, che devo arare!","Colonne? Io vedo solo erbacce."];
+function makeTractor(col){const g=new THREE.Group(),m=L(col),blk=L(0x1d1a17),st=L(0x8a8f96),skin=L(0xe0b48c),straw=L(0xe3c878);
+  box(g,m,1.8,1.2,3.2,0,.8,.2);box(g,m,1.3,.9,1.8,0,1.9,.9);box(g,blk,1.9,.12,1.9,0,3.5,-.6);[[-.85,-1.4],[.85,-1.4],[-.85,.2],[.85,.2]].forEach(q=>box(g,blk,.1,1.5,.1,q[0],2,q[1]-.2));
+  [[-1.2,-.7,1],[1.2,-.7,1],[-1,1.6,.55],[1,1.6,.55]].forEach(w=>{const c=sh(new THREE.Mesh(new THREE.CylinderGeometry(w[2],w[2],.55,12),blk));c.rotation.z=PI/2;c.position.set(w[0],w[2],w[1]);g.add(c);});
+  cyl(g,st,.12,1.4,.5,2.4,1.5,6);box(g,st,2.6,.25,.5,0,.4,-2.6);[-.9,0,.9].forEach(x=>{const d=sh(new THREE.Mesh(new THREE.CylinderGeometry(.35,.35,.08,10),st));d.rotation.z=PI/2;d.rotation.y=.4;d.position.set(x,.35,-2.9);g.add(d);});
+  cyl(g,L(0x4f6fa0),.36,1,0,1.9,-.6);const h=sh(new THREE.Mesh(new THREE.SphereGeometry(.3,10,8),skin));h.position.set(0,3.15,-.6);g.add(h);cyl(g,straw,.62,.06,0,3.35,-.6,12);cyl(g,straw,.3,.28,0,3.38,-.6,10);
+  g.scale.setScalar(.5);scene.add(g);return g;}
+function spawnFarmer(col,gate){const gt=GATES[gate];let x=gt.x,z=gt.z;for(let k=0;k<40&&!walkable(x,z);k++){x+=(0-gt.x)*.03;z+=(0-gt.z)*.03;}
+  if(G.mode==='race'){const p=player.position;for(let k=0;k<60;k++){const a=Math.random()*PI*2,r=34+Math.random()*12,xx=p.x+Math.cos(a)*r,zz=p.z+Math.sin(a)*r;if(walkable(xx,zz)&&edgeDist(xx,zz)>12){x=xx;z=zz;break;}}}
+  const f={g:makeTractor(col),x,z,h:0,stun:0,target:null,retarget:0,speech:4,majT:0};f.g.position.set(x,0,z);farmers.push(f);}
+function reburyItem(it){if(!it.revealed)return;it.revealed=false;G.buried++;
+  if(it.kind==='tile')G.tiles--;else if(it.kind==='poi')G.pois--;else G.lots--;
+  if(it.ins){if(it.ins.done===it.ins.total)G.ins--;it.ins.done--;}
+  const ri=rising.indexOf(it);if(ri>=0)rising.splice(ri,1);it.st=1;sinking.push(it);}
+function reburyMajor(b){b.revealed=false;G.revealed--;G.buried+=10;b.samples.forEach(s=>s.hit=false);b.hits=0;b.sink=1;
+  toast('Il contadino ha riseppellito: '+b.name+'!');tone(150,.6,'sawtooth',.05,90);}
+function unhitCells(x,z,R){const i0=Math.max(0,Math.floor((x-R-GX0)/GS)),i1=Math.min(GW-1,Math.ceil((x+R-GX0)/GS)),j0=Math.max(0,Math.floor((z-R-GZ0)/GS)),j1=Math.min(GH-1,Math.ceil((z+R-GZ0)/GS));
+  for(let j=j0;j<=j1;j++)for(let i=i0;i<=i1;i++){const k=j*GW+i;if(!cellHit[k]||cellBorder[k])continue;const cx=GX0+i*GS,cz=GZ0+j*GS;if((cx-x)**2+(cz-z)**2<=R*R){cellHit[k]=0;cellCount--;revealCtx.clearRect((cx-GS/2+200)*S,(cz-GS/2+150)*S,GS*S,GS*S);texDirty=true;}}}
+function updateFarmers(dt){const p=player.position;
+  for(const f of farmers){
+    if(f.stun>0){f.stun-=dt;f.g.rotation.y+=dt*9;f.g.position.y=Math.abs(Math.sin(f.stun*8))*.3;if(f.stun<=0)f.imm=2.5;continue;}f.g.position.y=0;f.imm=(f.imm||0)-dt;
+    f.retarget-=dt;
+    if(f.retarget<=0||!f.target||(f.target.revealed===false)){f.retarget=1.5;let bd=1e9,bt=null;
+      const pp=player.position;for(const it of items){if(!it.revealed)continue;const d=Math.hypot(it.cx-f.x,it.cz-f.z)+Math.hypot(it.cx-pp.x,it.cz-pp.z)*.9-(it.kind==='tile'?0:12);if(d<bd){bd=d;bt=it;}}
+      if(G.mode==='race'&&(!bt||Math.hypot(bt.cx-pp.x,bt.cz-pp.z)>45)){const a=Math.atan2(f.z-pp.z,f.x-pp.x)+(Math.random()-.5)*1.2,r=16+Math.random()*10;const lx=pp.x+Math.cos(a)*(r+18),lz=pp.z+Math.sin(a)*(r+18);if(inPoly(lx,lz))bt={cx:lx,cz:lz,revealed:true,lurk:true};}
+      for(const b of B){if(!b.revealed||b.id==='via')continue;const cx=(b.bb[0]+b.bb[1])/2,cz=(b.bb[2]+b.bb[3])/2,d=Math.hypot(cx-f.x,cz-f.z)-25;if(d<bd){bd=d;bt={cx,cz,major:b,revealed:true};}}
+      f.target=bt;}
+    let tx,tz;if(f.target){tx=f.target.cx;tz=f.target.cz;}else{tx=p.x;tz=p.z;}
+    if(trailCells.length&&G.time-trailT0>3.2){let bd=1e9,bk=-1;for(const k of trailCells){const cx=GX0+(k%GW)*GS,cz=GZ0+Math.floor(k/GW)*GS,d=Math.hypot(cx-f.x,cz-f.z);if(d<bd){bd=d;bk=k;}}if(bk>=0){tx=GX0+(bk%GW)*GS;tz=GZ0+Math.floor(bk/GW)*GS;}}
+    {const fi=Math.round((f.x-GX0)/GS),fj=Math.round((f.z-GZ0)/GS);let cut=false;for(let a=-1;a<=1;a++)for(let b=-1;b<=1;b++){const ii=fi+a,jj=fj+b;if(ii>=0&&jj>=0&&ii<GW&&jj<GH&&cellTrail[jj*GW+ii])cut=true;}if(cut)cutTrail();}
+    const dx=tx-f.x,dz=tz-f.z,d=Math.hypot(dx,dz);
+    if(d>.5){const sp=(G.mode==='race'?(f.fast?10.5:9)+Math.min(3,G.time/60)*(trailCells.length?1.2:.6):(f.fast?10:8.5))*dt,nx=f.x+dx/d*sp,nz=f.z+dz/d*sp;if(inPoly(nx,nz)&&edgeDist(nx,nz)>3&&!inAbbey(nx,nz)){f.x=nx;f.z=nz;}else if(inPoly(nx,f.z)&&!inAbbey(nx,f.z))f.x=nx;else if(inPoly(f.x,nz)&&!inAbbey(f.x,nz))f.z=nz;f.h=angLerp(f.h,Math.atan2(dx,dz),Math.min(1,dt*5));}
+    f.g.position.x=f.x;f.g.position.z=f.z;f.g.rotation.y=f.h;
+    const px=f.x-Math.sin(f.h)*1.6,pz=f.z-Math.cos(f.h)*1.6,PR=3.2;
+    for(const it of items){if(!it.revealed)continue;const ex=it.cx-px,ez=it.cz-pz,rr=PR+(it.kind==='tile'?.3:it.r*.3);if(ex*ex+ez*ez<rr*rr)reburyItem(it);}
+    unhitCells(px,pz,PR);
+    let inMaj=null;for(const b of B){if(b.revealed&&b.id!=='via'&&f.x>b.bb[0]&&f.x<b.bb[1]&&f.z>b.bb[2]&&f.z<b.bb[3])inMaj=b;}
+    if(inMaj){f.majT+=dt;if(f.majT>2.5){reburyMajor(inMaj);f.majT=0;}}else f.majT=0;
+    if(Math.random()<dt*3)burst(px,pz,2,2,[.45,.34,.22],false,6);
+    f.speech-=dt;if(f.speech<=0){f.speech=9+Math.random()*6;if(Math.hypot(f.x-p.x,f.z-p.z)<90)toast('Contadino: «'+FARM_LINES[Math.floor(Math.random()*FARM_LINES.length)]+'»');}
+    if(f.imm<=0&&Math.hypot(f.x-p.x,f.z-p.z)<2.8){f.stun=4;G.stuns++;toast(pick(["Contadino: «Ehi! Il mio campo!»","Contadino: «Va bene, va bene, mi fermo un attimo...»","Contadino: «Ma chi te l'ha dato il permesso?»"])+' +20');tone(440,.15,'square',.05);setTimeout(()=>tone(330,.2,'square',.05),120);}
+  }}
+
+/* ---------- fun: the Romans wake up and join your conga line ---------- */
+const romans=[],trail=[];let giove=null,horn=0;
+const ROMAN_LINES=["Ave! Che anno è?","Ho parcheggiato la biga qui nel 200 a.C.","Qualcuno ha visto le mie ciabatte?","Si balla? Si balla!","Questo carro senza cavalli è stregoneria!","Mi sono addormentato durante un discorso in senato...","È ancora aperta l'osteria?","Portatemi al foro, ho un appuntamento!","Chi ha spostato la mia casa?","Duemila anni di sonno e ancora nessuno ha lavato i piatti."];
+function makeRoman(){const g=new THREE.Group(),toga=L(pick([0xf2ede0,0xe8e0cc,0xf5f0e6])),sash=L(pick([0xa33b2a,0x7a3a8a,0x3f6f8f,0xd9a441])),skin=L(pick([0xe0b48c,0xc9966b,0xeac29e]));
+  const b=new THREE.Mesh(new THREE.CylinderGeometry(.45,.7,1.8,8),toga);b.position.y=.9;g.add(b);const s=new THREE.Mesh(new THREE.BoxGeometry(.2,1.5,1.45),sash);s.position.set(0,1.1,0);s.rotation.x=.5;g.add(s);
+  const h=new THREE.Mesh(new THREE.SphereGeometry(.38,10,8),skin);h.position.y=2.2;g.add(h);const lr=new THREE.Mesh(new THREE.TorusGeometry(.36,.08,5,12),L(0x5f8f3c));lr.rotation.x=PI/2;lr.position.y=2.4;g.add(lr);
+  [-1,1].forEach(k=>{const a=new THREE.Mesh(new THREE.BoxGeometry(.18,.9,.18),skin);a.position.set(k*.55,1.9,0);a.rotation.z=k*2.4;g.add(a);});
+  g.traverse(o=>{if(o.isMesh)o.castShadow=true;});g.scale.setScalar(.34);scene.add(g);return g;}
+let romanTalk=0;
+function spawnRoman(x,z,n){for(let i=0;i<(n||1);i++){if(romans.length>=140)return;const g=makeRoman();g.position.set(x+(Math.random()-.5)*3,-1,z+(Math.random()-.5)*3);romans.push({g,state:'join',vy:0,y:-1,sheep:false});}
+  if(romanTalk<=0){romanTalk=2.5;toast('Romano: «'+pick(ROMAN_LINES)+'»');}}
+function sheepJoin(s){const i=sheep.indexOf(s);if(i>=0)sheep.splice(i,1);romans.push({g:s.g,state:'join',vy:0,y:0,sheep:true});toast(pick(["Una pecora si è unita alla festa!","Beee! Anche la pecora balla.","La pecora ha preso la cittadinanza romana."]));tone(700,.4,'sawtooth',.03,500);}
+function makeGiove(){const g=new THREE.Group(),st=L(0xd8c3a0),dk=L(0x2a211a);const hd=new THREE.Mesh(new THREE.IcosahedronGeometry(1,1),st);g.add(hd);
+  const beard=new THREE.Mesh(new THREE.ConeGeometry(.75,1,8),st);beard.rotation.x=PI;beard.position.set(0,-.75,.45);g.add(beard);
+  [-.35,.35].forEach(x=>{const e=new THREE.Mesh(new THREE.SphereGeometry(.13,8,6),dk);e.position.set(x,.2,.88);g.add(e);const br=new THREE.Mesh(new THREE.BoxGeometry(.4,.1,.1),dk);br.position.set(x,.42,.86);br.rotation.z=x>0?-.3:.3;g.add(br);});
+  const hair=new THREE.Mesh(new THREE.TorusGeometry(.9,.22,6,14),st);hair.rotation.x=PI/2;hair.position.y=.45;g.add(hair);
+  g.traverse(o=>{if(o.isMesh)o.castShadow=true;});g.scale.setScalar(3.4);scene.add(g);return{g,x:GATES[0].x+14,z:GATES[0].z,cool:0,vx:0,vz:0};}
+function blowHorn(){if(G.mode!=='fun'||!G.running)return;tone(392,.18,'square',.06);setTimeout(()=>tone(523,.3,'square',.06),170);
+  romans.forEach(r=>{if(r.state==='line'&&r.y<=0)r.vy=7;});
+  const p=player.position;items.forEach(it=>{if(it.revealed&&it.kind!=='tile'&&Math.hypot(it.cx-p.x,it.cz-p.z)<35&&rising.indexOf(it)<0){it.t=0;rising.push(it);}});
+  if(romans.some(r=>r.state==='line'))toast(pick(["Tutti: «Evviva!»","Il corteo salta di gioia!","Tromba imperiale!"]));}
+$('bHorn').addEventListener('click',blowHorn);
+function updateFun(dt,moved,cx,cz){romanTalk-=dt;const p=player.position;
+  if(moved){const l=trail[trail.length-1];if(!l||Math.hypot(l.x-cx,l.z-cz)>.45)trail.push({x:cx,z:cz,h:heading.v});if(trail.length>900)trail.shift();}
+  let k=0;
+  for(const r of romans){const g=r.g;
+    if(r.state==='line'){k++;const ti=Math.max(0,trail.length-1-k*3),tp=trail[ti]||{x:cx,z:cz,h:heading.v};g.position.x+=(tp.x-g.position.x)*Math.min(1,dt*10);g.position.z+=(tp.z-g.position.z)*Math.min(1,dt*10);g.rotation.y=tp.h+Math.sin(G.time*8+k)*.3;
+      if(r.vy||r.y>0){r.vy-=20*dt;r.y=Math.max(0,r.y+r.vy*dt);if(r.y===0)r.vy=0;}g.position.y=r.y+Math.abs(Math.sin(G.time*9+k*.7))*.25;}
+    else if(r.state==='join'){r.y=Math.min(0,r.y+dt*2);const ti=Math.max(0,trail.length-1-(k+1)*3),tp=trail[ti]||{x:cx,z:cz};const dx=tp.x-g.position.x,dz=tp.z-g.position.z,d=Math.hypot(dx,dz);
+      if(d<1.6){if(r.y>=0){r.state='line';G.conga++;}}else{const sp=Math.min(d,26*dt);g.position.x+=dx/d*sp;g.position.z+=dz/d*sp;g.rotation.y=Math.atan2(dx,dz);}g.position.y=r.y+Math.abs(Math.sin(G.time*14))*.2;}
+    else if(r.state==='lost'){g.position.x+=r.vx*dt;g.position.z+=r.vz*dt;r.vx*=.98;r.vz*=.98;if(!inPoly(g.position.x,g.position.z)){r.vx*=-1;r.vz*=-1;}g.rotation.y+=dt*3;
+      if(Math.hypot(g.position.x-p.x,g.position.z-p.z)<2.6){r.state='join';}}}
+  G.conga=romans.filter(r=>r.state==='line').length;G.bestConga=Math.max(G.bestConga,G.conga);
+  for(const s of sheep.slice()){if(Math.hypot(s.g.position.x-p.x,s.g.position.z-p.z)<2.4)sheepJoin(s);}
+  if(!giove&&G.time>35){giove=makeGiove();toast('Si è staccata la testa di Giove dalla porta... e rotola!');tone(110,1.2,'sawtooth',.05,60);}
+  if(giove){const gv=giove,dx=p.x-gv.x,dz=p.z-gv.z,d=Math.max(.01,Math.hypot(dx,dz));gv.cool-=dt;
+    const sp=(d<90?12.5:7)*dt;let nx=gv.x+dx/d*sp,nz=gv.z+dz/d*sp;if(gv.cool>3){nx=gv.x-dx/d*sp;nz=gv.z-dz/d*sp;}
+    if(inPoly(nx,nz)&&edgeDist(nx,nz)>3.5){const mx=nx-gv.x,mz=nz-gv.z,ml=Math.hypot(mx,mz);if(ml>0){const ax=new THREE.Vector3(mz/ml,0,-mx/ml);gv.g.quaternion.premultiply(new THREE.Quaternion().setFromAxisAngle(ax,ml/3.4));}gv.x=nx;gv.z=nz;}
+    gv.g.position.set(gv.x,3.4,gv.z);
+    if(d<4.2&&gv.cool<=0){gv.cool=5;const line=romans.filter(r=>r.state==='line');const lost=line.slice(Math.floor(line.length/2));
+      lost.forEach(r=>{r.state='lost';const a=Math.random()*PI*2,s=8+Math.random()*8;r.vx=Math.cos(a)*s;r.vz=Math.sin(a)*s;});
+      toast(pick(["Giove: «Chi ha svegliato il re degli dèi?!»","Giove: «Fulmini e saette, che baccano!»","Giove: «Silenzio, sto dormendo da duemila anni!»"])+(lost.length?' Metà corteo scappa!':''));tone(90,.8,'sawtooth',.07,50);burst(p.x,p.z,6,6,null,true,80);}}
+}
+function clearFunAndFarm(){romans.forEach(r=>{if(r.sheep){sheep.push({g:r.g,tx:r.g.position.x,tz:r.g.position.z,vy:0,wait:1});r.g.position.y=0;r.g.rotation.set(0,0,0);}else scene.remove(r.g);});romans.length=0;trail.length=0;
+  if(giove){scene.remove(giove.g);giove=null;}farmers.forEach(f=>scene.remove(f.g));farmers.length=0;}
+
+function resetWorld(){
+  revealCtx.clearRect(0,0,MW,MH);revealTex.needsUpdate=true;cellHit.fill(0);cellCount=0;cellTrail.fill(0);trailCells=[];trailStart=null;lastCell=-1;
+  B.forEach(b=>{b.samples.forEach(s=>s.hit=false);b.hits=0;b.revealed=false;b.t=0;b.sink=0;b.group.visible=false;b.group.position.y=-b.h;});
+  items.forEach(it=>{it.revealed=false;it.t=1;placeItem(it,0,true);});flushParts();insulae.forEach(q=>q.done=0);rising.length=0;sinking.length=0;
+  placeFinds();bursts.forEach(p=>scene.remove(p.pts));bursts.length=0;clearFunAndFarm();
+  player.position.set(GATES[0].x+(G.mode==='race'?7:20),0,GATES[0].z);heading.v=PI/2;player.rotation.y=PI/2;
+  if(G.mode==='race'){for(let k=0;k<GW*GH;k++)if(cellBorder[k])claim(k);}
+  Object.assign(G,{won:false,pov:false,time:0,revealed:0,found:0,pois:0,lots:0,tiles:0,ins:0,seen:{},stuns:0,buried:0,cuts:0,quizOk:0,quizN:0,conga:0,bestConga:0});
+  const rc=$('rc').getContext('2d');rc.fillStyle='#0d0b08';rc.fillRect(0,0,200,64);
+  setView(0);cam.yaw=cam.tYaw=0;
+}
+function showHud(on){$('top').hidden=!on;$('bottom').hidden=!on||G.tour;$('hint').hidden=!on||G.tour;$('stats').hidden=G.tour;$('bHorn').hidden=G.mode!=='fun'||G.tour;$('bBook').hidden=G.tour;}
+function startMode(m){initAudio();if(AC&&AC.state==='suspended')AC.resume();G.mode=m;G.tour=false;resetWorld();G.running=true;G.started=true;
+  $('menu').hidden=true;$('end').hidden=true;showHud(true);clearCards();
+  const race=m==='race';$('kA').textContent=race?'Tempo':'Edifici';$('kB').textContent=race?'Punti':'Scoperte';$('kD').textContent=race?'Riseppellito':(m==='fun'?'Corteo':'Case');
+  $('stA').classList.toggle('hot',race);updateHud();
+  if(race){showCard('Competizione','Chiudi le aree',"Obiettivo: salva il 60% della città in 4 minuti. Il bordo lungo le mura è già rilevato. Esci con il georadar: lasci una scia gialla. Quando torni su terreno rilevato, l'area racchiusa riemerge tutta insieme, con case, strade ed edifici. Il contadino arriva tra poco: se tocca la tua scia la taglia e torni al punto di partenza. Speronalo per fermarlo.",14);
+    setTimeout(()=>{if(G.running&&G.mode==='race'&&!farmers.length){spawnFarmer(0xc0392b,3);toast('Arriva il contadino con l\'aratro! È qui vicino');}},5000);}
+  else if(m==='fun')toast('Ogni scoperta sveglia un Romano che si unisce al tuo corteo. Spazio o Tromba per farlo saltare!');
+  else{toast('Guida sul pianoro: il georadar al traino scansiona dove passi');setTimeout(()=>lesson('georadar'),4000);}
+  canvas.focus();}
+function openMenu(){document.body.classList.remove('tools-open');$('bMore').textContent='⋯';$('bMore').setAttribute('aria-expanded',false);G.running=false;G.tour=false;G.pov=false;G.explore=false;document.body.classList.remove('explore');$('guide').hidden=true;$('bNext').hidden=true;beam.visible=false;if(cam.v===3)setView(2);labelsOff();$('menu').hidden=false;$('end').hidden=true;$('resumeRow').hidden=!G.started||!G.mode;showHud(false);clearCards();joyEnd();}
+document.querySelectorAll('.mode').forEach(b=>b.addEventListener('click',()=>{if(b.dataset.mode==='explore'){startPov(true,true);return;}startMode(b.dataset.mode);}));
+$('bResume').addEventListener('click',()=>{G.running=true;G.tour=false;$('menu').hidden=true;showHud(true);canvas.focus();});
+$('bMenu').addEventListener('click',openMenu);
+$('bAgain').addEventListener('click',()=>startMode(G.mode));
+$('bEndMenu').addEventListener('click',()=>{G.started=false;openMenu();});
+$('bTour').addEventListener('click',()=>{if(unlocked){startPov(false);return;}G.tour=true;G.running=false;$('end').hidden=true;showHud(true);setView(2);toast('Trascina per ruotare, rotella o pizzico per lo zoom');});
+$('bPovM').addEventListener('click',()=>startPov(true));
+const pov={x:0,z:0,seen:{},bob:0,h:1.7,tH:1.7};
+function startPov(fresh,explore){initAudio();if(fresh){G.mode='walk';resetWorld();for(let k=0;k<GW*GH;k++)if(cellOK[k])claim(k);items.forEach(it=>{if(!it.revealed){revealItem(it,true);it.t=1;placeItem(it,0,false);}});rising.length=0;flushParts();B.forEach(b=>{if(!b.revealed)revealB(b,true);});revealTex.needsUpdate=true;G.started=true;}
+  G.tour=true;G.running=false;G.pov=true;$('menu').hidden=true;$('end').hidden=true;clearCards();showHud(true);
+  pov.x=GATES[0].x+9;pov.z=GATES[0].z;pov.seen={};pov.h=pov.tH=1.7;player.visible=false;setView(3);cam.yaw=cam.tYaw=-PI/2;cam.pitch=cam.tPitch=0;
+  G.explore=!!explore;document.body.classList.toggle('explore',G.explore);$('guide').hidden=!G.explore;$('bNext').hidden=!G.explore;route.i=0;route.done=false;beam.visible=G.explore;
+  if(G.explore){G.seen={};showCard('Esplorazione','Benvenuto a Falerii Novi',"Tutta la città è in superficie. Segui la freccia verde in alto: ti guida in 14 tappe, dalla Porta di Giove alle mura, con una lezione e un quiz a ogni sosta. Cammina con WASD o le frecce, trascina per guardarti intorno; con la rotella (o R e F) sali in alto per vedere meglio. «Vai alla tappa» ti ci porta subito.",16);}
+  else showCard('Visita a piedi','Benvenuto a Falerii Novi',"Sei appena entrato dalla Porta di Giove. Cammina con WASD o le frecce, trascina per guardarti intorno, con la rotella (o R e F) alzi lo sguardo sopra i tetti. Avvicinati a edifici e scoperte per sapere cosa sono: i nomi in sospeso si possono toccare.",14);}
+$('bView').addEventListener('click',cycleView);
+$('bMore').addEventListener('click',()=>{const o=document.body.classList.toggle('tools-open');$('bMore').setAttribute('aria-expanded',o);$('bMore').textContent=o?'×':'⋯';});
+if(window.ResizeObserver){const tp=$('top'),tl=tp.firstElementChild,ds=document.documentElement.style,ro=new ResizeObserver(()=>{const a=tl.getBoundingClientRect().bottom,b=tp.getBoundingClientRect().bottom;if(a>0){ds.setProperty('--toph',a+'px');ds.setProperty('--toph2',Math.max(a,b)+'px');}});ro.observe(tl);ro.observe(tp);}
+function cycleView(){if(G.tour&&G.pov){setView(cam.v===3?2:3);return;}if(G.tour){return;}setView((cam.v+1)%3);}
+$('bRotL').addEventListener('click',()=>{cam.tYaw+=PI/4;cam.idle=0;});
+$('bRotR').addEventListener('click',()=>{cam.tYaw-=PI/4;cam.idle=0;});
+$('bAudio').addEventListener('click',()=>{audioOn=!audioOn;$('bAudio').textContent=audioOn?'Audio sì':'Audio no';});
+$('cardX').addEventListener('click',hideCard);
+
+let toastT=0;function toast(s){const t=$('toast');t.textContent=s;t.classList.add('on');toastT=3.4;}
+
+function fmtTime(s){s=Math.max(0,Math.ceil(s));return Math.floor(s/60)+':'+String(s%60).padStart(2,'0');}
+function pct(){return cellTotal?Math.round(cellCount/cellTotal*100):0;}
+function raceScore(){return Math.max(0,Math.round((cellCount-(G.mode==='race'?borderCount:0))/cellTotal*1500)+G.revealed*150+G.pois*40+G.found*50+G.lots*8+G.ins*30+G.stuns*20);}
+function updateHud(){if(G.mode==='race'){$('vA').textContent=fmtTime(MODES.race.time-G.time);$('vB').textContent=raceScore();$('vD').textContent=G.buried;$('vC').textContent=pct()+'% / 60%';return;}
+  else{$('vA').textContent=G.revealed+'/'+B.length;$('vB').textContent=(G.pois+G.found)+'/'+(nPoi+finds.length);$('vD').textContent=G.mode==='fun'?G.conga:G.lots+'/'+nLots;}
+  $('vC').textContent=pct()+'%';}
+
+/* ---------- scanning ---------- */
+let texDirty=false,anomB=null;const rising=[],sinking=[];let lotCount=0;
+function revealItem(it,quiet){if(it.revealed)return;it.revealed=true;it.t=0;const si=sinking.indexOf(it);if(si>=0)sinking.splice(si,1);rising.push(it);
+  if(it.kind==='tile'){G.tiles++;if(!quiet)lesson('basolato');return;}
+  if(it.kind==='poi'){G.pois++;if(!quiet){burst(it.cx,it.cz,6,6,[.8,.66,.45],G.mode==='fun',G.mode==='fun'?90:50);tone(660,.2,'triangle',.06);setTimeout(()=>tone(990,.3,'triangle',.05),110);
+      if(G.mode==='race')toast('+40 · '+it.name);else if(G.mode==='fun'){toast(it.name+': '+it.fun);spawnRoman(it.cx,it.cz,2);}else{jAdd('Scoperte',it.name,it.text);showCard('Scoperta · insula '+it.ins.name,it.name,it.text,11);}}}
+  else{G.lots++;if(!quiet){lotCount++;if(G.mode==='fun'){if(lotCount%4===0)spawnRoman(it.cx,it.cz,1);if(Math.random()<.25)tone(300+Math.random()*300,.12,'square',.02,600);}
+      if(G.mode==='walk'){if(it.kind==='house')lesson('domus');else if(it.kind==='shop')lesson('taberna');else if(it.kind==='court')lesson('court');else if(it.kind==='garden')lesson('garden');}}}
+  if(it.ins){it.ins.done++;if(it.ins.done===it.ins.total&&!quiet){G.ins++;tone(523,.5,'triangle',.05);toast((G.mode==='race'?'+30 · ':'')+'Insula '+it.ins.name+' riportata alla luce');if(G.mode==='walk')setTimeout(()=>lesson('insula'),1500);}}}
+/* ---------- competition: close an area with the georadar trail (like Qix / Xonix) ---------- */
+let trailCells=[],trailStart=null,lastCell=-1,trailT0=0;
+function claim(k){if(!cellOK[k]||cellHit[k])return false;cellHit[k]=1;cellCount++;paintCell(k%GW,Math.floor(k/GW));texDirty=true;return true;}
+function addTrail(i,j){if(i<0||j<0||i>=GW||j>=GH)return;const k=j*GW+i;if(!cellOK[k]||cellHit[k]||cellTrail[k])return;if(!trailCells.length){trailT0=G.time;if(farmers.length)toast('Sei fuori dal rilevato: chiudi l\'area prima che il contadino ti veda!');}cellTrail[k]=1;trailCells.push(k);
+  const x=(GX0+i*GS-GS/2+200)*S,z=(GZ0+j*GS-GS/2+150)*S,sz=GS*S;revealCtx.fillStyle='rgba(242,193,102,.95)';revealCtx.fillRect(x+1,z+1,sz-2,sz-2);revealCtx.fillStyle='rgba(120,70,20,.5)';revealCtx.fillRect(x+sz/2-1.5,z+sz/2-1.5,3,3);texDirty=true;}
+function cutTrail(){if(!trailCells.length)return;trailCells.forEach(k=>{cellTrail[k]=0;const i=k%GW,j=Math.floor(k/GW);revealCtx.clearRect((GX0+i*GS-GS/2+200)*S,(GZ0+j*GS-GS/2+150)*S,GS*S,GS*S);});trailCells=[];texDirty=true;
+  if(trailStart){player.position.set(trailStart.x,0,trailStart.z);cam.target.set(trailStart.x,0,trailStart.z);}lastCell=-1;G.cuts=(G.cuts||0)+1;
+  toast('Il contadino ha tagliato la tua scia! Torni al punto di partenza');tone(180,.5,'sawtooth',.06,90);burst(player.position.x,player.position.z,4,4,[.9,.5,.3],false,30);}
+function closeTrail(){const added=trailCells.length;trailCells.forEach(k=>{cellTrail[k]=0;claim(k);});trailCells=[];
+  const lab=new Int32Array(GW*GH).fill(-1),regions=[];const fc=new Set(farmers.map(f=>Math.round((f.z-GZ0)/GS)*GW+Math.round((f.x-GX0)/GS)));
+  for(let k0=0;k0<GW*GH;k0++){if(!cellOK[k0]||cellHit[k0]||lab[k0]>=0)continue;const r={cells:[],farmer:false},q=[k0];lab[k0]=regions.length;
+    while(q.length){const k=q.pop();r.cells.push(k);if(fc.has(k))r.farmer=true;const i=k%GW,j=Math.floor(k/GW);
+      for(const [a,b] of [[1,0],[-1,0],[0,1],[0,-1]]){const ii=i+a,jj=j+b;if(ii<0||jj<0||ii>=GW||jj>=GH)continue;const kk=jj*GW+ii;if(cellOK[kk]&&!cellHit[kk]&&lab[kk]<0){lab[kk]=regions.length;q.push(kk);}}}
+    regions.push(r);}
+  let take=regions.filter(r=>!r.farmer);if(take.length===regions.length&&regions.length){const big=regions.reduce((a,b)=>a.cells.length>b.cells.length?a:b);take=take.filter(r=>r!==big);}
+  let n=added;take.forEach(r=>r.cells.forEach(k=>{if(claim(k))n++;}));
+  const cellOf=(x,z)=>{const i=Math.round((x-GX0)/GS),j=Math.round((z-GZ0)/GS);return(i<0||j<0||i>=GW||j>=GH)?-1:j*GW+i;};
+  let lots=0,pois=0,tiles=0;for(const it of items){if(it.revealed)continue;const k=cellOf(it.cx,it.cz);if(k>=0&&cellHit[k]){revealItem(it,true);if(it.kind==='tile')tiles++;else if(it.kind==='poi')pois++;else lots++;}}
+  for(const b of B){if(b.revealed)continue;let h=0;for(const sm of b.samples){const k=cellOf(sm.x,sm.z);if(k>=0&&cellHit[k])h++;}if(h/b.samples.length>=b.need)revealB(b);}
+  for(const f of finds){if(f.found)continue;const k=cellOf(f.x,f.z);if(k>=0&&cellHit[k])foundF(f);}
+  if(n>0){const pc=Math.round(n/cellTotal*100);toast('Area chiusa: +'+Math.round(n/cellTotal*1500)+' punti'+(lots?' · '+lots+' case':'')+(pois?' · '+pois+' scoperte':'')+(pc>=3?' · '+pc+'% della città':''));
+    tone(523,.2,'triangle',.06);setTimeout(()=>tone(659,.2,'triangle',.06),100);setTimeout(()=>tone(784,.35,'triangle',.06),200);
+    take.forEach(r=>{if(r.cells.length>6){const k=r.cells[Math.floor(r.cells.length/2)];burst(GX0+(k%GW)*GS,GZ0+Math.floor(k/GW)*GS,20,20,[.8,.66,.45],false,60);}});}}
+function raceScan(x,z){const i=Math.round((x-GX0)/GS),j=Math.round((z-GZ0)/GS);if(i<0||j<0||i>=GW||j>=GH)return;const k=j*GW+i;if(!cellOK[k])return;
+  if(cellHit[k]){if(trailCells.length)closeTrail();trailStart={x:player.position.x,z:player.position.z};lastCell=k;return;}
+  if(cellTrail[k]){lastCell=k;return;}
+  if(lastCell>=0){let ci=lastCell%GW,cj=Math.floor(lastCell/GW);let guard=0;while((ci!==i||cj!==j)&&guard++<20){if(ci!==i)ci+=Math.sign(i-ci);else cj+=Math.sign(j-cj);addTrail(ci,cj);}}
+  addTrail(i,j);lastCell=k;}
+function scan(x,z){if(G.mode==='race'){raceScan(x,z);return;}const R=MODES[G.mode].swath;
+  const i0=Math.max(0,Math.floor((x-R-GX0)/GS)),i1=Math.min(GW-1,Math.ceil((x+R-GX0)/GS)),j0=Math.max(0,Math.floor((z-R-GZ0)/GS)),j1=Math.min(GH-1,Math.ceil((z+R-GZ0)/GS));
+  for(let j=j0;j<=j1;j++)for(let i=i0;i<=i1;i++){const k=j*GW+i;if(!cellOK[k]||cellHit[k])continue;const cx=GX0+i*GS,cz=GZ0+j*GS;if((cx-x)**2+(cz-z)**2<=R*R){cellHit[k]=1;cellCount++;paintCell(i,j);texDirty=true;}}
+  for(const it of items){if(it.revealed)continue;const dx=it.cx-x,dz=it.cz-z,rr=R+(it.kind==='tile'?.6:it.r*.45);if(dx*dx+dz*dz<=rr*rr)revealItem(it);}
+  anomB=null;let bestD=1e9;
+  for(const b of B){if(b.revealed)continue;const bb=b.bb;if(x<bb[0]-R||x>bb[1]+R||z<bb[2]-R||z>bb[3]+R)continue;
+    for(const s of b.samples){if(s.hit)continue;if((s.x-x)**2+(s.z-z)**2<=R*R){s.hit=true;b.hits++;}}
+    const cxx=Math.max(bb[0],Math.min(x,bb[1])),czz=Math.max(bb[2],Math.min(z,bb[3])),d=Math.hypot(cxx-x,czz-z);if(d<bestD){bestD=d;anomB=b;}
+    if(b.hits/b.samples.length>=b.need)revealB(b);}
+  if(anomB&&anomB.revealed)anomB=null;
+  for(const f of finds){if(!f.found&&(f.x-x)**2+(f.z-z)**2<=(R+.6)**2)foundF(f);}
+}
+function revealCellsIn(bb){for(let j=0;j<GH;j++)for(let i=0;i<GW;i++){const x=GX0+i*GS,z=GZ0+j*GS;const k=j*GW+i;if(x<bb[0]-1||x>bb[1]+1||z<bb[2]-1||z>bb[3]+1||!cellOK[k]||cellHit[k])continue;cellHit[k]=1;cellCount++;paintCell(i,j);}texDirty=true;}
+function revealB(b,quiet){b.revealed=true;b.sink=0;b.group.visible=true;b.t=0;G.revealed++;revealCellsIn(b.bb);if(quiet){b.t=1;b.group.position.y=0;return;}
+  const mx=(b.bb[0]+b.bb[1])/2,mz=(b.bb[2]+b.bb[3])/2;
+  burst(mx,mz,b.bb[1]-b.bb[0],b.bb[3]-b.bb[2],[.78,.62,.42],false);
+  if(G.mode==='fun'){burst(mx,mz,8,8,null,true);spawnRoman(mx,mz,4);}
+  chord();
+  if(G.mode==='race')toast('+150 · '+b.name);
+  else if(G.mode==='fun')showCard(b.era,b.name,b.fun,7,null,REAL[b.id]||REAL._buried);
+  else{jAdd('Edifici',b.name,b.text);showCard(b.era,b.name,b.text,18,null,REAL[b.id]||REAL._buried);if(QUIZ[b.id]&&!G.seen['Q'+b.id]){G.seen['Q'+b.id]=1;showCard('Mettiti alla prova',b.name,'',30,QUIZ[b.id]);}}
+  if(G.revealed===B.length&&G.mode==='walk')showCard('Rilievo','Tutti i grandi edifici sono tornati',"Restano case, botteghe e piccole scoperte negli isolati. Apri il Quaderno per ripassare, o passa alla vista drone per ammirare la città.",14);}
+function foundF(f){f.found=true;G.found++;f.mesh=findMesh(f.kind);f.mesh.position.set(f.x,-.5,f.z);scene.add(f.mesh);f.t=0;
+  if(G.mode==='fun'){tone(300,.35,'square',.05,900);toast(f.fun);spawnRoman(f.x,f.z,1);}else{tone(880,.25,'triangle',.06);toast((G.mode==='race'?'+50 · ':'Reperto: ')+f.name);if(G.mode==='walk')jAdd('Scoperte',f.name,'Un piccolo oggetto di vita quotidiana, perso o buttato via da un abitante della città.');}}
+
+const WIN=.6;let unlocked=false;try{unlocked=localStorage.getItem('falerii-unlocked')==='1';}catch(e){}
+function setUnlocked(){$('bPovM').hidden=!unlocked;}setUnlocked();
+function revealAllAnimated(){for(let k=0;k<GW*GH;k++)if(cellOK[k])claim(k);items.forEach(it=>{if(!it.revealed)revealItem(it,true);});B.forEach(b=>{if(!b.revealed){revealB(b,true);b.t=0;b.group.position.y=-b.h;}});}
+function raceWin(){G.won=true;farmers.forEach(f=>{burst(f.x,f.z,4,4,[.6,.45,.3],false,40);scene.remove(f.g);});farmers.length=0;cutTrail&&trailCells.forEach(k=>cellTrail[k]=0);trailCells=[];
+  toast('Contadino: «Va bene, va bene! Pianterò le fave altrove.»');chord();const p=player.position;burst(p.x,p.z,10,10,null,true,200);
+  setTimeout(()=>{revealAllAnimated();toast('Tutta Falerii Novi torna in superficie!');burst(0,0,160,120,null,true,400);},1600);
+  unlocked=true;try{localStorage.setItem('falerii-unlocked','1');}catch(e){}setUnlocked();setTimeout(()=>{if(G.won&&G.mode==='race')finish(true);},6500);}
+function finish(win){G.running=false;showHud(false);clearCards();joyEnd();
+  const race=G.mode==='race',sc=raceScore();
+  $('eEye').textContent=race?(win?'Vittoria':'Fine della sfida'):'Rilievo concluso';
+  $('eTitle').textContent=race?(win?'Hai salvato Falerii Novi':'Il contadino ha vinto'):'Falerii Novi è tornata alla luce';
+  $('bTour').textContent=unlocked?'Esplora la città a piedi':'Guarda la città dal drone';
+  $('eK1').textContent=race?'Punti':'Scoperte';$('eV1').textContent=race?sc:(G.pois+G.found);$('eV2').textContent=pct()+'%';$('eV3').textContent=G.revealed+'/'+B.length;$('eV4').textContent=G.lots;
+  $('eText').textContent=race?((win?'Il contadino si è arreso e la città è tutta in superficie. Adesso puoi esplorarla a piedi, strada per strada. ':'Hai salvato il '+pct()+'% della città: per vincere serve il 60%. ')+'Il contadino ha riseppellito '+G.buried+' tra strade, case e scoperte; tu l\'hai fermato '+G.stuns+' volte e ti ha tagliato la scia '+(G.cuts||0)+' volte. '+(sc>best?'Hai battuto il record precedente di '+(best||0)+' punti.':'Il record da battere è '+best+' punti.'))
+    :'Nella realtà la città resta sotto i campi: la conosciamo grazie agli scavi e ai rilievi georadar, che ne hanno disegnato strade, case e piazze.';
+  if(race&&sc>best){best=sc;try{localStorage.setItem('falerii-best',String(best));}catch(e){}setBest();}
+  $('end').hidden=false;}
+
+/* ---------- camera ---------- */
+const VIEWS=[{name:"dall'alto",pitch:.95,dist:42},{name:'radente',pitch:.24,dist:12},{name:'drone',pitch:.72,dist:250},{name:'a piedi',pitch:0,dist:0}];
+const cam={v:0,yaw:0,tYaw:0,pitch:.95,tPitch:.95,zoom:1,tZoom:1,idle:0,target:new THREE.Vector3()};
+function setView(v){cam.v=v;cam.tPitch=VIEWS[v].pitch;cam.tZoom=1;cam.idle=0;$('bView').innerHTML='<span class="vk">Vista: </span>'+VIEWS[v].name;shadowSize(v===2?210:(v===1||v===3?40:70));player.visible=v!==3;if(v===2&&G.running)toast('Vista drone: trascina per ruotare. Il quad resta fermo');}
+const CITY=new THREE.Vector3(0,0,0);
+function updateCamera(dt){
+  if(cam.v===3){const k=Math.min(1,dt*10);cam.yaw+=(cam.tYaw-cam.yaw)*k;cam.pitch+=(cam.tPitch-cam.pitch)*k;pov.h+=(pov.tH-pov.h)*Math.min(1,dt*6);const ey=pov.h+Math.sin(pov.bob)*.035*Math.min(1,2/pov.h),cp=Math.cos(cam.pitch);
+    camera.position.set(pov.x,ey,pov.z);camera.lookAt(pov.x-Math.sin(cam.yaw)*cp,ey+Math.sin(cam.pitch),pov.z-Math.cos(cam.yaw)*cp);
+    scene.fog.near=60;scene.fog.far=520;sun.position.set(pov.x+SUNDIR.x*220,SUNDIR.y*220,pov.z+SUNDIR.z*220);sun.target.position.set(pov.x,0,pov.z);return;}
+  const drone=cam.v===2;cam.idle+=dt;if(drone&&cam.idle>4)cam.tYaw+=dt*.07;
+  const k=Math.min(1,dt*5);cam.yaw+=(cam.tYaw-cam.yaw)*k;cam.pitch+=(cam.tPitch-cam.pitch)*k;cam.zoom+=(cam.tZoom-cam.zoom)*k;
+  const tgt=drone?CITY:player.position;cam.target.lerp(tgt,Math.min(1,dt*(drone?2:6)));
+  const D=VIEWS[cam.v].dist*cam.zoom,cp=Math.cos(cam.pitch);
+  camera.position.set(cam.target.x+Math.sin(cam.yaw)*cp*D,Math.sin(cam.pitch)*D+(cam.v===1?.6:0),cam.target.z+Math.cos(cam.yaw)*cp*D);
+  camera.lookAt(cam.target.x,cam.v===1?1.3:0,cam.target.z);
+  scene.fog.near=drone?360:(cam.v===1?120:170);scene.fog.far=drone?1200:760;
+  const f=drone?CITY:player.position;sun.position.set(f.x+SUNDIR.x*220,SUNDIR.y*220,f.z+SUNDIR.z*220);sun.target.position.set(f.x,0,f.z);
+}
+
+/* ---------- visit on foot ---------- */
+function solidAt(x,z){for(const it of items){if(!it.revealed||!it.w||(it.kind!=='house'&&it.kind!=='shop'&&it.kind!=='court'&&it.kind!=='poi'))continue;const hw=it.w/2-(it.kind==='poi'?1.2:.2),hd=it.d/2-(it.kind==='poi'?1.2:.2);if(Math.abs(x-it.cx)<hw&&Math.abs(z-it.cz)<hd)return true;}return false;}
+function povOk(x,z){return walkable(x,z)&&(pov.h>5.5||!solidAt(x,z));}
+function infoFor(o){if(o.major){const b=o.major;return['era',b.era,b.name,b.text,REAL[b.id]||REAL._buried];}const it=o.item;return['poi','Scoperta · insula '+it.ins.name,it.name,it.text,REAL._buried];}
+/* ---------- guided route for the exploration mode ---------- */
+const beam=(function(){const g=new THREE.Group();const c=new THREE.Mesh(new THREE.CylinderGeometry(.9,.9,60,12,1,true),new THREE.MeshBasicMaterial({color:0xb6e08a,transparent:true,opacity:.28,depthWrite:false,side:THREE.DoubleSide}));c.position.y=30;g.add(c);
+  const r=new THREE.Mesh(new THREE.RingGeometry(2.2,2.8,32),new THREE.MeshBasicMaterial({color:0xb6e08a,transparent:true,opacity:.8,depthWrite:false}));r.rotation.x=-PI/2;r.position.y=.2;g.add(r);g.visible=false;scene.add(g);return g;})();
+const ROUTE=['porta','abbey','via','tempio','foro','tabernae','basilica','macellum','domusA','terme','teatro','tempioS','monumento','mura'];
+const LESSON_AT={porta:['falisci'],abbey:[],via:['basolato','cardo'],tempio:[],foro:['insula'],tabernae:['taberna'],basilica:[],macellum:['acqua'],domusA:['court','domus'],terme:[],teatro:['pompei'],tempioS:['abbandono'],monumento:['rilievo','georadar'],mura:['mura']};
+const route={i:0,done:false};
+function stopInfo(id){if(id==='porta')return{name:'Porta di Giove',x:GATES[0].x+10,z:GATES[0].z,r:9};if(id==='abbey')return{name:'Santa Maria di Falleri',x:ABBEY.x,z:ABBEY.box[3]+5,r:12};
+  if(id==='mura'){const x=PX(900),z=PZ(282)+9;return{name:'Le mura',x,z,r:9};}const b=B.find(q=>q.id===id);if(id==='via')return{name:b.name,x:b.cx,z:-30,r:7,b};return{name:b.name,x:(b.bb[0]+b.bb[1])/2,z:(b.bb[2]+b.bb[3])/2,r:Math.max(b.bb[1]-b.bb[0],b.bb[3]-b.bb[2])/2+3,b};}
+function arriveStop(id){const st=stopInfo(id);
+  if(id==='porta')showCard('Tappa 1 · III secolo a.C.','Porta di Giove',"La porta occidentale delle mura. Sulla chiave dell'arco è scolpita una testa di Giove, che da oltre duemila anni guarda chi entra. Da qui comincia la visita.",16,null,REAL.porta);
+  else if(id==='abbey'){showCard('Tappa 2 · 1143','Santa Maria di Falleri',"Chiesa abbaziale costruita dal 1143 dentro le mura romane, in parte con le pietre della città abbandonata: tre navate e cinque absidi. Chiusa nel 1649, è stata restaurata dal Comune dal 1990.",16,null,REAL.abbey);jAdd('Edifici','Santa Maria di Falleri',"Chiesa abbaziale del 1143, costruita con pietre romane riusate. Tre navate e cinque absidi.");}
+  else if(id==='mura'){}
+  else if(st.b){const b=st.b;const was=pov.seen['B'+b.id];pov.seen['B'+b.id]=1;jAdd('Edifici',b.name,b.text);if(!was)showCard('Tappa '+(route.i+1)+' · '+b.era,b.name,b.text,20,null,REAL[b.id]||REAL._buried);if(QUIZ[b.id]&&!G.seen['Q'+b.id]){G.seen['Q'+b.id]=1;showCard('Mettiti alla prova',b.name,'',30,QUIZ[b.id]);}}
+  (LESSON_AT[id]||[]).forEach(l=>lesson(l));
+  tone(660,.2,'triangle',.06);setTimeout(()=>tone(880,.3,'triangle',.05),120);
+  route.i++;if(route.i>=ROUTE.length){route.done=true;beam.visible=false;$('guide').hidden=true;$('bNext').hidden=true;
+    showCard('Percorso completato','Hai visitato Falerii Novi',"Hai percorso la città dalla Porta di Giove alle mura. Adesso sai cosa c'è sotto i campi: il passo successivo è andare a vederla davvero. Nel Quaderno trovi tutto quello che hai imparato.",30,null,{see:"Mura, Porta di Giove e abbazia si visitano a Fabrica di Roma.",links:[['Portami lì',MAPS.city],['Falerii Novi','https://en.wikipedia.org/wiki/Falerii_Novi']]});
+    burst(pov.x,pov.z,10,10,null,true,200);chord();setTimeout(()=>{if(G.explore)openVisit();},9000);}}
+function freeSpotNear(x,z){if(povOk(x,z))return[x,z];for(let r=2;r<40;r+=2)for(let a=0;a<16;a++){const xx=x+Math.cos(a/16*PI*2)*r,zz=z+Math.sin(a/16*PI*2)*r;if(povOk(xx,zz))return[xx,zz];}return[x,z];}
+$('bNext').addEventListener('click',()=>{if(route.done)return;const st=stopInfo(ROUTE[route.i]);let q=freeSpotNear(st.x,st.z);if(Math.hypot(q[0]-st.x,q[1]-st.z)>st.r-1)q=[st.x,st.z];pov.x=q[0];pov.z=q[1];
+  if(cam.v!==3)setView(3);const dx=st.x-pov.x,dz=st.z-pov.z;if(Math.hypot(dx,dz)>.5){cam.tYaw=cam.yaw=Math.atan2(-dx,-dz);}else{const b=st.b;if(b){pov.z=b.bb[3]+2;const q2=freeSpotNear(st.x,pov.z);pov.x=q2[0];pov.z=q2[1];cam.tYaw=cam.yaw=0;}arriveStop(ROUTE[route.i]);}cam.tPitch=.08;});
+function updateRoute(){if(!G.explore||route.done)return;const st=stopInfo(ROUTE[route.i]);beam.position.set(st.x,0,st.z);beam.children[1].scale.setScalar(1+Math.sin(performance.now()*.004)*.12);
+  const px=cam.v===3?pov.x:player.position.x,pz=cam.v===3?pov.z:player.position.z,dx=st.x-px,dz=st.z-pz,d=Math.hypot(dx,dz);
+  $('gStep').textContent='Tappa '+(route.i+1)+'/'+ROUTE.length;$('gName').textContent=st.name;$('gDist').textContent=Math.round(d*2.26)+' m';
+  const fx=-Math.sin(cam.yaw),fz=-Math.cos(cam.yaw),rel=Math.atan2(dx,dz)-Math.atan2(fx,fz);$('gArrow').style.transform='rotate('+(-rel)+'rad)';
+  if(cam.v===3&&d<st.r)arriveStop(ROUTE[route.i]);}
+function highView(){return G.tour&&(cam.v===2||(cam.v===3&&pov.h>4));}
+function flyTo(x,z){const q=freeSpotNear(x,z);if(cam.v!==3){const t=cam.target;pov.x=t.x;pov.z=t.z;pov.h=pov.tH=Math.max(18,pov.h);setView(3);cam.pitch=cam.tPitch=-.35;}
+  pov.tH=Math.max(pov.tH,10);pov.goto={x:q[0],z:q[1],fx:x,fz:z};}
+function updatePov(dt){let mx=0,mz=0;if(keys.KeyW||keys.ArrowUp)mz-=1;if(keys.KeyS||keys.ArrowDown)mz+=1;if(keys.KeyA||keys.ArrowLeft)mx-=1;if(keys.KeyD||keys.ArrowRight)mx+=1;mx+=joy.vx;mz+=joy.vy;
+  if(keys.KeyQ)cam.tYaw+=dt*1.8;if(keys.KeyE)cam.tYaw-=dt*1.8;if(keys.KeyR||keys.PageUp)pov.tH=Math.min(28,pov.tH+dt*8);if(keys.KeyF||keys.PageDown)pov.tH=Math.max(1.2,pov.tH-dt*8);
+  if(pov.goto&&Math.hypot(mx,mz)>.08)pov.goto=null;
+  if(pov.goto){const g=pov.goto,dx=g.x-pov.x,dz=g.z-pov.z,d=Math.hypot(dx,dz);if(d<.4){pov.x=g.x;pov.z=g.z;const fx=g.fx-pov.x,fz=g.fz-pov.z;if(Math.hypot(fx,fz)>.5)cam.tYaw=cam.yaw+(((Math.atan2(-fx,-fz)-cam.yaw+PI)%(2*PI)+2*PI)%(2*PI)-PI);pov.tH=1.7;cam.tPitch=.05;pov.goto=null;}
+    else{const sp=Math.min(d,Math.max(14,d*1.6)*dt);pov.x+=dx/d*sp;pov.z+=dz/d*sp;if(d>3)cam.tYaw=cam.yaw+(((Math.atan2(-dx,-dz)-cam.yaw+PI)%(2*PI)+2*PI)%(2*PI)-PI);cam.tPitch=-.3;}}
+  if(pov.h>4&&!G.seen.flyHint&&G.tour){G.seen.flyHint=1;toast('Da quassù tocca un nome o un punto della città per andarci');}
+  const mag=Math.hypot(mx,mz);if(!pov.goto&&mag>.08){const k=Math.min(mag,1)/mag;mx*=k;mz*=k;const cy=Math.cos(cam.yaw),sy=Math.sin(cam.yaw);const wx=mx*cy+mz*sy,wz=-mx*sy+mz*cy;const sp=(keys.ShiftLeft||keys.ShiftRight?6.5:3.4)*dt*(pov.h>5?3:1);
+    const nx=pov.x+wx*sp,nz=pov.z+wz*sp;if(povOk(nx,nz)){pov.x=nx;pov.z=nz;}else if(povOk(nx,pov.z))pov.x=nx;else if(povOk(pov.x,nz))pov.z=nz;pov.bob+=dt*9*Math.min(1,mag);}
+  player.position.set(pov.x,0,pov.z);heading.v=cam.yaw+PI;
+  for(const b of B){if(!b.revealed)continue;const inside=pov.h<5&&pov.x>b.bb[0]-1&&pov.x<b.bb[1]+1&&pov.z>b.bb[2]-1&&pov.z<b.bb[3]+1&&b.id!=='via'&&b.id!=='foro';const tgt=inside?.35:1;
+    if(Math.abs(b.fade-tgt)>.01){b.fade+=(tgt-b.fade)*Math.min(1,dt*6);b.mats.forEach(m=>{m.transparent=b.fade<.99;m.opacity=b.fade;m.depthWrite=b.fade>.99;});}
+    if(!pov.seen['B'+b.id]&&pov.x>b.bb[0]-4&&pov.x<b.bb[1]+4&&pov.z>b.bb[2]-4&&pov.z<b.bb[3]+4){pov.seen['B'+b.id]=1;jAdd('Edifici',b.name,b.text);showCard(b.era,b.name,b.text,16,null,REAL[b.id]||REAL._buried);}}
+  let near=null,nd=7;for(const it of items){if(it.kind==='tile'||!it.revealed)continue;const d=Math.hypot(it.cx-pov.x,it.cz-pov.z)-it.r*.5;if(d<nd){nd=d;near=it;}}
+  if(near){if(near.kind==='poi'&&/Pozzo|Fontana|Cisterna/.test(near.name))setTimeout(()=>lesson('acqua'),2500);if(near.kind==='poi'&&!pov.seen['P'+near.cx]){pov.seen['P'+near.cx]=1;jAdd('Scoperte',near.name,near.text);showCard('Scoperta · insula '+near.ins.name,near.name,near.text,13,null,REAL._buried);}
+    else if(near.kind==='house')lesson('domus');else if(near.kind==='shop')lesson('taberna');else if(near.kind==='court')lesson('court');else if(near.kind==='garden')lesson('garden');}
+  if(edgeDist(pov.x,pov.z)<8)lesson('mura');if(G.tour&&(pov.seen.t=(pov.seen.t||0)+dt)>40)lesson('pompei');
+  if(!G.explore&&!pov.seen.abbey&&Math.hypot(pov.x-ABBEY.x,pov.z-ABBEY.z)<30){pov.seen.abbey=1;showCard('1143','Santa Maria di Falleri',"Chiesa abbaziale costruita dal 1143 dentro le mura romane, in parte con le pietre della città abbandonata. È ancora in piedi e si può visitare.",14,null,REAL.abbey);}
+}
+const lblPool=[];const _v=new THREE.Vector3();
+function labelsOff(){lblPool.forEach(l=>l.el.style.display='none');}
+function updateLabels(){const cands=[];const cx=camera.position.x,cz=camera.position.z,povMode=cam.v===3;
+  for(const b of B){if(!b.revealed||b.id==='via')continue;cands.push({x:(b.bb[0]+b.bb[1])/2,z:(b.bb[2]+b.bb[3])/2,y:b.h*.75+1.5,t:b.name,major:b});}
+  cands.push({x:ABBEY.x,z:ABBEY.z,y:10,t:'Santa Maria di Falleri',abbey:true});cands.push({x:GATES[0].x,z:GATES[0].z,y:12,t:'Porta di Giove',porta:true});
+  if(povMode)for(const it of items){if(it.kind==='poi'&&it.revealed&&Math.hypot(it.cx-cx,it.cz-cz)<45)cands.push({x:it.cx,z:it.cz,y:3.2,t:it.name,item:it,poi:true});}
+  cands.forEach(c=>c.d=Math.hypot(c.x-cx,c.z-cz));cands.sort((a,b)=>a.d-b.d);const show=cands.slice(0,povMode?9:14);
+  while(lblPool.length<show.length){const el=document.createElement('button');el.type='button';el.className='lbl';$('labels').appendChild(el);const L={el,c:null};el.addEventListener('click',()=>{const c=L.c;if(!c)return;if(highView())flyTo(c.x,c.abbey?ABBEY.box[3]+4:c.z);
+      if(c.abbey)showCard('1143','Santa Maria di Falleri',"Chiesa abbaziale del 1143 costruita con pietre romane riusate: tre navate e cinque absidi.",14,null,REAL.abbey);else if(c.porta)showCard('III secolo a.C.','Porta di Giove',"La porta ovest delle mura, con la testa di Giove sulla chiave dell'arco.",12,null,REAL.porta);
+      else{const f=infoFor(c);showCard(f[1],f[2],f[3],16,null,f[4]);}});lblPool.push(L);}
+  const W=innerWidth,H=innerHeight;lblPool.forEach((L,i)=>{const c=show[i];if(!c){L.el.style.display='none';L.c=null;return;}_v.set(c.x,c.y,c.z).project(camera);
+    if(_v.z>1||_v.x<-1.05||_v.x>1.05||_v.y<-1||_v.y>1.1||(povMode&&c.d>140)){L.el.style.display='none';return;}
+    L.c=c;if(L.el.textContent!==c.t)L.el.textContent=c.t;L.el.className='lbl'+(c.poi?' poi':'');L.el.style.display='';L.el.style.transform='translate('+((_v.x+1)/2*W).toFixed(1)+'px,'+((1-_v.y)/2*H).toFixed(1)+'px) translate(-50%,-100%)';L.el.style.opacity=povMode?Math.max(.35,1-c.d/140).toFixed(2):'1';});}
+
+/* ---------- input ---------- */
+const keys={};
+addEventListener('keydown',e=>{keys[e.code]=true;if(!G.started)return;if(e.code==='Escape'&&(G.running||G.tour))openMenu();if(e.code==='KeyV'&&(G.running||G.tour))cycleView();if(e.code==='Space'&&G.running)blowHorn();
+  if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'].includes(e.code)&&G.running)e.preventDefault();});
+addEventListener('keyup',e=>{keys[e.code]=false;});
+addEventListener('blur',()=>{for(const k in keys)keys[k]=false;});
+const joy={on:false,id:null,ox:0,oy:0,vx:0,vy:0};const ptrs=new Map();let dragRot=null,pinch=null;
+canvas.addEventListener('contextmenu',e=>e.preventDefault());
+canvas.addEventListener('wheel',e=>{if(!(G.running||G.tour))return;e.preventDefault();if(cam.v===3){pov.tH=Math.max(1.2,Math.min(28,pov.tH*Math.exp(e.deltaY*.0015)));return;}cam.tZoom=Math.max(.4,Math.min(2.2,cam.tZoom*Math.exp(e.deltaY*.0012)));cam.idle=0;},{passive:false});
+canvas.addEventListener('pointerdown',e=>{if(!(G.running||G.tour))return;initAudio();ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});try{canvas.setPointerCapture(e.pointerId);}catch(_){}
+  if(ptrs.size===2){joyEnd();dragRot=null;const a=[...ptrs.values()];pinch={d:Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y),z:cam.tZoom,mx:(a[0].x+a[1].x)/2};return;}
+  if(e.pointerType==='mouse'||cam.v===2||(cam.v===3&&e.clientX>innerWidth*.45)||(!G.running&&cam.v!==3)){dragRot={id:e.pointerId,x:e.clientX,y:e.clientY};canvas.style.cursor='grabbing';return;}
+  joy.on=true;joy.id=e.pointerId;joy.ox=e.clientX;joy.oy=e.clientY;joy.vx=joy.vy=0;const s=$('stick');s.style.left=e.clientX+'px';s.style.top=e.clientY+'px';s.hidden=false;$('knob').style.transform='';});
+canvas.addEventListener('pointermove',e=>{if(!ptrs.has(e.pointerId))return;ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(pinch&&ptrs.size===2){const a=[...ptrs.values()];const d=Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y),mx=(a[0].x+a[1].x)/2;if(cam.v===3){pov.tH=Math.max(1.2,Math.min(28,(pinch.h||(pinch.h=pov.tH))*pinch.d/Math.max(20,d)));}else cam.tZoom=Math.max(.4,Math.min(2.2,pinch.z*pinch.d/Math.max(20,d)));cam.tYaw-=(mx-pinch.mx)*.006;pinch.mx=mx;cam.idle=0;return;}
+  if(dragRot&&e.pointerId===dragRot.id){const dx=e.clientX-dragRot.x,dy=e.clientY-dragRot.y;dragRot.x=e.clientX;dragRot.y=e.clientY;cam.tYaw-=dx*.006;cam.tPitch=cam.v===3?Math.max(-.7,Math.min(.8,cam.tPitch-dy*.004)):Math.max(cam.v===2?.08:.17,Math.min(1.45,cam.tPitch+dy*.004));cam.idle=0;return;}
+  if(joy.on&&e.pointerId===joy.id){let dx=e.clientX-joy.ox,dy=e.clientY-joy.oy;const l=Math.hypot(dx,dy),m=46;if(l>m){dx*=m/l;dy*=m/l;}joy.vx=dx/m;joy.vy=dy/m;$('knob').style.transform='translate('+dx+'px,'+dy+'px)';}});
+function joyEnd(){joy.on=false;joy.vx=joy.vy=0;joy.id=null;$('stick').hidden=true;}
+let downAt=null;canvas.addEventListener('pointerdown',e=>{downAt={x:e.clientX,y:e.clientY,t:performance.now(),n:ptrs.size-(ptrs.has(e.pointerId)?1:0)};},true);
+const _ray=new THREE.Raycaster(),_ndc=new THREE.Vector2(),_gp=new THREE.Plane(new THREE.Vector3(0,1,0),0),_hit=new THREE.Vector3();
+function groundClick(e){if(!downAt||downAt.n>0||!highView())return;if(Math.hypot(e.clientX-downAt.x,e.clientY-downAt.y)>7||performance.now()-downAt.t>400)return;
+  _ndc.set(e.clientX/innerWidth*2-1,-(e.clientY/innerHeight)*2+1);_ray.setFromCamera(_ndc,camera);if(!_ray.ray.intersectPlane(_gp,_hit)||!inPoly(_hit.x,_hit.z))return;
+  let best=null,bd=14;for(const b of B){if(!b.revealed||b.id==='via')continue;if(_hit.x>b.bb[0]&&_hit.x<b.bb[1]&&_hit.z>b.bb[2]&&_hit.z<b.bb[3]){best={major:b};bd=0;}}
+  if(!best)for(const it of items){if(it.kind!=='poi'||!it.revealed)continue;const d=Math.hypot(it.cx-_hit.x,it.cz-_hit.z);if(d<bd){bd=d;best={item:it};}}
+  if(best){const f=infoFor(best);showCard(f[1],f[2],f[3],16,null,f[4]);const tx=best.major?(best.major.bb[0]+best.major.bb[1])/2:best.item.cx,tz=best.major?(best.major.bb[2]+best.major.bb[3])/2:best.item.cz;flyTo(tx,tz);}
+  else flyTo(_hit.x,_hit.z);
+  const m=new THREE.Mesh(new THREE.RingGeometry(1.2,1.6,24),new THREE.MeshBasicMaterial({color:0xb6e08a,transparent:true,opacity:.9,depthWrite:false}));m.rotation.x=-PI/2;m.position.set(_hit.x,.3,_hit.z);scene.add(m);setTimeout(()=>scene.remove(m),1200);}
+function ptrUp(e){groundClick(e);ptrs.delete(e.pointerId);if(e.pointerId===joy.id)joyEnd();if(dragRot&&dragRot.id===e.pointerId){dragRot=null;canvas.style.cursor='';}if(ptrs.size<2)pinch=null;}
+canvas.addEventListener('pointerup',ptrUp);canvas.addEventListener('pointercancel',ptrUp);
+
+/* ---------- minimap & radar ---------- */
+const mctx=$('mini').getContext('2d'),rctx=$('rc').getContext('2d');
+function drawMini(t){const W=300,H=225;mctx.setTransform(1,0,0,1,0,0);mctx.fillStyle='#1a1611';mctx.fillRect(0,0,W,H);
+  const s=W/400;mctx.setTransform(s,0,0,s,200*s,150*s);polyPath(mctx);mctx.fillStyle='#2b241b';mctx.fill();
+  mctx.setTransform(1,0,0,1,0,0);mctx.drawImage(revealC,0,0,MW,MH,0,0,W,H);mctx.setTransform(s,0,0,s,200*s,150*s);
+  for(const it of items){if(!it.revealed)continue;if(it.kind==='tile'){mctx.fillStyle='#55545b';mctx.fillRect(it.cx-1.6,it.cz-1.6,3.2,3.2);}else{mctx.fillStyle=it.kind==='poi'?'#f2c166':'#e3cfa8';const r=it.r*.6;mctx.fillRect(it.cx-r,it.cz-r,r*2,r*2);}}
+  mctx.strokeStyle='#d48c4b';mctx.lineWidth=2.4;polyPath(mctx);mctx.stroke();
+  mctx.fillStyle='#b99064';mctx.fillRect(ABBEY.box[0],ABBEY.box[2],ABBEY.box[1]-ABBEY.box[0],ABBEY.box[3]-ABBEY.box[2]);
+  for(const b of B){if(b.revealed){mctx.fillStyle='rgba(212,140,75,.9)';mctx.fillRect(b.bb[0],b.bb[2],b.bb[1]-b.bb[0],b.bb[3]-b.bb[2]);}
+    else if(G.mode!=='race'&&b.id!=='via'){const cx=(b.bb[0]+b.bb[1])/2,cz=(b.bb[2]+b.bb[3])/2;mctx.strokeStyle='rgba(242,193,102,'+(.3+.25*Math.sin(t*3))+')';mctx.lineWidth=2;mctx.beginPath();mctx.arc(cx,cz,8+3*Math.sin(t*3),0,PI*2);mctx.stroke();}}
+  farmers.forEach(f=>{mctx.fillStyle='#e04a3a';mctx.beginPath();mctx.arc(f.x,f.z,6,0,PI*2);mctx.fill();});if(giove){mctx.fillStyle='#e6d3a8';mctx.beginPath();mctx.arc(giove.x,giove.z,7,0,PI*2);mctx.fill();}
+  romans.forEach(r=>{if(r.state==='lost'){mctx.fillStyle='#f2ede0';mctx.fillRect(r.g.position.x-2,r.g.position.z-2,4,4);}});
+  if(G.explore&&!route.done){const st=stopInfo(ROUTE[route.i]);mctx.strokeStyle='#b6e08a';mctx.lineWidth=3;mctx.beginPath();mctx.arc(st.x,st.z,9+2*Math.sin(t*4),0,PI*2);mctx.stroke();}
+  const p=player.position;mctx.fillStyle='#fff';mctx.beginPath();mctx.arc(p.x,p.z,5,0,PI*2);mctx.fill();
+  mctx.strokeStyle='#fff';mctx.lineWidth=2.5;mctx.beginPath();mctx.moveTo(p.x,p.z);mctx.lineTo(p.x+Math.sin(heading.v)*12,p.z+Math.cos(heading.v)*12);mctx.stroke();}
+function radarStep(sig){const W=200,H=64;rctx.drawImage($('rc'),-2,0);
+  for(let y=0;y<H;y+=2){let v=Math.random()*38;if(y>=4&&y<=7)v+=150;const band=Math.exp(-((y-26)**2)/50)*sig*235+Math.exp(-((y-44)**2)/30)*sig*90;v=Math.min(255,v+band);
+    rctx.fillStyle='rgb('+(v|0)+','+((v*.76)|0)+','+((v*.36)|0)+')';rctx.fillRect(W-2,y,2,2);}}
+
+/* ---------- main loop ---------- */
+let last=performance.now(),hudT=0,miniT=0,beepT=0,frame=0,orbit=0;
+function easeOutCubic(t){return 1-Math.pow(1-t,3);}
+function easeOutBack(t){const c1=2.2,c3=c1+1;return 1+c3*Math.pow(t-1,3)+c1*Math.pow(t-1,2);}
+function angLerp(a,b,t){let d=((b-a+PI)%(2*PI)+2*PI)%(2*PI)-PI;return a+d*t;}
+
+function update(dt,now){
+  let mx=0,mz=0;
+  if(keys.KeyQ)cam.tYaw+=dt*1.6;if(keys.KeyE)cam.tYaw-=dt*1.6;if(keys.KeyQ||keys.KeyE)cam.idle=0;
+  if(cam.v!==2){if(keys.KeyW||keys.ArrowUp)mz-=1;if(keys.KeyS||keys.ArrowDown)mz+=1;if(keys.KeyA||keys.ArrowLeft)mx-=1;if(keys.KeyD||keys.ArrowRight)mx+=1;mx+=joy.vx;mz+=joy.vy;}
+  const mag=Math.hypot(mx,mz);let moved=false;
+  if(mag>.08){const k=Math.min(mag,1)/mag;mx*=k;mz*=k;
+    const cy=Math.cos(cam.yaw),sy=Math.sin(cam.yaw);const wx=mx*cy+mz*sy,wz=-mx*sy+mz*cy;
+    const sp=MODES[G.mode].speed*dt;const p=player.position;const nx=p.x+wx*sp,nz=p.z+wz*sp;
+    if(walkable(nx,nz)){p.x=nx;p.z=nz;moved=true;}else if(walkable(nx,p.z)){p.x=nx;moved=true;}else if(walkable(p.x,nz)){p.z=nz;moved=true;}
+    heading.v=angLerp(heading.v,Math.atan2(wx,wz),Math.min(1,dt*10));}
+  player.rotation.y=heading.v;
+  player.userData.body.position.y=moved?Math.abs(Math.sin(now*.03))*.06:0;
+  const cx=player.position.x-Math.sin(heading.v)*1.76,cz=player.position.z-Math.cos(heading.v)*1.76;
+  const R=MODES[G.mode].swath;ring.visible=true;ring.position.set(cx,.15,cz);ring.scale.setScalar(R*(1+Math.sin(now*.008)*.03));ring.material.opacity=moved?.6:.3;
+  if(moved){scan(cx,cz);const sig=signalAt(cx,cz);radarStep(sig);$('sig').textContent='segnale '+Math.round(sig*9);
+    beepT-=dt;if(sig>.6&&beepT<=0){if(G.mode==='fun')tone(220+sig*300,.18,'square',.03,700);else tone(520+sig*520,.07,'sine',.04);beepT=.2;}}
+  const an=$('anom');if(anomB){const c=Math.min(1,anomB.hits/anomB.samples.length/anomB.need);an.classList.add('on');$('anomPct').textContent=Math.round(c*100)+'%';$('anomBar').style.width=(c*100)+'%';$('anomName').textContent=c>.6?'Grande edificio in vista':'Grande anomalia sepolta';}
+  else an.classList.remove('on');
+  const p=player.position;
+  if(G.mode!=='race'){
+    if(!G.seen.abbey&&Math.hypot(p.x-ABBEY.x,p.z-ABBEY.z)<32){G.seen.abbey=1;showCard('1143','Santa Maria di Falleri',G.mode==='fun'?"I monaci hanno riciclato le pietre romane molto prima che fosse di moda.":"Chiesa abbaziale costruita dal 1143 dentro le mura romane, in parte con le pietre della città abbandonata; dal 1179 vi sono documentati i monaci cistercensi. Con le mura, è ciò che resta in piedi di Falerii Novi.",16,null,REAL.abbey);if(G.mode==='walk')jAdd('Edifici','Santa Maria di Falleri',"Chiesa abbaziale del 1143, costruita con pietre romane riusate. Tre navate e cinque absidi.");}
+    if(!G.seen.porta&&G.time>1.5&&Math.hypot(p.x-GATES[0].x,p.z-GATES[0].z)<24){G.seen.porta=1;showCard('III secolo a.C.','Porta di Giove',"La porta occidentale delle mura. Sulla chiave dell'arco è scolpita una testa di Giove, che da oltre duemila anni guarda chi entra.",14,null,REAL.porta);if(G.mode==='walk')jAdd('Edifici','Porta di Giove',"Porta ovest delle mura, con la testa di Giove sulla chiave dell'arco. È ancora oggi l'ingresso al sito.");}
+  }
+  for(const b of B){if(!b.revealed)continue;const inside=cam.v!==2&&p.x>b.bb[0]-1&&p.x<b.bb[1]+1&&p.z>b.bb[2]-1&&p.z<b.bb[3]+1&&b.id!=='via';const tgt=inside?.3:1;
+    if(Math.abs(b.fade-tgt)>.01){b.fade+=(tgt-b.fade)*Math.min(1,dt*6);b.mats.forEach(m=>{m.transparent=b.fade<.99;m.opacity=b.fade;m.depthWrite=b.fade>.99;});}}
+  G.time+=dt;
+  if(G.mode==='race'){updateFarmers(dt);if(G.time>75&&farmers.length===1){spawnFarmer(0x3d7a3a,1);farmers[1].fast=true;toast('Arriva anche il cugino, con il trattore verde!');}}
+  if(G.mode==='fun')updateFun(dt,moved,cx,cz);
+  if(G.mode==='walk'){if(edgeDist(p.x,p.z)<9&&G.time>5)lesson('mura');const pc=pct();if(pc>=8)lesson('falisci');if(pc>=22)lesson('pompei');if(pc>=35)lesson('acqua');if(pc>=16)lesson('cardo');if(pc>=28)lesson('abbandono');if(pc>=42)lesson('rilievo');}
+  if(G.mode==='race'&&!G.won&&cellCount/cellTotal>=WIN)raceWin();
+  if(G.mode==='race'&&!G.won&&G.time>=MODES.race.time){finish(false);}
+  if(G.time>9&&!$('hint').hidden)$('hint').hidden=true;
+  hudT-=dt;if(hudT<=0){updateHud();hudT=.2;$('coord').textContent=(42.2918-p.z*.000018).toFixed(5)+' N · '+(12.3568+p.x*.000024).toFixed(5)+' E';}
+}
+
+function loop(now){const dt=Math.min(.05,(now-last)/1000);last=now;frame++;const t=now/1000;
+  if(G.running)update(dt,now);
+  if(G.tour&&cam.v===3)updatePov(dt);
+  if(G.tour)updateRoute();
+  if(G.tour)updateLabels();else labelsOff();
+  if(G.running||G.tour)updateCamera(dt);
+  else if(!G.started||!$('menu').hidden){orbit+=dt*.04;camera.position.set(Math.cos(orbit)*230+10,125,Math.sin(orbit)*190);camera.lookAt(10,0,0);scene.fog.near=300;scene.fog.far=1100;sun.position.set(SUNDIR.x*220,SUNDIR.y*220,SUNDIR.z*220);sun.target.position.set(0,0,0);}
+  else updateCamera(dt);
+  if(G.tour&&(keys.KeyQ||keys.KeyE)){cam.tYaw+=(keys.KeyQ?1:-1)*dt*1.6;cam.idle=0;}
+  for(const b of B){if(!b.revealed||b.t>=1)continue;b.t=Math.min(1,b.t+dt/(G.mode==='fun'?1.6:2.4));const e=G.mode==='fun'?easeOutBack(b.t):easeOutCubic(b.t);b.group.position.y=-b.h*(1-e);
+    if(G.mode!=='fun'&&frame%3===0&&b.t<.8){const bb=b.bb;burst(bb[0]+Math.random()*(bb[1]-bb[0]),bb[2]+Math.random()*(bb[3]-bb[2]),4,4,[.72,.58,.4],false,30);}}
+  for(let i=rising.length-1;i>=0;i--){const it=rising[i];it.t=Math.min(1,it.t+dt/(it.kind==='tile'?.5:(G.mode==='fun'?.9:1.3)));const e=G.mode==='fun'&&it.kind!=='tile'?easeOutBack(it.t):easeOutCubic(it.t);placeItem(it,-it.h*(1-e),false);if(it.t>=1)rising.splice(i,1);}
+  for(let i=sinking.length-1;i>=0;i--){const it=sinking[i];it.st-=dt/.8;if(it.st<=0){placeItem(it,0,true);sinking.splice(i,1);}else placeItem(it,-it.h*(1-it.st),false);}
+  for(const b of B){if(b.sink>0){b.sink-=dt/1.5;b.group.position.y=-b.h*(1-Math.max(0,b.sink));if(b.sink<=0){b.sink=0;b.group.visible=false;}}}
+  if(!G.running)ring.visible=false;
+  flushParts();
+  for(let i=bursts.length-1;i>=0;i--){const q=bursts[i];q.life+=dt;const a=q.pts.geometry.attributes.position;for(let k=0;k<q.vel.length;k++){const v=q.vel[k];v[1]-=(q.confetti?12:3)*dt;a.array[k*3]+=v[0]*dt;a.array[k*3+1]=Math.max(0,a.array[k*3+1]+v[1]*dt);a.array[k*3+2]+=v[2]*dt;}
+    a.needsUpdate=true;q.pts.material.opacity=Math.max(0,.9-q.life/(q.confetti?2.4:1.8));if(q.life>2.5){scene.remove(q.pts);q.pts.geometry.dispose();bursts.splice(i,1);}}
+  for(const fd of finds){if(!fd.mesh)continue;fd.t+=dt;fd.mesh.position.y=Math.min(2,-.5+fd.t*2.5)+Math.sin(fd.t*2)*.2;fd.mesh.rotation.y+=dt*1.2;}
+  for(const s of sheep){const g=s.g;if(s.vy||g.position.y>0){s.vy-=24*dt;g.position.y=Math.max(0,g.position.y+s.vy*dt);g.rotation.x+=G.mode==='fun'?dt*6:0;if(g.position.y===0){s.vy=0;g.rotation.x=0;}}
+    s.wait-=dt;if(s.wait>0)continue;const dx=s.tx-g.position.x,dz=s.tz-g.position.z,d=Math.hypot(dx,dz);
+    if(d<.5){s.wait=2+Math.random()*5;let x,z,n=0;do{x=g.position.x+(Math.random()-.5)*30;z=g.position.z+(Math.random()-.5)*30;n++;}while(!walkable(x,z)&&n<20);if(n<20){s.tx=x;s.tz=z;}continue;}
+    g.position.x+=dx/d*1.6*dt;g.position.z+=dz/d*1.6*dt;g.rotation.y=Math.atan2(dx,dz);}
+  if(texDirty&&frame%2===0){revealTex.needsUpdate=true;texDirty=false;}
+  if(G.running||G.tour){miniT-=dt;if(miniT<=0){drawMini(t);miniT=.15;}}
+  if(toastT>0){toastT-=dt;if(toastT<=0)$('toast').classList.remove('on');}
+  if(cardT>0){cardT-=dt;if(cardT<=0)hideCard();}
+  clouds.forEach(c=>{c.position.x+=dt*3;if(c.position.x>800)c.position.x=-800;});skyFollow();
+  renderer.render(scene,camera);requestAnimationFrame(loop);}
+
+/* menu backdrop: the forum quarter already standing */
+(function(){const show=b=>{b.revealed=true;b.group.visible=true;b.group.position.y=0;b.t=1;revealCellsIn(b.bb);};
+  ['foro','tempio','basilica','teatro','tabernae','via'].forEach(id=>show(B.find(x=>x.id===id)));
+  items.forEach(it=>{if(Math.hypot(it.cx-10,it.cz+5)<70){it.revealed=true;placeItem(it,0,false);}});flushParts();revealTex.needsUpdate=true;
+  B.forEach(b=>{b.revealed=false;});items.forEach(it=>{it.revealed=false;});})();
+requestAnimationFrame(loop);
+
+/* ============ GRAND TUSCIA ADVENTURE: la presa (engine/tg-ponte.js) ============
+   Aperto dal mondo: "Torna al trattore" nel menu, "Esci dalla modalità / dal gioco" in partita e nei risultati.
+   Con ?missione=1: la sfida al contadino in 2 minuti, poi punti e medaglia tornano al trattore. */
+(function(){
+  const PONTE=window.TGPonte?TGPonte.init('citta'):null;
+  if(!PONTE||!PONTE.attivo)return;
+  // 1. menu
+  const mrow=document.querySelector('#menu .row');mrow.insertBefore(PONTE.bottone({classe:'btn',id:'bBackWorldMenu'}),mrow.firstChild);
+  // 2. in partita (accanto a "Menu") e nei risultati
+  PONTE.rinomina($('bMenu'));$('bMenu').parentNode.insertBefore(PONTE.bottone({classe:'ib',testo:'Esci dal gioco',id:'bBackWorldPause'}),$('bMenu').nextSibling);
+  PONTE.rinomina($('bEndMenu'));$('bEndMenu').parentNode.appendChild(PONTE.bottone({classe:'btn ghost',id:'bBackWorld'}));
+  // 3. missione
+  if(!PONTE.missione)return;
+  const T_MIS=120,T_FULL=MODES.race.time,SOGLIE={oro:40,argento:25,bronzo:12};
+  let misAgain=false;
+  $('bAgain').addEventListener('click',e=>{if(!misAgain)return;e.stopImmediatePropagation();startMis();},true);
+  const startMis=()=>{MODES.race.time=T_MIS;startMode('race');
+    const txt="Missione: due minuti per riportare alla luce più città che puoi. Esci col georadar, lascia la scia gialla e richiudi l'area su terreno rilevato. Oro sopra il 40%, argento 25%, bronzo 12%. Se arrivi al 60% il contadino si arrende.";
+    if(cardCur){cardCur.title='Sfida al contadino';cardCur.text=txt;}$('cTitle').textContent='Sfida al contadino';$('cText').textContent=txt;};
+  $('menu').hidden=true;
+  setTimeout(startMis,0);
+  const finOrig=finish;
+  finish=function(win){
+    const live=!PONTE.finita&&G.mode==='race',best0=best;
+    finOrig(win);
+    const back=$('bBackWorld');
+    if(!live){back.onclick=()=>PONTE.torna(null);return;}
+    // la missione da 2 minuti non tocca il record della sfida da 4
+    if(best!==best0){best=best0;try{if(best0)localStorage.setItem('falerii-best',String(best0));else localStorage.removeItem('falerii-best');}catch(e){}setBest();}
+    const pc=pct(),sc=raceScore(),med=win?'oro':PONTE.medaglia(pc,SOGLIE);
+    const res=med?{ok:true,t:sc,med}:{ok:false,msg:'Hai riportato alla luce solo il '+pc+'% della città: per la missione serve almeno il 12%.'};
+    if(!win)$('eTitle').textContent=med?'Missione compiuta':'Il contadino ha vinto';
+    $('eEye').textContent='Missione · Grand Tuscia Adventure'+(med?' · medaglia d\''+med:'');
+    $('eText').textContent=(win?'Il contadino si è arreso e la città è tutta in superficie. ':'Hai salvato il '+pc+'% della città in due minuti. ')+(med?'Medaglia d\''+med+'! ':'')+'Oro sopra il 40%, argento 25%, bronzo 12%. Il punteggio torna al trattore e vale per i punti Tuscia.';
+    back.className='btn';back.innerHTML=PONTE.icona+'Torna al trattore';back.onclick=()=>PONTE.torna(res);
+    back.parentNode.insertBefore(back,back.parentNode.firstChild);
+    $('bTour').className='btn ghost';
+    $('bAgain').textContent='Riprova la missione';misAgain=true;
+    $('bEndMenu').textContent='Gioco completo';
+  };
+  const chiudi=()=>{if(PONTE.finita&&!misAgain)return;PONTE.chiudiMissione();MODES.race.time=T_FULL;misAgain=false;$('bAgain').textContent='Gioca ancora';};
+  $('bEndMenu').addEventListener('click',chiudi);
+  document.querySelectorAll('#menu .mode,#bPovM').forEach(b=>b.addEventListener('click',chiudi,true));
+  window.__cittaMis={G,MODES,MIS:PONTE,end:w=>finish(w),setCells:f=>{cellCount=Math.round(cellTotal*f);},pct};
+})();
+})();
+</script>
+
+</body></html>

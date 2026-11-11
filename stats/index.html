@@ -1,0 +1,574 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Pubblicità Tuscia</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,500..900&family=Figtree:wght@400;600;700;800&family=Martian+Mono:wght@400;600&display=swap">
+<link rel="stylesheet" href="../engine/tg-ui.css">
+<style>
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:64px}
+body{margin:0;background:var(--tg-peperino);color:var(--tg-carta);font-family:var(--tg-body);font-size:14px;line-height:1.45}
+main{max-width:1200px;margin:0 auto;padding:22px 16px 70px;display:grid;gap:22px}
+header.top{display:flex;flex-wrap:wrap;gap:14px;align-items:end;justify-content:space-between}
+h1{margin:4px 0 0;font-size:clamp(28px,5vw,46px)}
+h2{margin:0;font-family:var(--tg-display);font-stretch:112%;font-weight:800;font-size:20px;text-transform:uppercase;letter-spacing:.01em}
+h3{margin:0 0 8px;font-size:13px;letter-spacing:.1em;text-transform:uppercase;color:var(--tg-muted);font-weight:800}
+.sub{color:var(--tg-muted);margin:6px 0 0;max-width:66ch}
+a{color:var(--tg-tufo)}
+.ctl{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+input,select,button,textarea{font:inherit;color:inherit}
+input,select,textarea{background:var(--tg-peperino-2);border:1px solid var(--tg-line-strong);border-radius:10px;padding:8px 10px;min-width:0}
+textarea{width:100%;min-height:64px;resize:vertical}
+button.b{background:var(--tg-rosso);border:0;border-radius:10px;padding:9px 14px;font-weight:800;cursor:pointer;color:#fff}
+button.g,a.g{background:transparent;border:1px solid var(--tg-line-strong);border-radius:10px;padding:7px 11px;font-weight:700;cursor:pointer;text-decoration:none;color:var(--tg-carta);display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+button.g:hover,a.g:hover{border-color:var(--tg-tufo)}
+.s{padding:4px 9px!important;font-size:12.5px;border-radius:8px!important}
+button:disabled{opacity:.55;cursor:default}
+nav.tabs{position:sticky;top:0;z-index:5;background:rgba(23,32,31,.94);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);margin:0 -16px;padding:10px 16px;border-bottom:1px solid var(--tg-line);display:flex;gap:6px;overflow-x:auto;scrollbar-width:none}
+nav.tabs a{flex:none;text-decoration:none;color:var(--tg-muted);font-weight:800;font-size:12px;letter-spacing:.08em;text-transform:uppercase;padding:7px 11px;border-radius:99px;border:1px solid transparent}
+nav.tabs a:hover{color:var(--tg-carta);border-color:var(--tg-line-strong)}
+.note{padding:10px 14px;border-radius:12px;border:1px solid var(--tg-line);background:var(--tg-glass);color:#e7dcc2}
+.note b{color:var(--tg-tufo)}
+.note.err{border-color:var(--tg-bad);color:#ffd2c9}
+.kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1px;background:var(--tg-line);border-radius:14px;overflow:hidden}
+.kpis div{background:var(--tg-peperino-2);padding:14px 16px;display:grid;gap:3px;align-content:start}
+.kpis b{font-family:var(--tg-mono);font-size:28px;font-weight:600;font-variant-numeric:tabular-nums;line-height:1.1}
+.kpis span{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--tg-muted);font-weight:800}.kpis small{font-size:12px;color:var(--tg-muted)}
+.kpis small{color:var(--tg-muted);font-size:12px}
+.up{color:var(--tg-faggio)} .down{color:var(--tg-bad)}
+section.card{background:var(--tg-glass);border:1px solid var(--tg-line);border-radius:16px;padding:16px;min-width:0;display:grid;grid-template-columns:minmax(0,1fr);gap:12px}
+.grid2>*,main>*{min-width:0}
+.head{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
+.filters{display:flex;flex-wrap:wrap;gap:8px;align-items:center}.seg{display:inline-flex;gap:0;border:1px solid var(--tg-line-strong);border-radius:10px;overflow:hidden}.seg button{border:0!important;border-radius:0!important;margin:0}.seg button[aria-pressed=true]{background:var(--tg-rosso);color:#fff}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+.tw{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{padding:7px 8px;border-bottom:1px solid var(--tg-line);text-align:right;white-space:nowrap;vertical-align:top}
+th:first-child,td:first-child,th.l,td.l{text-align:left;white-space:normal}
+th{font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--tg-muted);font-weight:800;cursor:pointer;user-select:none}
+th.on{color:var(--tg-tufo)}
+th.on::after{content:" ↓"} th.on.asc::after{content:" ↑"}
+td{font-family:var(--tg-mono);font-variant-numeric:tabular-nums}
+td.l,td:first-child{font-family:var(--tg-body)}
+td small{display:block;color:var(--tg-muted);font-family:var(--tg-body);font-size:11.5px}
+tr.click{cursor:pointer} tr.click:hover td{background:rgba(240,228,203,.05)} tr.sel td{background:rgba(226,183,101,.1)}
+.z{color:rgba(184,177,158,.45)}
+.pc{color:var(--tg-faggio)}
+.chip{display:inline-block;font-family:var(--tg-body);font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;padding:2px 7px;border-radius:99px;border:1px solid currentColor;margin:0 4px 0 0;vertical-align:1px;white-space:nowrap}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:7px;vertical-align:0}
+.help{color:var(--tg-muted);font-size:12.5px;margin:0;max-width:90ch}
+.empty{color:var(--tg-muted);padding:10px 0;margin:0}
+.chart svg{width:100%;height:auto;display:block}
+.legend{display:flex;gap:14px;flex-wrap:wrap;color:var(--tg-muted);font-size:12px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+#dett{border:1px solid var(--tg-line-strong);border-radius:14px;padding:14px;display:grid;gap:12px;background:rgba(0,0,0,.14)}
+.mini{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:13px;color:var(--tg-muted)}
+.mini b{color:var(--tg-carta);font-family:var(--tg-mono);font-weight:600}
+.ann{display:grid;gap:4px;margin:0;padding:0;list-style:none}
+.ann li{padding:8px 10px;border-radius:10px;background:rgba(255,255,255,.03);display:flex;gap:10px;justify-content:space-between;align-items:baseline}
+.ann li span{font-family:var(--tg-mono);font-size:12px;color:var(--tg-muted);white-space:nowrap}
+.pcard{border:1px solid var(--tg-line);border-radius:14px;padding:14px;display:grid;gap:10px;background:rgba(0,0,0,.12)}
+.pcard h4{margin:0;font-size:17px}
+.pcards{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+dialog{background:var(--tg-peperino);color:var(--tg-carta);border:1px solid var(--tg-line-strong);border-radius:16px;padding:0;width:min(640px,calc(100vw - 24px));max-height:calc(100dvh - 24px)}
+dialog::backdrop{background:rgba(0,0,0,.6)}
+dialog form{display:grid;gap:12px;padding:18px}
+.fg{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+label.f{display:grid;gap:4px;font-size:12px;font-weight:700;color:var(--tg-muted)}
+label.f.w{grid-column:1/-1}
+label.f input,label.f select{width:100%}
+.ck{display:flex;gap:8px;align-items:center;font-weight:700}
+.toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:var(--tg-tufo);color:#1d1a12;font-weight:800;padding:9px 14px;border-radius:10px;z-index:20;box-shadow:0 6px 20px rgba(0,0,0,.4)}
+footer{color:var(--tg-muted);font-size:12.5px;display:flex;gap:14px;flex-wrap:wrap}
+@media (max-width:760px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.kpis b{font-size:22px}.grid2,.fg{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<main>
+  <header class="top">
+    <div>
+      <span class="tg-eyebrow">Grand Tuscia Adventure · pubblicità</span>
+      <h1 class="tg-display">Luoghi, radio,<br>visite vere</h1>
+      <p class="sub">Quanto sono popolari i luoghi, chi ascolta gli annunci della radio, quanti passano dal gioco al posto vero. E i partner: chi c'è, fino a quando, e il loro rendiconto. Tutto anonimo.</p>
+    </div>
+    <div class="ctl">
+      <select id="giorni" aria-label="Periodo"><option value="1">Ultime 24 ore</option><option value="7">7 giorni</option><option value="30" selected>30 giorni</option><option value="90">90 giorni</option><option value="365">Un anno</option></select>
+      <input id="pw" type="password" placeholder="Password statistiche" aria-label="Password statistiche" autocomplete="current-password">
+      <button class="b" id="go">Mostra</button>
+    </div>
+  </header>
+
+  <nav class="tabs" aria-label="Sezioni">
+    <a href="#lancio">Lancio</a><a href="#sintesi">Sintesi</a><a href="#andamento">Andamento</a><a href="#luoghi">Popolarità luoghi</a><a href="#radio">Annunci radio</a><a href="#vero">Dal gioco al vero</a><a href="#partner">Partner</a><a href="#pubblico">Pubblico</a>
+  </nav>
+
+  <div class="note" id="mode">Scrivi la password delle statistiche e premi <b>Mostra</b>.</div>
+
+  <section class="card" id="lancio">
+    <div class="head"><h2>I tre numeri del lancio</h2><span class="help" id="lancioP"></span></div>
+    <div class="kpis" id="lancioK"></div>
+    <p class="help" style="margin-top:8px">Se <b>il ritorno</b> cresce, il gioco tiene. Se <b>le partite a testa</b> crescono, c'è l'"ancora una". Se <b>chi condivide</b> cresce, il passaparola può partire da solo. Soglie indicative: ritorno sopra 25% buono, sotto 10% da rivedere; partite a testa sopra 5; condivisione sopra 15%.</p>
+  </section>
+
+  <section id="sintesi" class="kpis" aria-label="Sintesi"></section>
+
+  <section class="card" id="andamento">
+    <div class="head"><h2>Andamento</h2>
+      <div class="filters">
+        <div class="seg" role="group" aria-label="Per periodo"><button class="g s" data-gran="giorno" aria-pressed="true">Giorno</button><button class="g s" data-gran="settimana" aria-pressed="false">Settimana</button><button class="g s" data-gran="mese" aria-pressed="false">Mese</button></div>
+        <select id="anN" aria-label="Quanti periodi"><option value="14">ultimi 14</option><option value="30" selected>ultimi 30</option><option value="60">ultimi 60</option><option value="120">ultimi 120</option></select>
+        <select id="anM" aria-label="Misura"><option value="giocatori">Giocatori</option><option value="sessioni">Sessioni</option><option value="partite">Partite nei giochi</option><option value="minuti">Minuti di gioco</option><option value="nuovi">Nuovi contadini</option><option value="tornati">Tornati</option><option value="iscritti">Iscritti con la mail</option><option value="scoperte">Luoghi scoperti</option><option value="missioni">Missioni compiute</option><option value="condivisioni">Inviti e sfide</option><option value="tv">Schermi TV Nocchia</option></select>
+        <button class="g s" id="anCsv">Scarica CSV</button>
+      </div></div>
+    <p class="help">Per giorno, settimana (da lunedì) o mese, ora italiana. <b>Giocatori</b> = dispositivi diversi; <b>tornati</b> = giocatori del periodo che avevano già giocato prima; <b>nuovi</b> = chi ha iniziato il contadino in quel periodo.</p>
+    <div class="chart" id="cAndamento"></div>
+    <div class="tw" id="tAndamento"></div>
+  </section>
+
+  <section class="card" id="luoghi">
+    <div class="head"><h2>Popolarità dei luoghi</h2>
+      <div class="ctl">
+        <select id="fCat" aria-label="Categoria"><option value="">Tutte le categorie</option></select>
+        <label class="ck"><input type="checkbox" id="fPart"> Solo partner</label>
+        <button class="g s" id="csv">Scarica CSV</button>
+      </div>
+    </div>
+    <p class="help">Persone diverse nel periodo. <b>Visto</b>: il luogo era sullo schermo entro 800 m. <b>Arrivati</b>: ci sono passati vicino. <b>Rispetto a prima</b>: arrivati confrontati con il periodo precedente di uguale durata. <b>Scheda</b>: hanno aperto "Scopri di più". <b>Dal vero</b>: "Come arrivarci", sito ufficiale, QR inquadrato sul posto. <b>Radio</b>: il conduttore ne ha parlato mentre erano lì. <b>Interesse</b>: quanti degli arrivati hanno aperto la scheda o fatto un passo verso il posto vero. Tocca una riga per il dettaglio.</p>
+    <div class="tw" id="tLuoghi"></div>
+    <div id="dett" hidden></div>
+  </section>
+
+  <section class="card" id="radio">
+    <div class="head"><h2>Annunci della radio</h2>
+      <label class="ck"><input type="checkbox" id="fGioco"> Mostra anche le frasi di gioco</label>
+    </div>
+    <p class="help">Le frasi di Radio Nocchia che parlano di un luogo vero o di un partner. <b>Battuta</b>: la frase del luogo, detta quando ci passi. <b>Cita</b>: una frase che nomina il luogo. <b>Spot</b>: pubblicità di un partner. <b>Detto</b>: il conduttore l'ha letto. <b>Fino in fondo</b>: la radio era ancora accesa alla fine. <b>Interrotto</b>: radio spenta mentre parlava.</p>
+    <h3>Per luogo e partner</h3>
+    <div class="tw" id="tRadioDest"></div>
+    <h3>Frase per frase</h3>
+    <div class="tw" id="tRadio"></div>
+  </section>
+
+  <section class="card" id="vero">
+    <h2>Dal gioco al posto vero</h2>
+    <p class="help">I passi che portano fuori dal gioco, verso il luogo reale. <b>Come arrivarci</b>: ha aperto la strada su Google Maps. <b>Sito</b>: ha aperto il sito del luogo. <b>Punti mappa</b>: giocatori registrati che hanno ricevuto i punti per la strada. <b>QR inquadrato</b>: hanno inquadrato il QR esposto sul posto. <b>Visite vere</b>: visite confermate dal QR, una per giocatore.</p>
+    <div class="tw" id="tVero"></div>
+    <div class="grid2">
+      <div><h3>Spot e bottega dei partner</h3><p class="help" style="margin-bottom:8px">Spot radio dei prodotti, acquisti nella bottega del gioco, ricerche sulla mappa.</p><div class="tw" id="tSpot"></div></div>
+      <div><h3>Clic verso siti esterni</h3><p class="help" style="margin-bottom:8px">Ogni link che porta fuori dal gioco, con il testo del pulsante.</p><div class="tw" id="tFuori"></div></div>
+    </div>
+  </section>
+
+  <section class="card" id="partner">
+    <div class="head"><h2>Partner</h2><button class="b" id="nuovo">+ Aggiungi partner</button></div>
+    <p class="help">I luoghi veri che entrano nel gioco con un pacchetto. Ogni partner ha un link al suo <b>rendiconto</b>: lo mandi a lui, vede solo i numeri del suo luogo (mai quelli degli altri, né prezzo e note). Il luogo nel gioco, la battuta della radio e gli spot si aggiungono nel codice del gioco; qui c'è la parte commerciale.</p>
+    <div class="kpis" id="pKpi" style="grid-template-columns:repeat(4,minmax(0,1fr))"></div>
+    <div class="pcards" id="pList"></div>
+  </section>
+
+  <section class="card" id="pubblico">
+    <h2>Il pubblico</h2>
+    <p class="help">Quante persone giocano ogni giorno e da dove arrivano: i numeri da mostrare a un futuro partner.</p>
+    <div class="chart" id="cGiorni"></div>
+    <div class="grid2">
+      <div><h3>Da dove arrivano</h3><div class="tw" id="tProv"></div></div>
+      <div><h3>Chi sono</h3><div class="tw" id="tChi"></div></div>
+    </div>
+  </section>
+
+  <footer><a href="gioco.html">Statistiche di gioco (giochi, modalità, mezzi) →</a><span>Dati anonimi, cancellati dopo 13 mesi.</span></footer>
+</main>
+
+<dialog id="dlg">
+  <form method="dialog" id="fPartner">
+    <div class="head"><h2 id="dTit">Nuovo partner</h2><button class="g s" value="x" type="submit" formnovalidate>Chiudi</button></div>
+    <div class="fg">
+      <label class="f w">Luogo nel gioco
+        <select name="luogo" required></select>
+      </label>
+      <label class="f w">Nome del partner<input name="nome" required maxlength="120" placeholder="Es. Agriturismo Il Noccioleto"></label>
+      <label class="f">Pacchetto
+        <select name="pacchetto"><option value="pilota">Pilota (gratis)</option><option value="presenza">Presenza</option><option value="voce">Voce</option><option value="evento">Evento</option><option value="patrocinio">Patrocinio (ente)</option><option value="territorio">Territorio (ente)</option></select>
+      </label>
+      <label class="f">Prezzo all'anno (€)<input name="prezzo" type="number" min="0" step="10" placeholder="0"></label>
+      <label class="f">Inizio<input name="inizio" type="date"></label>
+      <label class="f">Fine<input name="fine" type="date"></label>
+      <label class="f w">Sito<input name="sito" type="url" maxlength="200" placeholder="https://"></label>
+      <label class="f w">Contatto (non lo vede il partner)<input name="contatto" maxlength="200" placeholder="Nome, telefono, mail"></label>
+      <label class="f w">Parole degli annunci: separate da virgola. Ogni frase della radio che le contiene conta per questo partner.<input name="parole" placeholder="es. noccioleto, agriturismo"></label>
+      <label class="f w">Eventi del gioco legati al partner (avanzato, separati da virgola)<input name="eventi" placeholder="es. spot_consorzio, prodotto"></label>
+      <label class="f w">Note (non le vede il partner)<textarea name="note" maxlength="1000"></textarea></label>
+      <label class="ck" style="grid-column:1/-1"><input type="checkbox" name="attivo" checked> Attivo (se lo spegni, il link del rendiconto smette di funzionare)</label>
+    </div>
+    <p class="help" id="dBattuta"></p>
+    <div class="row" style="justify-content:flex-end"><button class="g" value="x" type="submit" formnovalidate>Annulla</button><button class="b" value="ok" id="dSalva">Salva</button></div>
+  </form>
+</dialog>
+
+<script src="../engine/tg-places.js"></script>
+<script src="../engine/tg-partner.js"></script>
+<script src="../engine/tg-giochi.js"></script>
+<script src="../engine/tg-stats-config.js"></script>
+<script>
+(function () {
+'use strict';
+const $ = id => document.getElementById(id), CFG = window.TG_STATS_CONFIG || {}, TG = window.TG || {};
+const KEY = CFG.key || CFG.pub || '';
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const fmt = n => n == null || isNaN(n) ? '·' : Math.round(n).toLocaleString('it-IT');
+const pct = (a, b) => b ? Math.round(a / b * 100) + '%' : '·';
+const eur = n => n == null || n === '' ? '·' : (+n).toLocaleString('it-IT', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 });
+const slug = t => String(t || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9 ]+/g, ' ').trim().split(/\s+/).slice(0, 7).join('-').slice(0, 80);
+const norm = t => ' ' + String(t || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, ' ') + ' ';
+const CATS = TG.CATS || {};
+const CATCOL = { luoghi: '#e2b765', natura: '#8cbf52', storia: '#d98c5f', tradizioni: '#e06f9a', attivita: '#5fb7c4' };
+const PACC = { pilota: 'Pilota', presenza: 'Presenza', voce: 'Voce', evento: 'Evento', patrocinio: 'Patrocinio', territorio: 'Territorio' };
+
+// i luoghi del gioco (Codex + partner): nomi, categorie, battuta della radio
+const PL = {}; const DI_BATTUTA = {};
+for (const p of (TG.PLACES || [])) {
+  PL[p.id] = { id: p.id, name: p.name, cat: p.cat, radio: p.radio || '', partner: !!p.partner, segreto: !!p.segreto };
+  if (p.radio) DI_BATTUTA[slug(p.radio)] = p.id;
+}
+// come la radio li chiama: nome intero e nome corto (senza "Monte", "Il", "La"...)
+const ALIAS = [];
+for (const p of Object.values(PL)) {
+  const set = new Set([p.name]);
+  const corto = p.name.replace(/^(il|lo|la|le|i|gli|l'|monte|lago di|le serate ai|la corsa dei)\s+/i, '');
+  if (corto.length >= 6) set.add(corto);
+  if (p.id === 'fabrica') set.add('Fabrica');
+  if (p.id === 'palazzo') set.add('Palazzo Farnese');
+  if (p.id === 'nocciola' || p.id === 'radio' || p.cat === 'natura' && !/monte|faggeta|forre|riserva|sasso/i.test(p.name)) continue;
+  for (const a of set) ALIAS.push({ id: p.id, re: norm(a).trim() });
+}
+const nome = id => (PL[id] && PL[id].name) || PART_NOME[id] || id;
+let PART_NOME = {};
+
+let D = null, PW = '', SEL = null;
+
+async function rpc(fn, args) {
+  if (!CFG.url || !KEY) throw new Error('Il collegamento a Supabase non è configurato (engine/tg-stats-config.js).');
+  const h = { apikey: KEY, 'Content-Type': 'application/json' };
+  if (/^eyJ/.test(KEY)) h.Authorization = 'Bearer ' + KEY;
+  const r = await fetch(CFG.url.replace(/\/$/, '') + '/rest/v1/rpc/' + fn, { method: 'POST', headers: h, body: JSON.stringify(args) });
+  const t = await r.text();
+  if (!r.ok) { let m = t; try { m = JSON.parse(t).message || t; } catch (e) {} throw new Error(/password/.test(m) ? 'Password sbagliata' : 'Errore dal server: ' + m); }
+  return t ? JSON.parse(t) : null;
+}
+
+// tabella ordinabile: cols = [{t, l?}], rows = [[{v, h}]], click(row) facoltativo
+function tabella(el, cols, rows, opz) {
+  opz = opz || {};
+  const st = { k: opz.sort == null ? 1 : opz.sort, dir: opz.dir || -1 };
+  const draw = () => {
+    if (!rows.length) { el.innerHTML = `<p class="empty">${opz.vuoto || 'Ancora niente nel periodo.'}</p>`; return; }
+    const rs = rows.slice().sort((a, b) => { const x = a[st.k].v, y = b[st.k].v; return (typeof x === 'string' ? String(x).localeCompare(y) : (x || 0) - (y || 0)) * st.dir; });
+    el.innerHTML = `<table><thead><tr>${cols.map((c, i) => `<th data-i="${i}" class="${c.l ? 'l ' : ''}${i === st.k ? 'on' + (st.dir > 0 ? ' asc' : '') : ''}" title="Ordina">${c.t}</th>`).join('')}</tr></thead><tbody>${rs.map(r => `<tr${opz.click ? ` class="click${r.key === SEL ? ' sel' : ''}" data-k="${esc(r.key)}"` : ''}>${r.map((c, i) => `<td${cols[i].l ? ' class="l"' : ''}>${c.h != null ? c.h : esc(c.v)}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
+    el.querySelectorAll('th').forEach(th => th.onclick = () => { const i = +th.dataset.i; if (st.k === i) st.dir *= -1; else { st.k = i; st.dir = typeof rows[0][i].v === 'string' ? 1 : -1; } draw(); });
+    if (opz.click) el.querySelectorAll('tr.click').forEach(tr => tr.onclick = () => opz.click(tr.dataset.k));
+  };
+  draw();
+}
+const c = (v, h) => ({ v, h });
+const num = v => c(+v || 0, +v ? fmt(v) : '<span class="z">0</span>');
+const catChip = cat => cat && CATS[cat] ? `<span class="dot" style="background:${CATCOL[cat]}" title="${esc(CATS[cat].label)}"></span>` : '<span class="dot" style="background:#666"></span>';
+
+// ---------- calcoli ----------
+function luoghiDa(D) {
+  const L = {};
+  for (const r of D.luoghi || []) { (L[r.luogo] = L[r.luogo] || {})[r.tipo] = { n: +r.n, p: +r.persone }; }
+  const partner = {}; for (const p of D.partner || []) partner[p.luogo] = p;
+  const ids = new Set([...Object.keys(L), ...Object.keys(partner)]);
+  const rows = [];
+  for (const id of ids) {
+    const x = L[id] || {}, g = (t, k) => (x[t] && x[t][k || 'p']) || 0;
+    const r = {
+      id, nome: nome(id), cat: PL[id] ? PL[id].cat : (partner[id] ? 'attivita' : ''), partner: partner[id] || null,
+      visto: g('luogo_visto'), arrivati: g('luogo_raggiunto'), scoperto: g('luogo_scoperto'), radio: g('luogo_raccontato'),
+      scheda: g('scheda_aperta'), arrivarci: g('come_arrivarci', 'n'), arrivarciP: g('come_arrivarci'), sito: g('sito_ufficiale', 'n'), sitoP: g('sito_ufficiale'),
+      qr: g('qr_inquadrato', 'n'), qrP: g('qr_inquadrato'), visite: Math.max(g('reale_visita'), g('visita_vera')), mappa: g('reale_mappa'), qrGioca: g('qr_gioca', 'n'),
+      prima: g('prima_raggiunto'),
+    };
+    r.esposti = Math.max(r.visto, r.arrivati);
+    r.dalvero = r.arrivarci + r.sito + r.qr;
+    r.interesse = r.arrivati ? Math.min(1, (Math.max(r.arrivarciP, 0) + r.sitoP + r.qrP + (r.scheda ? r.scheda : 0)) / r.arrivati) : 0;
+    rows.push(r);
+  }
+  return rows;
+}
+function classifica(D) {
+  const parts = (D.partner || []).map(p => ({ id: p.luogo, an: new Set(p.annunci || []), parole: (p.parole || []).filter(w => w && w.trim().length >= 3).map(w => norm(w).trim()) }));
+  return (D.annunci || []).map(a => {
+    const t = norm(a.testo || a.cosa.replace(/-/g, ' '));
+    let dest = null, tipo = 'gioco';
+    for (const p of parts) if (p.an.has(a.cosa) || p.parole.some(w => t.includes(' ' + w))) { dest = p.id; tipo = /pubblicit|promozional|interrompemo/.test(t) ? 'spot' : 'partner'; break; }
+    if (!dest && DI_BATTUTA[a.cosa]) { dest = DI_BATTUTA[a.cosa]; tipo = 'battuta'; }
+    if (!dest) for (const al of ALIAS) if (t.includes(' ' + al.re + ' ')) { dest = al.id; tipo = 'cita'; break; }
+    if (!dest && /pubblicit|promozional/.test(t)) tipo = 'spot';
+    return Object.assign({}, a, { dest, tipo, inviato: +a.inviato, detto: +a.detto, ascoltato: +a.ascoltato, interrotto: +a.interrotto, persone: +a.persone });
+  });
+}
+
+// ---------- disegno ----------
+function kpi(el, items) {
+  el.innerHTML = items.map(([l, v, s]) => `<div><b>${v}</b><span>${l}</span>${s ? `<small>${s}</small>` : ''}</div>`).join('');
+}
+function delta(ora, prima, haPrima) {
+  if (!haPrima) return '';
+  if (!prima) return ora ? '<span class="up">nuovo</span>' : '';
+  const d = Math.round((ora - prima) / prima * 100);
+  return d === 0 ? '<span class="z">=</span>' : `<span class="${d > 0 ? 'up' : 'down'}">${d > 0 ? '+' : ''}${d}%</span>`;
+}
+
+function mostra(dati) {
+  D = dati;
+  PART_NOME = {}; for (const p of D.partner || []) PART_NOME[p.luogo] = p.nome;
+  const LU = luoghiDa(D), AN = classifica(D), haPrima = (+D.giocatori_prima || 0) > 0;
+  const annPub = AN.filter(a => a.tipo !== 'gioco');
+  const sum = (arr, k) => arr.reduce((t, x) => t + (+x[k] || 0), 0);
+  const attivi = (D.partner || []).filter(p => p.attivo && (!p.fine || new Date(p.fine) >= new Date(new Date().toDateString())));
+
+  kpi($('sintesi'), [
+    ['Giocatori', fmt(D.giocatori), haPrima ? `${delta(+D.giocatori, +D.giocatori_prima, true)} rispetto al periodo prima` : `${fmt(D.nuovi)} nuovi`],
+    ['Arrivi ai luoghi', fmt(sum(LU, 'arrivati')), `in ${LU.filter(r => r.arrivati).length} luoghi diversi`],
+    ['Annunci ascoltati', fmt(sum(annPub, 'ascoltato')), 'di luoghi e partner, fino in fondo'],
+    ['Verso il posto vero', fmt(sum(LU, 'arrivarci') + sum(LU, 'sito')), '"Come arrivarci" e siti dei luoghi'],
+    ['Visite vere', fmt(sum(LU, 'visite')), `QR inquadrati sul posto: ${fmt(sum(LU, 'qr'))}`],
+    ['Partner attivi', fmt(attivi.length), `valore: ${eur(sum(attivi, 'prezzo'))} all'anno`],
+  ]);
+
+  // popolarità
+  const fc = $('fCat'), pc = fc.value;
+  fc.innerHTML = '<option value="">Tutte le categorie</option>' + Object.entries(CATS).map(([k, v]) => `<option value="${k}">${esc(v.label)}</option>`).join('');
+  fc.value = pc;
+  const drawLuoghi = () => {
+    const rs = LU.filter(r => (!fc.value || r.cat === fc.value) && (!$('fPart').checked || r.partner) && (r.esposti || r.partner || r.scoperto));
+    const ord = rs.slice().sort((a, b) => b.arrivati - a.arrivati || b.visto - a.visto);
+    const pos = {}; ord.forEach((r, i) => pos[r.id] = i + 1);
+    tabella($('tLuoghi'), [{ t: '#' }, { t: 'Luogo', l: 1 }, { t: 'Visto' }, { t: 'Arrivati' }, { t: 'Rispetto a prima' }, { t: 'Scheda' }, { t: 'Dal vero' }, { t: 'Visite vere' }, { t: 'Radio' }, { t: 'Interesse' }],
+      rs.map(r => Object.assign([
+        c(pos[r.id], `<span class="z">${pos[r.id]}</span>`),
+        c(r.nome, `${catChip(r.cat)}${esc(r.nome)}${r.partner ? ` <span class="chip" style="color:var(--tg-tufo)">${esc(PACC[r.partner.pacchetto] || 'partner')}</span>` : ''}`),
+        num(r.visto), num(r.arrivati), c(r.prima ? (r.arrivati - r.prima) / r.prima : (r.arrivati ? 9 : 0), delta(r.arrivati, r.prima, haPrima) || '<span class="z">·</span>'),
+        num(r.scheda), num(r.dalvero), num(r.visite), num(r.radio), c(r.interesse, r.arrivati ? `<span class="pc">${pct(r.interesse, 1)}</span>` : '<span class="z">·</span>'),
+      ], { key: r.id })), { sort: 0, dir: 1, click: id => { SEL = SEL === id ? null : id; drawLuoghi(); dettaglio(); }, vuoto: 'Nessun luogo nel periodo.' });
+  };
+  fc.onchange = drawLuoghi; $('fPart').onchange = drawLuoghi; drawLuoghi(); dettaglio();
+  $('csv').onclick = () => {
+    const rows = [['luogo', 'id', 'categoria', 'partner', 'visto', 'arrivati', 'arrivati_periodo_prima', 'scheda', 'come_arrivarci', 'sito', 'qr_inquadrati', 'visite_vere', 'radio', 'interesse']]
+      .concat(LU.map(r => [r.nome, r.id, r.cat, r.partner ? r.partner.pacchetto : '', r.visto, r.arrivati, r.prima, r.scheda, r.arrivarci, r.sito, r.qr, r.visite, r.radio, Math.round(r.interesse * 100) + '%']));
+    const csv = rows.map(r => r.map(x => '"' + String(x == null ? '' : x).replace(/"/g, '""') + '"').join(';')).join('\n');
+    const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob(['﻿' + csv], { type: 'text/csv' })); a.download = 'popolarita-luoghi.csv'; a.click();
+  };
+
+  // radio
+  const TIPI = { battuta: ['Battuta', '#e2b765'], cita: ['Cita', '#5fb7c4'], partner: ['Partner', '#8cbf52'], spot: ['Spot', '#e06f9a'], gioco: ['Gioco', '#8a8577'] };
+  const byDest = {};
+  for (const a of annPub) { if (!a.dest) continue; const d = byDest[a.dest] = byDest[a.dest] || { frasi: 0, detto: 0, ascoltato: 0, interrotto: 0, persone: 0, spot: 0 }; d.frasi++; d.detto += a.detto; d.ascoltato += a.ascoltato; d.interrotto += a.interrotto; d.persone += a.persone; if (a.tipo === 'spot') d.spot += a.ascoltato; }
+  tabella($('tRadioDest'), [{ t: 'Luogo o partner', l: 1 }, { t: 'Frasi' }, { t: 'Dette' }, { t: 'Fino in fondo' }, { t: 'Di cui spot' }, { t: 'Interrotte' }, { t: 'Ascoltate' }],
+    Object.entries(byDest).map(([id, d]) => [c(nome(id), `${catChip(PL[id] && PL[id].cat || 'attivita')}${esc(nome(id))}${PART_NOME[id] ? ' <span class="chip" style="color:var(--tg-tufo)">partner</span>' : ''}`), num(d.frasi), num(d.detto), num(d.ascoltato), num(d.spot), num(d.interrotto), c(d.detto ? d.ascoltato / d.detto : 0, `<span class="pc">${pct(d.ascoltato, d.detto)}</span>`)]), { sort: 3, vuoto: 'Nessun annuncio di luoghi o partner nel periodo.' });
+  const drawRadio = () => {
+    const lista = $('fGioco').checked ? AN : annPub;
+    tabella($('tRadio'), [{ t: 'Annuncio', l: 1 }, { t: 'Per', l: 1 }, { t: 'Inviato' }, { t: 'Detto' }, { t: 'Fino in fondo' }, { t: 'Interrotto' }, { t: 'Persone' }],
+      lista.map(a => [c(a.testo || a.cosa, `${esc(a.testo || a.cosa.replace(/-/g, ' '))}`), c((a.dest ? nome(a.dest) : 'zz') + a.tipo, `<span class="chip" style="color:${TIPI[a.tipo][1]}">${TIPI[a.tipo][0]}</span>${a.dest ? esc(nome(a.dest)) : ''}`), num(a.inviato), num(a.detto), num(a.ascoltato), num(a.interrotto), num(a.persone)]), { sort: 4 });
+  };
+  $('fGioco').onchange = drawRadio; drawRadio();
+
+  // dal gioco al vero
+  tabella($('tVero'), [{ t: 'Luogo', l: 1 }, { t: 'Arrivati' }, { t: 'Scheda' }, { t: 'Come arrivarci' }, { t: 'Sito' }, { t: 'Punti mappa' }, { t: 'QR inquadrato' }, { t: 'Visite vere' }, { t: 'Gioca dal QR' }],
+    LU.filter(r => r.scheda || r.arrivarci || r.sito || r.qr || r.visite || r.mappa || r.partner).map(r => [c(r.nome, `${catChip(r.cat)}${esc(r.nome)}`), num(r.arrivati), num(r.scheda), c(r.arrivarci, r.arrivarci ? `${fmt(r.arrivarci)}<small>${fmt(r.arrivarciP)} pers.</small>` : '<span class="z">0</span>'), num(r.sito), num(r.mappa), num(r.qr), num(r.visite), num(r.qrGioca)]), { sort: 3, vuoto: 'Ancora nessuno è passato dal gioco al posto vero in questo periodo.' });
+  const SPOT = { spot_consorzio: 'Spot radio della bottega', prodotto: 'Comprato in bottega', mappa_rapida: 'Cercato sulla mappa' };
+  tabella($('tSpot'), [{ t: 'Cosa', l: 1 }, { t: 'Volte' }, { t: 'Persone' }, { t: 'Quantità' }],
+    (D.spot || []).map(s => [c((SPOT[s.tipo] || s.tipo) + s.cosa, `${esc(s.cosa)}<small>${esc(SPOT[s.tipo] || s.tipo)}</small>`), num(s.n), num(s.persone), num(s.quantita)]), { sort: 1 });
+  tabella($('tFuori'), [{ t: 'Verso', l: 1 }, { t: 'Volte' }, { t: 'Persone' }],
+    (D.fuori || []).map(f => { let q = ''; try { const u = new URL(f.link); q = u.searchParams.get('query') || ''; } catch (e) {} return [c(f.verso, `<a href="${esc(f.link)}" target="_blank" rel="noopener">${esc(q ? 'Maps: ' + q : f.verso)}</a><small>${esc(f.testo || '')}</small>`), num(f.n), num(f.persone)]; }), { sort: 1 });
+
+  // partner
+  disegnaPartner(LU, byDest);
+
+  // pubblico
+  grafico($('cGiorni'), (D.giorni || []).map(g => ({ x: g.g, a: +g.giocatori })), { a: 'Giocatori al giorno' });
+  const prov = {};
+  for (const p of D.provenienza || []) {
+    let k = p.da;
+    if (/^gioco:/.test(k)) k = 'Ritorno da un gioco del mondo';
+    else if (k === 'diretto') k = 'Link diretto o indirizzo scritto';
+    else if (k === 'qr') k = 'QR nei luoghi veri';
+    else if (k === 'app') k = 'App installata sul telefono';
+    else if (/googlequicksearchbox|google\./.test(k)) k = 'Google';
+    else if (/android\.gm|mail/.test(k)) k = 'Email';
+    else if (/facebook|fb\./.test(k)) k = 'Facebook';
+    else if (/instagram/.test(k)) k = 'Instagram';
+    prov[k] = (prov[k] || 0) + +p.persone;
+  }
+  tabella($('tProv'), [{ t: 'Da', l: 1 }, { t: 'Persone' }], Object.entries(prov).map(([k, v]) => [c(k), num(v)]));
+  tabella($('tChi'), [{ t: 'Cosa', l: 1 }, { t: 'Numero' }], [
+    [c('Giocatori diversi'), num(D.giocatori)], [c('Nuovi nel periodo'), num(D.nuovi)], [c('Partite (sessioni)'), num(D.sessioni)],
+    [c('Da telefono'), c(+D.telefono, `${fmt(D.telefono)} <small style="display:inline">${pct(+D.telefono, +D.giocatori)}</small>`)],
+    [c('Hanno ascoltato la radio'), num(D.radio_persone)], [c('Minuti di radio'), num(D.radio_minuti)],
+  ], { sort: 0, dir: 1 });
+}
+
+function grafico(el, pts, lab) {
+  if (!pts.length) { el.innerHTML = '<p class="empty">Ancora nessun dato nel periodo.</p>'; return; }
+  const W = 1000, H = 190, top = 14, bot = 24, max = Math.max(1, ...pts.map(p => Math.max(p.a || 0, p.b || 0))), bw = W / pts.length, hh = H - top - bot;
+  const bar = (v, i, col, off, w) => { const h = hh * v / max; return v ? `<rect x="${i * bw + off}" y="${top + hh - h}" width="${Math.max(1, w)}" height="${h}" rx="2" fill="${col}"></rect>` : ''; };
+  const two = pts.some(p => p.b != null);
+  el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(lab.a)}">
+    <line x1="0" x2="${W}" y1="${top + hh}" y2="${top + hh}" stroke="rgba(240,228,203,.2)"/>
+    ${pts.map((p, i) => `<g><title>${p.x}: ${lab.a.toLowerCase()} ${p.a || 0}${two ? `, ${lab.b.toLowerCase()} ${p.b || 0}` : ''}${p.c ? `, ${lab.c.toLowerCase()} ${p.c}` : ''}</title>
+      ${two ? bar(p.a || 0, i, 'rgba(226,183,101,.35)', bw * .12, bw * .76) + bar(p.b || 0, i, '#e2b765', bw * .3, bw * .4) : bar(p.a || 0, i, '#e2b765', bw * .12, bw * .76)}
+      ${p.c ? `<circle cx="${i * bw + bw / 2}" cy="${top + 6}" r="${Math.min(9, 3 + p.c)}" fill="#d8432a"/>` : ''}</g>`).join('')}
+    <text x="0" y="${H - 6}" fill="#b8b19e" font-size="13">${pts[0].x}</text><text x="${W}" y="${H - 6}" fill="#b8b19e" font-size="13" text-anchor="end">${pts[pts.length - 1].x} · max ${max}</text></svg>
+    <div class="legend">${two ? `<span><i style="background:rgba(226,183,101,.35)"></i>${esc(lab.a)}</span><span><i style="background:#e2b765"></i>${esc(lab.b)}</span>` : `<span><i style="background:#e2b765"></i>${esc(lab.a)}</span>`}${lab.c ? `<span><i style="background:#d8432a;border-radius:50%"></i>${esc(lab.c)}</span>` : ''}</div>`;
+}
+
+function dettaglio() {
+  const el = $('dett');
+  if (!SEL || !D) { el.hidden = true; return; }
+  const LU = luoghiDa(D), r = LU.find(x => x.id === SEL); if (!r) { el.hidden = true; return; }
+  const AN = classifica(D).filter(a => a.dest === SEL);
+  const giorni = (D.giorni || []).map(g => g.g), S = {}; for (const s of D.serie || []) if (s.luogo === SEL) S[s.g] = s;
+  el.hidden = false;
+  el.innerHTML = `<div class="head"><h2>${catChip(r.cat)}${esc(r.nome)}</h2><button class="g s" id="chiudiDett">Chiudi</button></div>
+    <div class="mini"><span>Visto <b>${fmt(r.visto)}</b></span><span>Arrivati <b>${fmt(r.arrivati)}</b></span><span>Scoperto <b>${fmt(r.scoperto)}</b></span><span>Scheda <b>${fmt(r.scheda)}</b></span><span>Come arrivarci <b>${fmt(r.arrivarci)}</b></span><span>Sito <b>${fmt(r.sito)}</b></span><span>QR <b>${fmt(r.qr)}</b></span><span>Visite vere <b>${fmt(r.visite)}</b></span><span>Radio vicino <b>${fmt(r.radio)}</b></span></div>
+    <div class="chart" id="cDett"></div>
+    <div><h3>Cosa ha detto la radio</h3>${AN.length ? `<ul class="ann">${AN.sort((a, b) => b.ascoltato - a.ascoltato).map(a => `<li>${esc(a.testo || a.cosa)}<span>${fmt(a.ascoltato)} fino in fondo · ${fmt(a.persone)} pers.</span></li>`).join('')}</ul>` : '<p class="empty">La radio non ne ha parlato nel periodo.</p>'}</div>`;
+  grafico($('cDett'), giorni.map(g => ({ x: g, a: S[g] ? +S[g].esposti : 0, b: S[g] ? +S[g].raggiunti : 0, c: S[g] ? +S[g].azioni : 0 })), { a: 'Visto o arrivato', b: 'Arrivati', c: 'Passi verso il vero' });
+  $('chiudiDett').onclick = () => { SEL = null; mostra(D); };
+}
+
+// ---------- partner ----------
+function linkRendiconto(k) { return new URL('partner/?k=' + encodeURIComponent(k), location.href).href; }
+function disegnaPartner(LU, byDest) {
+  const P = D.partner || [], oggi = new Date(new Date().toDateString());
+  const stato = p => {
+    if (!p.attivo) return ['spento', '#8a8577'];
+    if (p.fine) { const g = Math.round((new Date(p.fine) - oggi) / 864e5); if (g < 0) return ['scaduto', '#ff6a55']; if (g <= 30) return [`scade tra ${g} gg`, '#e2b765']; }
+    if (p.inizio && new Date(p.inizio) > oggi) return ['parte il ' + new Date(p.inizio).toLocaleDateString('it-IT'), '#5fb7c4'];
+    return ['attivo', '#8cbf52'];
+  };
+  const attivi = P.filter(p => stato(p)[0] === 'attivo' || /^scade/.test(stato(p)[0]));
+  kpi($('pKpi'), [
+    ['Partner attivi', fmt(attivi.length), `${fmt(P.length)} in tutto`],
+    ['Valore contratti', eur(attivi.reduce((t, p) => t + (+p.prezzo || 0), 0)), 'all\'anno, partner attivi'],
+    ['In scadenza', fmt(P.filter(p => /^scade/.test(stato(p)[0])).length), 'entro 30 giorni'],
+    ['Scaduti', fmt(P.filter(p => stato(p)[0] === 'scaduto').length), 'da rinnovare o spegnere'],
+  ]);
+  if (!P.length) { $('pList').innerHTML = '<p class="empty">Nessun partner. Aggiungi il primo.</p>'; return; }
+  $('pList').innerHTML = P.map(p => {
+    const r = LU.find(x => x.id === p.luogo) || {}, d = byDest[p.luogo] || {}, [st, col] = stato(p);
+    return `<div class="pcard" data-l="${esc(p.luogo)}">
+      <div class="head"><h4>${esc(p.nome)}</h4><span class="chip" style="color:${col}">${esc(st)}</span></div>
+      <div class="mini"><span>${esc(PACC[p.pacchetto] || p.pacchetto)}</span><span>${p.inizio ? new Date(p.inizio).toLocaleDateString('it-IT') : '…'} → ${p.fine ? new Date(p.fine).toLocaleDateString('it-IT') : 'senza fine'}</span><span><b>${eur(p.prezzo)}</b></span></div>
+      <div class="mini"><span>Arrivati <b>${fmt(r.arrivati || 0)}</b></span><span>Dal vero <b>${fmt(r.dalvero || 0)}</b></span><span>Visite <b>${fmt(r.visite || 0)}</b></span><span>Annunci ascoltati <b>${fmt(d.ascoltato || 0)}</b></span></div>
+      ${p.contatto ? `<div class="help">${esc(p.contatto)}</div>` : ''}
+      <div class="row"><button class="g s" data-a="mod">Modifica</button><button class="g s" data-a="copia">Copia link rendiconto</button><a class="g s" href="${esc(linkRendiconto(p.chiave))}" target="_blank" rel="noopener">Apri rendiconto ↗</a><button class="g s" data-a="chiave" title="Il vecchio link smette di funzionare">Nuovo link</button></div>
+    </div>`;
+  }).join('');
+  $('pList').querySelectorAll('.pcard').forEach(card => {
+    const p = P.find(x => x.luogo === card.dataset.l);
+    card.querySelector('[data-a="mod"]').onclick = () => apriForm(p);
+    card.querySelector('[data-a="copia"]').onclick = () => copia(linkRendiconto(p.chiave));
+    card.querySelector('[data-a="chiave"]').onclick = async e => {
+      if (!confirm(`Creo un nuovo link per ${p.nome}? Quello vecchio smette di funzionare.`)) return;
+      e.target.disabled = true;
+      try { await rpc('tg_partner_nuova_chiave', { chiave: PW, luogo: p.luogo }); toast('Nuovo link pronto'); await vai(); } catch (err) { alert(err.message); e.target.disabled = false; }
+    };
+  });
+}
+function copia(t) {
+  const ok = () => toast('Link copiato');
+  if (navigator.clipboard) navigator.clipboard.writeText(t).then(ok, () => prompt('Copia il link:', t)); else prompt('Copia il link:', t);
+}
+function toast(t) { const d = document.createElement('div'); d.className = 'toast'; d.textContent = t; document.body.appendChild(d); setTimeout(() => d.remove(), 2200); }
+
+function apriForm(p) {
+  const f = $('fPartner'), nuovo = !p; p = p || {};
+  $('dTit').textContent = nuovo ? 'Nuovo partner' : p.nome;
+  const giaPartner = new Set((D && D.partner || []).map(x => x.luogo));
+  const opts = Object.values(PL).filter(x => !x.segreto).sort((a, b) => (b.partner - a.partner) || a.name.localeCompare(b.name));
+  f.luogo.innerHTML = opts.map(x => `<option value="${esc(x.id)}" ${!nuovo || !giaPartner.has(x.id) ? '' : 'disabled'}>${esc(x.name)}${x.partner ? ' · luogo partner' : ''}${giaPartner.has(x.id) ? ' (già partner)' : ''}</option>`).join('')
+    + (p.luogo && !PL[p.luogo] ? `<option value="${esc(p.luogo)}">${esc(p.luogo)}</option>` : '');
+  f.luogo.disabled = !nuovo;
+  if (p.luogo) f.luogo.value = p.luogo; else { const free = opts.find(x => x.partner && !giaPartner.has(x.id)) || opts.find(x => !giaPartner.has(x.id)); if (free) f.luogo.value = free.id; }
+  f.nome.value = p.nome || ''; f.pacchetto.value = p.pacchetto || 'presenza'; f.prezzo.value = p.prezzo == null ? '' : p.prezzo;
+  f.inizio.value = p.inizio || (nuovo ? new Date().toISOString().slice(0, 10) : ''); f.fine.value = p.fine || '';
+  f.sito.value = p.sito || ''; f.contatto.value = p.contatto || ''; f.note.value = p.note || '';
+  f.parole.value = (p.parole || []).join(', '); f.eventi.value = (p.eventi || []).join(', '); f.attivo.checked = p.attivo !== false;
+  const battuta = () => { const x = PL[f.luogo.value]; $('dBattuta').innerHTML = x && x.radio ? `Battuta del luogo alla radio, contata da sola: «${esc(x.radio)}»` : 'Questo luogo non ha ancora una battuta alla radio.'; if (nuovo && x && !f.nome.value) f.nome.placeholder = x.name; };
+  f.luogo.onchange = battuta; battuta();
+  $('dlg').showModal();
+}
+$('nuovo').onclick = () => { if (!D) { alert('Prima scrivi la password e premi Mostra.'); return; } apriForm(null); };
+$('dlg').addEventListener('close', async () => {
+  if ($('dlg').returnValue !== 'ok') return;
+  const f = $('fPartner'), luogo = f.luogo.value, x = PL[luogo];
+  const lista = s => s.split(',').map(w => w.trim()).filter(Boolean);
+  const vecchio = (D.partner || []).find(p => p.luogo === luogo) || {};
+  const annunci = new Set(vecchio.annunci || []); if (x && x.radio) annunci.add(slug(x.radio));
+  const p = { luogo, nome: f.nome.value.trim() || (x && x.name) || luogo, pacchetto: f.pacchetto.value, prezzo: f.prezzo.value, inizio: f.inizio.value, fine: f.fine.value,
+    sito: f.sito.value.trim(), contatto: f.contatto.value.trim(), note: f.note.value.trim(), parole: lista(f.parole.value), eventi: lista(f.eventi.value), annunci: [...annunci], attivo: f.attivo.checked };
+  try { await rpc('tg_partner_salva', { chiave: PW, p }); toast('Partner salvato'); await vai(); }
+  catch (e) { alert('Non salvato: ' + e.message); }
+});
+
+// ---------- avvio ----------
+async function vai() {
+  const pw = $('pw').value.trim(); if (!pw) { $('mode').innerHTML = 'Scrivi la <b>password</b> delle statistiche.'; return; }
+  $('go').disabled = true; $('go').textContent = '…';
+  try {
+    const d = await rpc('tg_pubblicita', { chiave: pw, giorni: +$('giorni').value });
+    PW = pw; try { sessionStorage.setItem('tg-stats-pw', pw); } catch (e) {}
+    $('mode').className = 'note';
+    const per = $('giorni').selectedOptions[0].textContent.toLowerCase();
+    $('mode').innerHTML = `Numeri di <b>tutti i giocatori</b>, ${esc(per)}. Aggiornato alle ${new Date().toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })}.`;
+    mostra(d); andamento(); lancio();
+  } catch (e) { $('mode').className = 'note err'; $('mode').innerHTML = '<b>' + esc(e.message) + '</b>'; }
+  $('go').disabled = false; $('go').textContent = 'Mostra';
+}
+$('go').onclick = vai; $('giorni').onchange = () => { if ($('pw').value) vai(); };
+// I TRE NUMERI DEL LANCIO (funzione tg_stats_lancio): chi torna il giorno dopo, partite a testa, chi condivide
+async function lancio() {
+  if (!PW) return; const g = Math.max(2, +$('giorni').value || 30);
+  try {
+    const L = await rpc('tg_stats_lancio', { chiave: PW, giorni: g });
+    $('lancioP').textContent = `ultimi ${L.giorni} giorni`;
+    const sem = (v, buono, male) => v == null ? '' : v >= buono ? ' 🟢' : v < male ? ' 🔴' : ' 🟡';
+    $('lancioK').innerHTML = `
+      <div><b>${L.ritorno_pct == null ? '–' : L.ritorno_pct + '%'}${sem(L.ritorno_pct, 25, 10)}</b><span>Tornano il giorno dopo</span><small>${L.tornati} su ${L.nuovi} nuovi</small></div>
+      <div><b>${L.partite_a_testa == null ? '–' : L.partite_a_testa}${sem(L.partite_a_testa, 5, 2)}</b><span>Partite a testa</span><small>${L.sessioni_a_testa || 0} sessioni a testa · ${L.attivi} giocatori</small></div>
+      <div><b>${L.condividono_pct == null ? '–' : L.condividono_pct + '%'}${sem(L.condividono_pct, 15, 5)}</b><span>Condividono</span><small>${L.condividono} hanno mandato un invito o una sfida</small></div>`;
+  } catch (e) { $('lancioK').innerHTML = `<div><b>–</b><span>${esc(e.message)}</span></div>`; }
+}
+// L'ANDAMENTO: per giorno, settimana o mese (funzione tg_stats_serie)
+const AN = { gran: 'giorno', righe: [] };
+const AN_ETI = { giocatori: 'Giocatori', sessioni: 'Sessioni', partite: 'Partite nei giochi', minuti: 'Minuti di gioco', nuovi: 'Nuovi contadini', tornati: 'Tornati', iscritti: 'Iscritti con la mail', scoperte: 'Luoghi scoperti', missioni: 'Missioni compiute', condivisioni: 'Inviti e sfide', tv: 'Schermi TV Nocchia' };
+const AN_COLS = ['giocatori', 'nuovi', 'tornati', 'sessioni', 'partite', 'minuti', 'iscritti', 'scoperte', 'missioni', 'condivisioni', 'tv'];
+function etiPeriodo(b, gran) { const d = new Date(b + 'T12:00:00'); if (gran === 'mese') return d.toLocaleDateString('it-IT', { month: 'short', year: '2-digit' }); if (gran === 'settimana') return 'sett. ' + d.toLocaleDateString('it-IT', { day: 'numeric', month: 'short' }); return d.toLocaleDateString('it-IT', { day: 'numeric', month: 'short' }); }
+async function andamento() {
+  if (!PW) return;
+  try { const d = await rpc('tg_stats_serie', { chiave: PW, gran: AN.gran, n: +$('anN').value }); AN.righe = d.righe || []; }
+  catch (e) { $('cAndamento').innerHTML = `<p class="empty">${esc(e.message)}</p>`; return; }
+  disegnaAndamento();
+}
+function disegnaAndamento() {
+  const m = $('anM').value, R = AN.righe;
+  grafico($('cAndamento'), R.map(r => ({ x: etiPeriodo(r.b, AN.gran), a: +r[m] || 0 })), { a: AN_ETI[m] });
+  tabella($('tAndamento'), [{ t: AN.gran === 'mese' ? 'Mese' : AN.gran === 'settimana' ? 'Settimana dal' : 'Giorno' }].concat(AN_COLS.map(c => ({ t: AN_ETI[c], l: 'n' }))),
+    R.slice().reverse().map(r => [{ v: etiPeriodo(r.b, AN.gran), h: r.b }].concat(AN_COLS.map(c => ({ v: +r[c] || 0 })))), { sort: 0, dir: 1 });
+}
+document.querySelectorAll('#andamento [data-gran]').forEach(b => b.onclick = () => { AN.gran = b.dataset.gran; document.querySelectorAll('#andamento [data-gran]').forEach(x => x.setAttribute('aria-pressed', x === b)); andamento(); });
+$('anN').onchange = andamento; $('anM').onchange = disegnaAndamento;
+$('anCsv').onclick = () => { const righe = [['periodo'].concat(AN_COLS)].concat(AN.righe.map(r => [r.b].concat(AN_COLS.map(c => r[c])))); const csv = righe.map(x => x.join(';')).join('\n'); const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8' })); a.download = `tuscia-games-andamento-${AN.gran}.csv`; a.click(); };
+$('pw').addEventListener('keydown', e => { if (e.key === 'Enter') vai(); });
+try { $('pw').value = sessionStorage.getItem('tg-stats-pw') || ''; } catch (e) {}
+if ($('pw').value) vai();
+})();
+</script>
+</body>
+</html>

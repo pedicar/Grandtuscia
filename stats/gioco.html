@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Statistiche di gioco</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,500..900&family=Figtree:wght@400;600;700;800&family=Martian+Mono:wght@400;600&display=swap">
+<link rel="stylesheet" href="../engine/tg-ui.css">
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:var(--tg-peperino);color:var(--tg-carta);font-family:var(--tg-body);font-size:14px;line-height:1.45}
+main{max-width:1180px;margin:0 auto;padding:22px 16px 60px;display:grid;gap:22px}
+header{display:flex;flex-wrap:wrap;gap:14px;align-items:end;justify-content:space-between}
+h1{margin:4px 0 0;font-size:clamp(28px,5vw,44px)}
+h2{margin:0 0 10px;font-family:var(--tg-display);font-stretch:112%;font-weight:800;font-size:20px;text-transform:uppercase}
+.sub{color:var(--tg-muted);margin:4px 0 0;max-width:62ch}
+.ctl{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+input,select,button{font:inherit;color:inherit}
+input,select{background:var(--tg-peperino-2);border:1px solid var(--tg-line-strong);border-radius:10px;padding:8px 10px}
+button.b{background:var(--tg-rosso);border:0;border-radius:10px;padding:9px 14px;font-weight:800;cursor:pointer}
+button.g{background:transparent;border:1px solid var(--tg-line-strong);border-radius:10px;padding:8px 12px;font-weight:700;cursor:pointer}
+.note{padding:10px 14px;border-radius:12px;border:1px solid var(--tg-line);background:var(--tg-glass);color:#e7dcc2}
+.note b{color:var(--tg-tufo)}
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1px;background:var(--tg-line);border-radius:14px;overflow:hidden}
+.kpis div{background:var(--tg-peperino-2);padding:14px 16px;display:grid;gap:2px}
+.kpis b{font-family:var(--tg-mono);font-size:28px;font-weight:600;font-variant-numeric:tabular-nums}
+.kpis span{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--tg-muted);font-weight:800}
+.card{background:var(--tg-glass);border:1px solid var(--tg-line);border-radius:16px;padding:16px;min-width:0}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+.tw{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{padding:7px 8px;border-bottom:1px solid var(--tg-line);text-align:right;white-space:nowrap}
+th:first-child,td:first-child{text-align:left;white-space:normal}
+th{font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--tg-muted);font-weight:800;cursor:pointer;user-select:none}
+th.on{color:var(--tg-tufo)}
+td{font-family:var(--tg-mono);font-variant-numeric:tabular-nums}
+td:first-child{font-family:var(--tg-body)}
+td small{display:block;color:var(--tg-muted);font-family:var(--tg-body);font-size:11.5px}
+.pc{color:var(--tg-faggio)}
+.bar{display:inline-block;height:6px;border-radius:3px;background:var(--tg-tufo);vertical-align:middle;margin-left:6px}
+.help{color:var(--tg-muted);font-size:12.5px;margin:-4px 0 10px}
+#chart svg{width:100%;height:170px;display:block}
+.empty{color:var(--tg-muted);padding:10px 0}
+@media (max-width:640px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.kpis b{font-size:22px}.grid2{grid-template-columns:1fr}}
+</style>
+</head>
+<body data-app="stats">
+<main>
+  <header>
+    <div>
+      <span class="tg-eyebrow">Grand Tuscia Adventure · numeri</span>
+      <h1 class="tg-display">Chi gioca, cosa vede</h1>
+      <p class="sub">Luoghi visti e raggiunti, annunci della radio ascoltati, giochi aperti, clic su "come arrivarci". Tutto anonimo.</p>
+    </div>
+    <div class="ctl" id="ctl">
+      <select id="giorni" aria-label="Periodo"><option value="1">Ultime 24 ore</option><option value="7">7 giorni</option><option value="30" selected>30 giorni</option><option value="90">90 giorni</option><option value="365">Un anno</option></select>
+      <input id="pw" type="password" placeholder="Password statistiche" aria-label="Password statistiche" autocomplete="current-password">
+      <button class="b" id="go">Mostra</button>
+      <button class="g" id="csv">Scarica CSV</button>
+    </div>
+  </header>
+  <div class="note" id="mode"></div>
+  <p class="sub"><a href="./" style="color:var(--tg-tufo)">← Torna al pannello pubblicità</a></p>
+  <section class="kpis" id="kpis"></section>
+  <section class="card"><h2>Giocatori al giorno</h2><div id="chart"></div></section>
+  <section class="card"><h2>Dentro i giochi</h2><p class="help">Partite: ogni volta che un gioco viene aperto. Dal mondo / diretti: arrivati dal trattore (o dalla missione) oppure dal link del gioco. Minuti: tempo con il gioco davanti agli occhi. Tornati: usciti verso il mondo. Modalità: quelle scelte, con i minuti passati in ciascuna.</p><div class="tw" id="dentro"></div></section>
+  <section class="card"><h2>Luoghi</h2><p class="help">Visto: era sullo schermo entro 800 m. Raggiunto: ci è passato vicino. Scheda: ha aperto "Scopri di più". Dal vero: ha cliccato "Come arrivarci". Radio: il conduttore ne ha parlato mentre era lì vicino. I numeri sono persone diverse.</p><div class="tw" id="luoghi"></div></section>
+  <section class="card"><h2>Annunci della radio</h2><p class="help">Inviato: il mondo ha passato la frase alla radio. Detto: il conduttore l'ha detta. Fino in fondo: la radio era ancora accesa alla fine. Interrotto: radio spenta mentre parlava.</p><div class="tw" id="annunci"></div></section>
+  <div class="grid2">
+    <section class="card"><h2>Giochi</h2><div class="tw" id="giochi"></div></section>
+    <section class="card"><h2>Radio: ascolto per programma</h2><div class="tw" id="radio"></div></section>
+    <section class="card"><h2>Paesi, panorami, segreti</h2><div class="tw" id="paesi"></div></section>
+    <section class="card"><h2>Mezzi e da dove arrivano</h2><div class="tw" id="altro"></div></section>
+  </div>
+</main>
+<script src="../engine/tg-places.js"></script>
+<script src="../engine/tg-giochi.js"></script>
+<script src="../engine/tg-stats-config.js"></script>
+<script src="../engine/tg-stats.js"></script>
+<script>
+(function () {
+'use strict';
+const $ = id => document.getElementById(id), CFG = window.TG_STATS_CONFIG || {}, TG = window.TG || {};
+const remoto = !!(CFG.url && CFG.key);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const fmt = n => n == null ? '·' : Math.round(n).toLocaleString('it-IT');
+const pct = (a, b) => b ? Math.round(a / b * 100) + '%' : '·';
+const NOMI = {}; (TG.PLACES || []).forEach(p => NOMI[p.id] = p.name); (TG.GIOCHI || []).forEach(g => NOMI[g.id] = g.nome);
+(TG.TOWNS || []).forEach(t => NOMI[t.id] = t.name);
+Object.assign(NOMI, { caprarola: 'Caprarola', carbognano: 'Carbognano', fabrica: 'Fabrica di Roma', ronciglione: 'Ronciglione', fogliano: 'Belvedere del Fogliano', mongolfiera: 'Mongolfiera su Falerii', farnese: 'Sosta in Piazza Farnese', fungo: "Fungo dell'acqua", cigni: 'Una notte ai Cigni', soratte: "L'aereo del bunker",
+  trattore: 'Trattore', ape: 'Ape', vespa: 'Vespa', volo: 'In volo', 'a piedi': 'A piedi',
+  mattina: 'Nocchia Mattina', giornale: 'O Giornale de a Nocchia', tavola: 'A Tavola!', bosco: 'Bosco e Lago', machedici: 'Ma che dici?', games: 'Tuscia Games', unavolta: 'Come se faceva una volta', balera: 'Balera de Vico', rock: 'Trattore Rock', notte: 'La Nocchia di Notte', gita: 'Gita in Tuscia' });
+const nome = id => NOMI[id] || id;
+let DATA = null, EVROWS = [];
+
+$('mode').innerHTML = remoto
+  ? 'Dati di <b>tutti i giocatori</b>, da Supabase. Scrivi la password scelta nel file SQL.'
+  : 'Supabase non è ancora collegato (<code>engine/tg-stats-config.js</code> è vuoto): qui vedi <b>solo i numeri di questo dispositivo</b>. Utile per provare.';
+if (!remoto) { $('pw').hidden = true; $('giorni').hidden = true; }
+try { $('pw').value = sessionStorage.getItem('tg-stats-pw') || ''; } catch (e) {}
+
+async function carica() {
+  if (!remoto) {
+    const L = TG.Stats ? TG.Stats.locale() : { agg: {}, sessioni: 0 };
+    const ev = Object.entries(L.agg).map(([k, a]) => { const i = k.indexOf('|'); return { tipo: k.slice(0, i), cosa: k.slice(i + 1), n: a[0], persone: 1, somma: a[1] }; });
+    const testi = {}; for (const [k, a] of Object.entries(L.agg)) if (k.startsWith('annuncio_inviato|') && a[2]) testi[k.slice(17)] = a[2];
+    return { giocatori: 1, sessioni: L.sessioni, nuovi: 1, giorni: [], eventi: ev, testi, provenienza: [], telefono: matchMedia('(pointer:coarse)').matches ? 1 : 0, esiti: [] };
+  }
+  const pw = $('pw').value.trim(); if (!pw) throw new Error('Scrivi la password');
+  const r = await fetch(CFG.url.replace(/\/$/, '') + '/rest/v1/rpc/tg_riepilogo', { method: 'POST', headers: { apikey: CFG.key, Authorization: 'Bearer ' + CFG.key, 'Content-Type': 'application/json' }, body: JSON.stringify({ chiave: pw, giorni: +$('giorni').value }) });
+  if (!r.ok) { const t = await r.text(); throw new Error(/password/.test(t) ? 'Password sbagliata' : 'Errore dal server: ' + r.status); }
+  try { sessionStorage.setItem('tg-stats-pw', pw); } catch (e) {}
+  return r.json();
+}
+
+// indice: tipo → cosa → {n, persone, somma}
+function indice(ev) { const I = {}; for (const e of ev) { (I[e.tipo] = I[e.tipo] || {})[e.cosa] = e; } return I; }
+const P = (I, tipo, cosa, campo) => { const x = I[tipo] && I[tipo][cosa]; return x ? +x[campo || 'persone'] : 0; };
+const ids = (I, ...tipi) => { const s = new Set(); for (const t of tipi) for (const k in (I[t] || {})) s.add(k); return [...s]; };
+
+// tabella ordinabile
+function tabella(el, cols, rows, sortIdx) {
+  const st = { k: sortIdx == null ? 1 : sortIdx, dir: -1 };
+  const draw = () => {
+    const rs = rows.slice().sort((a, b) => { const x = a[st.k].v, y = b[st.k].v; return (typeof x === 'string' ? x.localeCompare(y) : x - y) * st.dir; });
+    el.innerHTML = rs.length ? `<table><thead><tr>${cols.map((c, i) => `<th data-i="${i}" class="${i === st.k ? 'on' : ''}" title="Ordina">${c}</th>`).join('')}</tr></thead><tbody>${rs.map(r => `<tr>${r.map(c => `<td>${c.h != null ? c.h : esc(c.v)}</td>`).join('')}</tr>`).join('')}</tbody></table>` : '<p class="empty">Ancora nessun dato.</p>';
+    el.querySelectorAll('th').forEach(th => th.onclick = () => { const i = +th.dataset.i; if (st.k === i) st.dir *= -1; else { st.k = i; st.dir = i ? -1 : 1; } draw(); });
+  };
+  draw();
+}
+const c = (v, h) => ({ v, h });
+const num = v => c(v, fmt(v));
+
+function mostra(D) {
+  DATA = D; EVROWS = D.eventi || []; const I = indice(EVROWS);
+  const minuti = [...Object.values(I.tempo || {}), ...Object.values(I.tempo_gioco || {})].reduce((t, e) => t + (+e.somma || 0), 0) / 60;
+  $('kpis').innerHTML = [
+    ['Giocatori', fmt(D.giocatori)], ['Nuovi', fmt(D.nuovi)], ['Sessioni', fmt(D.sessioni)],
+    ['Minuti di gioco', fmt(minuti)], ['Minuti a giocatore', D.giocatori ? (minuti / D.giocatori).toFixed(1) : '·'],
+    ['Da telefono', pct(D.telefono, D.giocatori)], ['Luoghi scoperti', fmt(Object.values(I.luogo_scoperto || {}).reduce((t, e) => t + +e.n, 0))],
+    ['Clic "dal vero"', fmt(Object.values(I.come_arrivarci || {}).reduce((t, e) => t + +e.n, 0))],
+  ].map(([l, v]) => `<div><b>${v}</b><span>${l}</span></div>`).join('');
+
+  // grafico giornaliero
+  const G = D.giorni || [];
+  if (!G.length) $('chart').innerHTML = `<p class="empty">${remoto ? 'Ancora nessun dato nel periodo.' : 'Il grafico per giorno si vede quando Supabase è collegato.'}</p>`;
+  else {
+    const W = 1000, H = 170, max = Math.max(1, ...G.map(g => +g.giocatori)), bw = W / G.length;
+    $('chart').innerHTML = `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img" aria-label="Giocatori al giorno">${G.map((g, i) => { const h = (H - 22) * g.giocatori / max; return `<rect x="${i * bw + 1}" y="${H - 18 - h}" width="${Math.max(1, bw - 2)}" height="${h}" rx="2" fill="#e2b765"><title>${g.g}: ${g.giocatori} giocatori, ${g.sessioni} sessioni, ${g.minuti} minuti</title></rect>`; }).join('')}<text x="0" y="${H - 3}" fill="#b8b19e" font-size="12">${G[0].g}</text><text x="${W}" y="${H - 3}" fill="#b8b19e" font-size="12" text-anchor="end">${G[G.length - 1].g} · max ${max}</text></svg>`;
+  }
+
+  // luoghi
+  const L = ids(I, 'luogo_visto', 'luogo_raggiunto', 'luogo_scoperto', 'scheda_aperta', 'come_arrivarci', 'luogo_raccontato');
+  tabella($('luoghi'), ['Luogo', 'Visto', 'Raggiunto', 'Scoperto', 'Scheda', 'Dal vero', 'Radio', 'Visto → raggiunto'], L.map(id => {
+    const v = P(I, 'luogo_visto', id), r = P(I, 'luogo_raggiunto', id);
+    return [c(nome(id)), num(v), num(r), num(P(I, 'luogo_scoperto', id)), num(P(I, 'scheda_aperta', id)), num(P(I, 'come_arrivarci', id)), num(P(I, 'luogo_raccontato', id)), c(v ? r / v : 0, `<span class="pc">${pct(r, v)}</span>`)];
+  }));
+
+  // annunci
+  const A = ids(I, 'annuncio_inviato', 'annuncio_detto', 'annuncio_ascoltato', 'annuncio_interrotto');
+  tabella($('annunci'), ['Annuncio', 'Inviato', 'Detto', 'Fino in fondo', 'Interrotto', 'Ascoltato'], A.map(id => {
+    const inv = P(I, 'annuncio_inviato', id, 'n'), fin = P(I, 'annuncio_ascoltato', id, 'n');
+    return [c(D.testi && D.testi[id] || id, esc(D.testi && D.testi[id] || id.replace(/-/g, ' '))), num(inv), num(P(I, 'annuncio_detto', id, 'n')), num(fin), num(P(I, 'annuncio_interrotto', id, 'n')), c(inv ? fin / inv : 0, `<span class="pc">${pct(fin, inv)}</span>`)];
+  }));
+
+  // giochi
+  const ES = {}; (D.esiti || []).forEach(e => ES[e.cosa] = e);
+  const Gi = ids(I, 'gioco_visto', 'gioco_arrivo', 'gioco_scheda', 'gioco_avvio', 'gioco_ritorno');
+  tabella($('giochi'), ['Gioco', 'Visto', 'Arrivato', 'Scheda', 'Avviato', 'Tornato', 'Medaglie'], Gi.map(id => {
+    const e = ES[id] || {}; const med = (+e.oro || 0) + (+e.argento || 0) + (+e.bronzo || 0);
+    return [c(nome(id)), num(P(I, 'gioco_visto', id)), num(P(I, 'gioco_arrivo', id)), num(P(I, 'gioco_scheda', id, 'n')), num(P(I, 'gioco_avvio', id, 'n')), num(P(I, 'gioco_ritorno', id, 'n')), c(med, med ? `${e.oro || 0}·${e.argento || 0}·${e.bronzo || 0}` : '·')];
+  }));
+
+  // radio
+  const R = ids(I, 'radio_ascolto');
+  const acc = Object.values(I.radio_accesa || {}).reduce((t, e) => t + +e.n, 0), spe = Object.values(I.radio_spenta || {}).reduce((t, e) => t + +e.n, 0), sal = Object.values(I.radio_avanti || {}).reduce((t, e) => t + +e.n, 0);
+  tabella($('radio'), ['Programma', 'Minuti', 'Persone', 'Scelto a mano'], R.map(id => [c(nome(id)), num(P(I, 'radio_ascolto', id, 'somma') / 60), num(P(I, 'radio_ascolto', id)), num(P(I, 'radio_stazione', id, 'n'))]));
+  $('radio').insertAdjacentHTML('beforeend', `<p class="help" style="margin:10px 0 0">Accesa a mano: ${fmt(acc)} · spenta: ${fmt(spe)} · canzoni saltate: ${fmt(sal)}</p>`);
+
+  // paesi, panorami, segreti
+  const rowsP = [];
+  for (const [tipo, lab] of [['paese', 'Paese'], ['panorama', 'Panorama'], ['segreto', 'Segreto'], ['missione_compiuta', 'Meta raggiunta']]) for (const id in (I[tipo] || {})) rowsP.push([c(nome(id), `${esc(nome(id))}<small>${lab}</small>`), num(P(I, tipo, id))]);
+  tabella($('paesi'), ['Cosa', 'Persone'], rowsP);
+
+  // dentro i giochi: partite, provenienza, tempo, modalità
+  const VIE = {}; (D.vie || []).forEach(v => { (VIE[v.app] = VIE[v.app] || {})[v.via] = +v.sessioni; });
+  const APPS = ids(I, 'sessione', 'tempo_gioco').filter(a => a !== 'mondo' && a !== 'stats');
+  const modi = app => Object.keys(I.modalita || {}).filter(k => k.startsWith(app + '|')).map(k => { const m = k.slice(app.length + 1); return { m, n: +I.modalita[k].n, min: P(I, 'tempo_modalita', k, 'somma') / 60 }; }).sort((a, b) => b.min - a.min || b.n - a.n);
+  tabella($('dentro'), ['Gioco', 'Partite', 'Persone', 'Dal mondo', 'Diretti', 'Minuti', 'Min. a partita', 'Tornati', 'Modalità'], APPS.map(a => {
+    const par = P(I, 'sessione', a, 'n'), v = VIE[a] || {}, min = P(I, 'tempo_gioco', a, 'somma') / 60, M = modi(a);
+    return [c(nome(a)), num(par), num(P(I, 'sessione', a)), num((v.mondo || 0) + (v.missione || 0)), num(v.diretto || 0), num(min), c(par ? min / par : 0, par ? (min / par).toFixed(1) : '·'), num(P(I, 'gioco_uscita', a, 'n')),
+      c(M.length, M.length ? M.slice(0, 4).map(x => `${esc(x.m)} <small style="display:inline">${x.min >= 1 ? Math.round(x.min) + ' min' : x.n + '×'}</small>`).join('<br>') : '·')];
+  }));
+  // clic, pagina per pagina
+  const CL = Object.keys(I.clic || {}).map(k => { const i = k.indexOf('|'); return { app: k.slice(0, i), nome: k.slice(i + 1), n: +I.clic[k].n, p: +I.clic[k].persone }; });
+  const pagine = [...new Set(CL.map(x => x.app))].sort((a, b) => a === 'mondo' ? -1 : b === 'mondo' ? 1 : a.localeCompare(b));
+  const sel = $('clicApp') || document.createElement('select'), prima = sel.value;
+  sel.innerHTML = '<option value="">Tutte le pagine</option>' + pagine.map(a => `<option value="${esc(a)}">${esc(nome(a))}</option>`).join('');
+  if (pagine.includes(prima)) sel.value = prima;
+  const drawClic = () => $('clic') && tabella($('clic'), ['Pulsante', 'Pagina', 'Volte', 'Persone'], CL.filter(x => !sel.value || x.app === sel.value).map(x => [c(x.nome), c(nome(x.app)), num(x.n), num(x.p)]), 2);
+  sel.onchange = drawClic; drawClic();
+  $('fuori') && tabella($('fuori'), ['Verso', 'Da', 'Volte', 'Persone'], Object.keys(I.clic_esterno || {}).map(k => { const i = k.indexOf('|'); return [c(k.slice(i + 1)), c(nome(k.slice(0, i))), num(+I.clic_esterno[k].n), num(+I.clic_esterno[k].persone)]; }), 2);
+
+  // mezzi e provenienza
+  const rowsA = [];
+  for (const id in (I.tempo || {})) rowsA.push([c(nome(id), `${esc(nome(id))}<small>minuti di gioco</small>`), num(P(I, 'tempo', id, 'somma') / 60)]);
+  for (const p of (D.provenienza || [])) rowsA.push([c(p.da, `${esc(p.da)}<small>arrivati da (persone)</small>`), num(+p.persone)]);
+  tabella($('altro'), ['Cosa', 'Numero'], rowsA);
+}
+
+async function vai() {
+  $('go').disabled = true; $('go').textContent = '…';
+  try { mostra(await carica()); } catch (e) { $('mode').innerHTML = '<b>' + esc(e.message) + '</b>'; }
+  $('go').disabled = false; $('go').textContent = 'Mostra';
+}
+$('go').onclick = vai; $('giorni').onchange = () => { if (!remoto || $('pw').value) vai(); };
+$('pw').addEventListener('keydown', e => { if (e.key === 'Enter') vai(); });
+$('csv').onclick = () => {
+  const rows = [['tipo', 'cosa', 'nome', 'volte', 'persone', 'somma']].concat(EVROWS.map(e => [e.tipo, e.cosa, nome(e.cosa), e.n, e.persone, e.somma == null ? '' : e.somma]));
+  const csv = rows.map(r => r.map(x => '"' + String(x == null ? '' : x).replace(/"/g, '""') + '"').join(';')).join('\n');
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob(['﻿' + csv], { type: 'text/csv' })); a.download = 'statistiche-tuscia.csv'; a.click();
+};
+if (!remoto || $('pw').value) vai(); else mostra({ giocatori: 0, sessioni: 0, nuovi: 0, giorni: [], eventi: [], testi: {}, esiti: [] });
+})();
+</script>
+</body>
+</html>

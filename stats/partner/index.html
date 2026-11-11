@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Rendiconto partner</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,500..900&family=Figtree:wght@400;600;700;800&family=Martian+Mono:wght@400;600&display=swap">
+<style>
+:root{--carta:#f6efe0;--carta-2:#fffaf0;--inchiostro:#1f2624;--muted:#6b6455;--linea:rgba(31,38,36,.14);--tufo:#a8741c;--tufo-chiaro:#e2b765;--rosso:#c23a22;--verde:#4f7a26;
+  --display:"Archivo","Arial Narrow",Arial,sans-serif;--body:"Figtree","Segoe UI",system-ui,sans-serif;--mono:"Martian Mono",ui-monospace,Menlo,monospace}
+*{box-sizing:border-box}
+body{margin:0;background:var(--carta);color:var(--inchiostro);font-family:var(--body);font-size:14.5px;line-height:1.5}
+main{max-width:920px;margin:0 auto;padding:28px 16px 60px;display:grid;gap:24px}
+header{display:grid;gap:6px;border-bottom:3px solid var(--inchiostro);padding-bottom:16px}
+.eyebrow{font-weight:800;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--tufo)}
+h1{margin:0;font-family:var(--display);font-stretch:125%;font-weight:800;text-transform:uppercase;line-height:.95;font-size:clamp(28px,6vw,48px);letter-spacing:-.01em}
+h2{margin:0 0 10px;font-family:var(--display);font-stretch:112%;font-weight:800;text-transform:uppercase;font-size:18px}
+.sub{color:var(--muted);margin:0;max-width:64ch}
+.ctl{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px}
+select,button{font:inherit;color:inherit}
+select{background:var(--carta-2);border:1px solid var(--linea);border-radius:9px;padding:7px 10px}
+button{background:var(--inchiostro);color:var(--carta);border:0;border-radius:9px;padding:8px 13px;font-weight:800;cursor:pointer}
+.periodo{font-weight:700}
+.big{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1px;background:var(--linea);border:1px solid var(--linea);border-radius:14px;overflow:hidden}
+.big div{background:var(--carta-2);padding:14px 16px;display:grid;gap:2px;align-content:start}
+.big b{font-family:var(--mono);font-size:30px;font-weight:600;font-variant-numeric:tabular-nums;line-height:1.1}
+.big span{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:800}
+.big small{color:var(--muted);font-size:12px;line-height:1.35}
+.big .hl b{color:var(--rosso)}
+.pos{background:var(--inchiostro);color:var(--carta);border-radius:14px;padding:16px 18px;display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+.pos b{font-family:var(--display);font-stretch:125%;font-weight:800;font-size:44px;line-height:1;color:var(--tufo-chiaro)}
+section{display:grid;gap:8px}
+.card{background:var(--carta-2);border:1px solid var(--linea);border-radius:14px;padding:16px}
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th,td{padding:8px;border-bottom:1px solid var(--linea);text-align:right;vertical-align:top}
+th:first-child,td:first-child{text-align:left}
+th{font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:800}
+td{font-family:var(--mono);font-variant-numeric:tabular-nums}
+td:first-child{font-family:var(--body)}
+.chart svg{width:100%;height:auto;display:block}
+.legend{display:flex;gap:14px;flex-wrap:wrap;color:var(--muted);font-size:12px;margin-top:6px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+dl{display:grid;grid-template-columns:minmax(120px,max-content) 1fr;gap:6px 16px;margin:0}
+dt{font-weight:800}
+dd{margin:0;color:var(--muted)}
+.empty{color:var(--muted);margin:0}
+.err{background:#fff;border:2px solid var(--rosso);border-radius:14px;padding:18px}
+footer{color:var(--muted);font-size:12.5px;border-top:1px solid var(--linea);padding-top:12px}
+@media (max-width:680px){.big{grid-template-columns:repeat(2,minmax(0,1fr))}.big b{font-size:24px}dl{grid-template-columns:1fr}dd{margin-bottom:6px}}
+@media print{body{background:#fff}main{padding:0}.ctl{display:none}.card,.big div{background:#fff}section{break-inside:avoid}}
+</style>
+</head>
+<body>
+<main id="m">
+  <header>
+    <span class="eyebrow">Grand Tuscia Adventure · rendiconto partner</span>
+    <h1 id="nome">Rendiconto</h1>
+    <p class="sub" id="intro">Come il tuo luogo vive dentro Grand Tuscia Adventure, il gioco gratuito della Tuscia. Numeri anonimi: persone diverse, senza nomi.</p>
+    <div class="ctl">
+      <select id="giorni" aria-label="Periodo"><option value="0">Dall'inizio dell'accordo</option><option value="30">Ultimi 30 giorni</option><option value="90">Ultimi 90 giorni</option><option value="365">Ultimo anno</option></select>
+      <button id="stampa" type="button">Stampa o salva in PDF</button>
+      <span class="periodo" id="periodo"></span>
+    </div>
+  </header>
+  <div id="out"><p class="empty">Carico i numeri…</p></div>
+  <footer>Grand Tuscia Adventure · grandtuscia.netlify.app · Le statistiche sono anonime: nessun nome, nessuna posizione reale dei giocatori. Chi gioca può spegnerle dal menu di pausa.</footer>
+</main>
+<script src="../../engine/tg-places.js"></script>
+<script src="../../engine/tg-partner.js"></script>
+<script src="../../engine/tg-stats-config.js"></script>
+<script>
+(function () {
+'use strict';
+const $ = id => document.getElementById(id), CFG = window.TG_STATS_CONFIG || {}, TG = window.TG || {};
+const KEY = CFG.key || CFG.pub || '';
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const fmt = n => n == null || isNaN(n) ? '0' : Math.round(n).toLocaleString('it-IT');
+const data = s => new Date(s).toLocaleDateString('it-IT', { day: 'numeric', month: 'long', year: 'numeric' });
+const PACC = { pilota: 'Partner pilota', presenza: 'Pacchetto Presenza', voce: 'Pacchetto Voce', evento: 'Pacchetto Evento', patrocinio: 'Patrocinio', territorio: 'Pacchetto Territorio' };
+const SPOT = { spot_consorzio: 'Spot alla radio', prodotto: 'Comprato nella bottega del gioco', mappa_rapida: 'Cercato sulla mappa del gioco' };
+let K = ''; try { K = new URLSearchParams(location.search).get('k') || ''; } catch (e) {}
+
+async function carica() {
+  if (!K) throw new Error('Manca il codice nel link. Usa il link completo che hai ricevuto.');
+  const h = { apikey: KEY, 'Content-Type': 'application/json' }; if (/^eyJ/.test(KEY)) h.Authorization = 'Bearer ' + KEY;
+  const r = await fetch(CFG.url.replace(/\/$/, '') + '/rest/v1/rpc/tg_rendiconto', { method: 'POST', headers: h, body: JSON.stringify({ k: K, giorni: +$('giorni').value }) });
+  const t = await r.text();
+  if (!r.ok) throw new Error(/link non valido/.test(t) ? 'Questo link non è valido o non è più attivo. Chiedi un link nuovo.' : 'I numeri non sono raggiungibili adesso. Riprova tra poco.');
+  return JSON.parse(t);
+}
+
+function grafico(pts) {
+  if (!pts.length) return '<p class="empty">Ancora nessun giorno con dati.</p>';
+  const W = 900, H = 180, top = 14, bot = 24, hh = H - top - bot, max = Math.max(1, ...pts.map(p => Math.max(p.a, p.b))), bw = W / pts.length;
+  const bar = (v, i, col, off, w) => { const h = hh * v / max; return v ? `<rect x="${i * bw + off}" y="${top + hh - h}" width="${Math.max(1, w)}" height="${h}" rx="2" fill="${col}"/>` : ''; };
+  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Persone al giorno"><line x1="0" x2="${W}" y1="${top + hh}" y2="${top + hh}" stroke="rgba(31,38,36,.25)"/>
+    ${pts.map((p, i) => `<g><title>${data(p.x)}: ${p.a} l'hanno visto, ${p.b} sono arrivati${p.c ? `, ${p.c} passi verso il luogo vero` : ''}</title>${bar(p.a, i, 'rgba(168,116,28,.3)', bw * .12, bw * .76)}${bar(p.b, i, '#a8741c', bw * .3, bw * .4)}${p.c ? `<circle cx="${i * bw + bw / 2}" cy="${top + 5}" r="${Math.min(8, 3 + p.c)}" fill="#c23a22"/>` : ''}</g>`).join('')}
+    <text x="0" y="${H - 6}" fill="#6b6455" font-size="13">${data(pts[0].x)}</text><text x="${W}" y="${H - 6}" fill="#6b6455" font-size="13" text-anchor="end">${data(pts[pts.length - 1].x)}</text></svg>
+    <div class="legend"><span><i style="background:rgba(168,116,28,.3)"></i>L'hanno visto</span><span><i style="background:#a8741c"></i>Sono arrivati</span><span><i style="background:#c23a22;border-radius:50%"></i>Passi verso il luogo vero</span></div>`;
+}
+
+function mostra(D) {
+  const P = D.partner || {}, L = {};
+  for (const r of D.luoghi || []) L[r.tipo] = { n: +r.n, p: +r.persone };
+  const g = (t, k) => (L[t] && L[t][k || 'p']) || 0;
+  document.title = 'Rendiconto · ' + P.nome;
+  $('nome').textContent = P.nome;
+  $('intro').textContent = `${PACC[P.pacchetto] || 'Partner'}${P.inizio ? ' dal ' + data(P.inizio) : ''}${P.fine ? ' al ' + data(P.fine) : ''}. Come il tuo luogo vive dentro Grand Tuscia Adventure, il gioco gratuito della Tuscia. Numeri anonimi: persone diverse, senza nomi.`;
+  $('periodo').textContent = `Dal ${data(D.da)} a oggi`;
+  const an = D.annunci || [], ascoltati = an.reduce((t, a) => t + +a.ascoltato, 0), detti = an.reduce((t, a) => t + +a.detto, 0);
+  const dalvero = g('come_arrivarci', 'n') + g('sito_ufficiale', 'n') + g('qr_inquadrato', 'n');
+  const visite = Math.max(g('reale_visita'), g('visita_vera'));
+  const giorni = (D.giorni || []).map(x => x.g), S = {}; for (const s of D.serie || []) S[s.g] = s;
+  const box = (l, v, s, hl) => `<div${hl ? ' class="hl"' : ''}><b>${v}</b><span>${l}</span>${s ? `<small>${s}</small>` : ''}</div>`;
+  $('out').innerHTML = `
+  <section>
+    <div class="big">
+      ${box('L\'hanno visto', fmt(Math.max(g('luogo_visto'), g('luogo_raggiunto'))), 'persone con il tuo luogo sullo schermo')}
+      ${box('Sono arrivati', fmt(g('luogo_raggiunto')), 'persone passate davanti al tuo luogo nel gioco')}
+      ${box('L\'hanno scoperto', fmt(g('luogo_scoperto')), 'aggiunto al loro Tuscia Codex')}
+      ${box('Scheda aperta', fmt(g('scheda_aperta', 'n')), 'hanno letto "Scopri di più"')}
+      ${box('Come arrivarci', fmt(g('come_arrivarci', 'n')), 'hanno aperto la strada su Google Maps', 1)}
+      ${box('Sito', fmt(Math.max(g('sito_ufficiale', 'n'), (D.fuori || []).reduce((t, f) => t + (/maps/.test(f.link) ? 0 : +f.n), 0))), 'hanno aperto il tuo sito', 1)}
+      ${box('Visite vere', fmt(visite), `confermate dal QR sul posto${g('qr_inquadrato', 'n') ? ` (QR inquadrato ${fmt(g('qr_inquadrato', 'n'))} ${g('qr_inquadrato', 'n') === 1 ? 'volta' : 'volte'})` : ''}`, 1)}
+      ${box('Alla radio', fmt(ascoltati), `annunci ascoltati fino in fondo, su ${fmt(detti)} detti`)}
+    </div>
+  </section>
+  ${D.posizione && D.luoghi_totali && g('luogo_raggiunto') ? `<div class="pos"><b>${D.posizione}°</b><div>luogo più visitato del gioco nel periodo, su ${D.luoghi_totali} luoghi raggiunti dai giocatori.<br><span style="opacity:.75">Nel periodo hanno giocato ${fmt(D.giocatori)} persone, ${fmt(D.telefono)} dal telefono.</span></div></div>` : ''}
+  <section class="card"><h2>Giorno per giorno</h2><div class="chart">${grafico(giorni.map(x => ({ x, a: S[x] ? +S[x].esposti : 0, b: S[x] ? +S[x].raggiunti : 0, c: S[x] ? +S[x].azioni : 0 })))}</div></section>
+  <section class="card"><h2>Cosa ha detto la radio</h2>
+    ${an.length ? `<table><thead><tr><th>Annuncio di Radio Nocchia</th><th>Detto</th><th>Fino in fondo</th><th>Persone</th></tr></thead><tbody>${an.sort((a, b) => b.ascoltato - a.ascoltato).map(a => `<tr><td>${esc(a.testo || a.cosa)}</td><td>${fmt(a.detto)}</td><td>${fmt(a.ascoltato)}</td><td>${fmt(a.persone)}</td></tr>`).join('')}</tbody></table>` : '<p class="empty">La radio non ha ancora parlato di te in questo periodo.</p>'}
+    ${g('luogo_raccontato') ? `<p class="sub" style="margin-top:8px">Il conduttore ha raccontato il tuo luogo a ${g('luogo_raccontato') === 1 ? 'una persona mentre ci passava' : fmt(g('luogo_raccontato')) + ' persone mentre ci passavano'} davanti.</p>` : ''}
+  </section>
+  ${(D.spot || []).length ? `<section class="card"><h2>I tuoi prodotti nel gioco</h2><table><thead><tr><th>Cosa</th><th>Volte</th><th>Persone</th></tr></thead><tbody>${D.spot.map(s => `<tr><td>${esc(s.cosa)}<br><small style="color:var(--muted)">${esc(SPOT[s.tipo] || s.tipo)}</small></td><td>${fmt(s.n)}</td><td>${fmt(s.persone)}</td></tr>`).join('')}</tbody></table></section>` : ''}
+  <section class="card"><h2>Cosa vogliono dire i numeri</h2><dl>
+    <dt>L'hanno visto</dt><dd>Il tuo luogo era sullo schermo, a meno di 800 metri dal giocatore.</dd>
+    <dt>Sono arrivati</dt><dd>Il giocatore ci è passato davanti con il suo mezzo (a piedi, Vespa, Ape, trattore).</dd>
+    <dt>L'hanno scoperto</dt><dd>La prima volta che ci arriva, il luogo entra nel suo Tuscia Codex, con la scheda e la strada per venirci davvero.</dd>
+    <dt>Come arrivarci</dt><dd>Ha toccato il pulsante che apre Google Maps con la strada per il tuo luogo vero.</dd>
+    <dt>Visite vere</dt><dd>Ha inquadrato il QR esposto da te: una visita per giocatore, che nel gioco vale punti.</dd>
+    <dt>Alla radio</dt><dd>Radio Nocchia è la radio del gioco. Contiamo le frasi che parlano di te e quante volte sono state ascoltate fino alla fine, con la radio accesa.</dd>
+    <dt>Persone</dt><dd>Ogni dispositivo conta una volta sola nel periodo, anche se torna più volte.</dd>
+  </dl></section>`;
+}
+
+async function vai() {
+  try { mostra(await carica()); }
+  catch (e) { $('out').innerHTML = `<div class="err"><b>${esc(e.message)}</b></div>`; }
+}
+$('giorni').onchange = vai;
+$('stampa').onclick = () => print();
+vai();
+})();
+</script>
+</body>
+</html>

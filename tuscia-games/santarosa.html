@@ -1,0 +1,1141 @@
+<!doctype html>
+<html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Sotto col Ciuffo · gioco gratis · Viterbo</title><meta name="description" content="Porta a spalla la Macchina di Santa Rosa fino al santuario. Il trasporto, ogni 3 settembre. Un gioco di Tuscia Games, gratis dal telefono."><link rel="canonical" href="https://grandtuscia.netlify.app/tuscia-games/santarosa.html"><link rel="icon" href="../icone/favicon-32.png">
+<meta property="og:type" content="website"><meta property="og:site_name" content="Tuscia Games"><meta property="og:title" content="Sotto col Ciuffo · gioco gratis · Viterbo"><meta property="og:description" content="Porta a spalla la Macchina di Santa Rosa fino al santuario. Il trasporto, ogni 3 settembre. Un gioco di Tuscia Games, gratis dal telefono.">
+<meta property="og:image" content="https://grandtuscia.netlify.app/tuscia-games/img/santarosa.jpg"><meta property="og:url" content="https://grandtuscia.netlify.app/tuscia-games/santarosa.html"><meta name="twitter:card" content="summary_large_image">
+<style>:root{padding:env(safe-area-inset-top,0px) 0 env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+</head><body data-scheda="santarosa">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Alegreya+Sans:wght@400;500;700&family=Overpass:wght@700;800&display=swap" rel="stylesheet">
+<style>
+html{touch-action:manipulation}
+/* Layout: una guida di viaggio da giocare. Fotogrammi grandi dei giochi; ogni paese ha il suo cartello turistico marrone, come lungo le strade della Tuscia. */
+:root{
+  --bg:#eef0ea; --surface:#ffffff; --fg:#1d2723; --muted:#5c6862; --line:#d5dad2;
+  --sign:#6b3d22; --sign-fg:#fbf6ee; --lake:#2c6876; --hazel:#5b7a36; --night:#141d2e; --gold:#e3a83a;
+  --f-display:"Bricolage Grotesque","Trebuchet MS",system-ui,sans-serif;
+  --f-body:"Alegreya Sans","Segoe UI",system-ui,sans-serif;
+  --f-sign:"Overpass","Arial Narrow",Arial,sans-serif;
+  --r:14px;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#101715;--surface:#18221f;--fg:#e7ece7;--muted:#a3ada7;--line:#2b3733;--sign:#8a5233;--sign-fg:#fff7ec;--lake:#5fa7b6;--hazel:#94b765;--night:#0b111c;--gold:#efb94e;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#101715;--surface:#18221f;--fg:#e7ece7;--muted:#a3ada7;--line:#2b3733;--sign:#8a5233;--sign-fg:#fff7ec;--lake:#5fa7b6;--hazel:#94b765;--night:#0b111c;--gold:#efb94e;color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font:400 17px/1.5 var(--f-body)}
+a{color:inherit}
+h1,h2,h3{font-family:var(--f-display);line-height:1.05;margin:0;text-wrap:balance}
+.wrap{max-width:1180px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--night)}
+/* testata */
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:9;background:color-mix(in srgb,var(--night) 92%,transparent);backdrop-filter:blur(8px);color:#f1efe8}
+.top .wrap{display:flex;align-items:center;gap:18px;min-height:58px}
+.logo{font-family:var(--f-display);font-weight:800;font-size:19px;letter-spacing:.02em;text-decoration:none;display:flex;align-items:center;gap:9px}
+.logo i{width:26px;height:26px;display:block;background:conic-gradient(from 30deg,var(--gold),#c46a2e,var(--hazel),var(--lake),var(--gold));clip-path:polygon(50% 0,100% 38%,82% 100%,18% 100%,0 38%)}
+.top nav{display:flex;align-items:center;gap:16px;margin-left:auto;font-weight:700;font-size:15px}
+.top nav a{text-decoration:none;opacity:.85}.top nav a:hover{opacity:1}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:0 22px;border-radius:999px;font:800 16px var(--f-body);letter-spacing:.02em;text-decoration:none;border:2px solid transparent;cursor:pointer}
+.btn.play{background:var(--gold);color:#22170a}
+.btn.play:hover{filter:brightness(1.06)}
+.btn.ghost{border-color:currentColor}
+.btn.sm{min-height:40px;padding:0 16px;font-size:14.5px}
+.btn:focus-visible,a:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
+/* cartello turistico marrone */
+.sign{display:inline-flex;align-items:center;gap:6px;background:var(--sign);color:var(--sign-fg);font:800 12.5px/1 var(--f-sign);letter-spacing:.06em;text-transform:uppercase;padding:6px 9px 5px;border-radius:4px;box-shadow:inset 0 0 0 2px var(--sign),inset 0 0 0 3px color-mix(in srgb,var(--sign-fg) 70%,transparent)}
+/* apertura */
+.hero{position:relative;color:#fff;background:var(--night);overflow:hidden}
+.hero img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:60% 30%}
+.hero::after{content:"";position:absolute;inset:0;background:linear-gradient(100deg,rgba(9,14,24,.8) 0%,rgba(9,14,24,.42) 45%,rgba(9,14,24,0) 78%)}
+@media (max-width:820px){.hero::after{background:linear-gradient(180deg,rgba(9,14,24,.35) 0%,rgba(9,14,24,.72) 45%,rgba(9,14,24,.88) 100%)}}
+.hero .wrap{position:relative;z-index:1;padding-block:clamp(56px,10vw,120px)}
+.hero h1{font-size:clamp(40px,7.2vw,86px);font-weight:800;max-width:11ch;letter-spacing:-.01em}
+.hero h1 em{font-style:normal;color:var(--gold)}
+.hero p{font-size:clamp(17px,2vw,20px);max-width:36ch;margin:18px 0 26px;color:#e6e9e4}
+.hero .row{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+.hero small{display:block;margin-top:16px;color:#c7cdc8;font-size:14.5px}
+/* adesso in Tuscia */
+.now{background:var(--surface);border-bottom:1px solid var(--line)}
+.now .wrap{display:grid;grid-template-columns:auto 1fr 1fr;gap:12px 28px;align-items:center;padding-block:16px}
+.now b.lab{font:800 12px var(--f-sign);letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.ev{display:flex;gap:12px;align-items:center;min-width:0}
+.ev .d{font:800 13px var(--f-sign);text-transform:uppercase;letter-spacing:.06em;color:var(--hazel);white-space:nowrap}
+.ev a{font-weight:700;text-decoration-color:var(--line);text-underline-offset:3px}
+/* sezioni */
+section{padding-block:clamp(44px,7vw,80px)}
+.head{display:flex;flex-wrap:wrap;align-items:end;justify-content:space-between;gap:10px 24px;margin-bottom:24px}
+.head h2{font-size:clamp(30px,4.4vw,48px);font-weight:800}
+.head p{margin:0;color:var(--muted);max-width:46ch}
+/* giochi */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:18px}
+.card{background:var(--surface);border-radius:var(--r);overflow:hidden;display:flex;flex-direction:column;border:1px solid var(--line);transition:transform .2s}
+.card:hover{transform:translateY(-3px)}
+.card .ph{position:relative;aspect-ratio:16/9;max-width:100%;background:var(--night)}
+.card .ph img{width:100%;height:100%;object-fit:cover;display:block}
+.card .ph .sign{position:absolute;left:10px;top:10px}
+.card .tx{padding:14px 16px 16px;display:flex;flex-direction:column;gap:6px;flex:1}
+.card h3{font-size:23px;font-weight:800}
+.card p{margin:0;color:var(--muted);font-size:15.5px;flex:1}
+.card .acts{display:flex;align-items:center;gap:14px;margin-top:8px}
+.card .acts a.more{font-weight:700;font-size:14.5px;color:var(--lake)}
+.card.big{grid-column:1/-1;display:grid;grid-template-columns:1.4fr 1fr;background:var(--night);color:#eef0ea;border-color:transparent}
+.card.big .ph{aspect-ratio:auto;min-height:260px}
+.card.big .tx{padding:24px;justify-content:center;gap:10px}
+.card.big h3{font-size:clamp(28px,3.4vw,40px)}
+.card.big p{color:#c5cbc6;flex:0}
+.tag{font:800 11.5px var(--f-sign);letter-spacing:.1em;text-transform:uppercase;color:var(--gold)}
+.modes{display:flex;gap:6px;flex-wrap:wrap}
+.modes span{font-size:12.5px;font-weight:700;padding:3px 9px;border-radius:999px;border:1px solid var(--line);color:var(--muted)}
+.card.big .modes span{border-color:#3a4652;color:#c5cbc6}
+/* mappa */
+.mapbox{display:grid;grid-template-columns:1.25fr 1fr;gap:24px;align-items:start}
+.map{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.map svg{display:block;width:100%;height:auto}
+.map .t{fill:var(--fg);font:800 13px var(--f-sign);letter-spacing:.04em;text-transform:uppercase}
+.pin{cursor:pointer}
+.pin circle{fill:var(--sign);stroke:var(--surface);stroke-width:3}
+.pin.on circle{fill:var(--gold)}
+.pin:focus-visible circle{stroke:var(--gold)}
+.place{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:20px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.place h3{font-size:28px;font-weight:800}
+.place p{margin:0;color:var(--muted)}
+.place ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.place li a{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;background:var(--bg);text-decoration:none;font-weight:700}
+.place li a span{color:var(--lake);font-size:14px}
+/* classifica */
+.board{display:grid;grid-template-columns:1fr 1fr;gap:28px;align-items:center}
+.rows{display:flex;flex-direction:column;gap:10px}
+.r{display:grid;grid-template-columns:28px 130px 1fr 60px;gap:10px;align-items:center;font-variant-numeric:tabular-nums}
+.r b{font-family:var(--f-display);font-size:20px}
+.r .bar{height:12px;border-radius:6px;background:var(--line);overflow:hidden}
+.r .bar i{display:block;height:100%;background:var(--hazel);border-radius:6px}
+#trPaesi .r{grid-template-columns:28px minmax(0,1fr) 72px 70px}#trPaesi .r>span:nth-child(2){display:flex;flex-direction:column;line-height:1.15;min-width:0}#trPaesi .r>span:nth-child(2) small{white-space:nowrap}.r span small{color:var(--muted);font-size:12px}.r.io{box-shadow:inset 3px 0 0 var(--hazel);padding-left:6px;border-radius:6px}.r>span:last-child small{font-size:11px;color:var(--muted)}
+.r:first-child .bar i{background:var(--gold)}
+.r span:last-child{text-align:right;font-weight:700}
+.note{font-size:13.5px;color:var(--muted)}
+.suEta{display:block;margin-top:6px;font-size:12.5px;color:var(--muted)}
+/* comuni e sponsor */
+.pro{background:var(--night);color:#e9ece7}
+.pro .head p{color:#b7beb9}
+.cols{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.col{border-top:3px solid var(--gold);padding-top:14px;display:flex;flex-direction:column;gap:6px}
+.col h3{font-size:22px}
+.col p{margin:0;color:#c3c9c4;font-size:15.5px}
+.mail{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:26px}
+.mail code{font:700 16px var(--f-body);background:#ffffff14;padding:10px 14px;border-radius:10px;user-select:all}
+footer{padding-block:28px;color:var(--muted);font-size:14.5px;border-top:1px solid var(--line)}
+footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px}
+/* scheda del gioco */
+.back{display:inline-flex;align-items:center;gap:6px;font-weight:700;text-decoration:none;color:#dfe3df;margin-bottom:18px}
+.g-hero h1{max-width:14ch}
+.g-grid{display:grid;grid-template-columns:1.2fr 1fr;gap:32px;align-items:start}
+.g-grid h2{font-size:clamp(26px,3.2vw,36px);font-weight:800;margin-bottom:12px}
+.steps{display:flex;flex-direction:column;gap:12px;margin:0;padding:0;list-style:none}
+.steps li{display:grid;grid-template-columns:44px 1fr;gap:12px;align-items:start}
+.steps li b{display:grid;place-items:center;width:44px;height:44px;border-radius:50%;background:var(--surface);border:1px solid var(--line);font-family:var(--f-display);font-size:18px}
+.steps li p{margin:0}
+.steps li strong{display:block}
+.real{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:22px;display:flex;flex-direction:column;gap:14px}
+.facts{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.facts div{border-left:3px solid var(--sign);padding-left:10px}
+.facts span{display:block;font:800 11.5px var(--f-sign);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.facts b{font-family:var(--f-display);font-size:22px;font-variant-numeric:tabular-nums}
+.codex{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.cx{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px;min-width:0}
+.cx .tag{color:var(--sign)}
+.cx h4{margin:4px 0;font-family:var(--f-display);font-size:18px}
+.cx p{margin:0;font-size:14.5px;color:var(--muted)}
+.cx.lock{display:grid;place-items:center;text-align:center;color:var(--muted);border-style:dashed}
+.share{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.btn.wa{background:#127a3c;color:#fff}
+.btn.sign-b{background:var(--sign);color:var(--sign-fg)}
+@media (max-width:820px){
+  .top nav a:not(.btn){display:none}
+  .now .wrap{grid-template-columns:1fr}
+  .card.big{grid-template-columns:1fr}
+  .card.big .ph{min-height:0;aspect-ratio:16/9}
+  .mapbox,.board,.g-grid{grid-template-columns:1fr}
+  .cols{grid-template-columns:1fr}
+  .codex{grid-template-columns:1fr 1fr}
+  .r{grid-template-columns:24px 104px 1fr 52px}
+}
+@media (prefers-reduced-motion:reduce){.card{transition:none}.card:hover{transform:none}}
+.err{padding:40px 0;color:var(--muted)}
+.chip{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:700;color:var(--muted)}
+.tabs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:22px}
+.tabs button{font:800 15px var(--f-body);color:#c9cfca;background:transparent;border:1.5px solid #3b4757;border-radius:999px;padding:10px 16px;cursor:pointer;min-height:44px}
+.tabs button[aria-selected="true"]{background:var(--gold);border-color:var(--gold);color:#22170a}
+.pane{display:grid;grid-template-columns:1fr 1.6fr;gap:22px;align-items:start}
+.pitch h3{font-size:clamp(24px,3vw,32px);margin-bottom:10px}
+.pitch p{margin:0;color:#c3c9c4}
+.offer{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.pk{background:#ffffff0d;border:1px solid #3b4757;border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.pk.hi{border-color:var(--gold);background:#e3a83a14}
+.pk .lv,.report .lv{font:800 11.5px var(--f-sign);letter-spacing:.1em;text-transform:uppercase;color:var(--gold)}
+.pk b{font-family:var(--f-display);font-size:21px;line-height:1.1}
+.pk p{margin:0;font-size:14.5px;color:#c3c9c4}
+.esempio{grid-column:1/-1;margin:0;font-size:15px;color:#c3c9c4;border-left:3px solid var(--gold);padding-left:12px}
+.how{display:grid;grid-template-columns:1fr 1fr;gap:22px;margin-top:40px;align-items:start}
+.how h3{font-size:22px;margin-bottom:12px}
+.prezzi{margin:-4px 0 14px;color:#c3c9c4;font-size:15px}
+.flow{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:12px;counter-reset:f}
+.flow li{counter-increment:f;display:grid;grid-template-columns:36px 1fr;column-gap:12px;color:#c3c9c4;font-size:15px}
+.flow li::before{content:counter(f);grid-row:span 2;display:grid;place-items:center;width:36px;height:36px;border-radius:50%;border:1.5px solid var(--gold);color:var(--gold);font:800 16px var(--f-display)}
+.flow li b{color:#eef0ea;display:block}
+.report{background:#f3f1ea;color:#1d2723;border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:10px}
+.report .lv{color:#6b3d22}
+.report h3{margin:0;font-size:20px}
+.kpi{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.kpi b{display:block;font-family:var(--f-display);font-size:26px;font-variant-numeric:tabular-nums}
+.kpi span{font-size:12.5px;color:#5c6862}
+.report .note{color:#5c6862;margin:0}
+.rules{list-style:none;margin:28px 0 0;padding:0;display:flex;flex-wrap:wrap;gap:8px 20px;font-size:14.5px;color:#c3c9c4}
+.rules li::before{content:"✓ ";color:var(--gold);font-weight:800}
+@media (max-width:820px){.pane,.how{grid-template-columns:1fr}.offer{grid-template-columns:1fr}.kpi{grid-template-columns:1fr 1fr}}
+.seg{display:flex;gap:4px;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:3px}
+.seg button{background:none;border:0;border-radius:999px;padding:7px 12px;font:700 13.5px var(--f-body);color:var(--muted);cursor:pointer;min-height:36px}
+.seg button[aria-selected="true"]{background:var(--sign);color:var(--sign-fg)}
+.btn.ghost{background:transparent;color:inherit}
+@media (max-width:480px){.logo{font-size:15px;white-space:nowrap}.logo i{width:20px;height:20px}.top .wrap{gap:10px}.top nav{gap:8px}.top .btn.sm{padding:0 12px}}
+.subito{margin-top:22px;max-width:480px;display:flex;flex-direction:column;gap:8px}
+.subito label{font-weight:700;color:#f1efe8}
+.sur{display:flex;gap:8px}
+.sur input{flex:1;min-width:0;font:500 17px var(--f-body);padding:0 16px;min-height:50px;border-radius:999px;border:2px solid #ffffff55;background:#0b1220cc;color:#fff}
+.sur input::placeholder{color:#c7cdc8}
+.sur input:focus{outline:3px solid var(--gold);outline-offset:1px}
+.subito small{margin-top:0}
+.suerr{margin:0;color:#ffb4a3;font-weight:700;font-size:14.5px}
+.suerr:empty{display:none}
+.subito.dentro .sur,.subito.dentro label{display:none}
+.linkbtn{background:none;border:0;padding:0;font:inherit;color:inherit;text-decoration:underline;text-underline-offset:3px;cursor:pointer;font-weight:700}
+.trono{background:var(--surface);border-bottom:1px solid var(--line)}
+.tgrid{display:grid;grid-template-columns:.8fr 1.1fr 1fr;gap:20px;align-items:start}
+.poster{margin:0;border-radius:var(--r);overflow:hidden;background:#1b130b;position:relative;box-shadow:0 14px 34px rgba(0,0,0,.25)}
+.poster img{display:block;width:100%;height:auto}
+.poster figcaption{position:absolute;left:0;right:0;bottom:0;padding:28px 14px 12px;background:linear-gradient(transparent,rgba(20,12,4,.85));color:#f4dfb0;font:700 14px var(--f-body);letter-spacing:.04em;text-align:center}
+.tbox{background:var(--bg);border:1px solid var(--line);border-radius:var(--r);padding:18px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.tbar{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:8px}
+.tbar h3{font-size:22px}
+.trows{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.trows li{display:grid;grid-template-columns:34px 1fr auto;gap:10px;align-items:center;padding:9px 12px;border-radius:10px;background:var(--surface);font-variant-numeric:tabular-nums}.trows li small{color:var(--muted);font-size:12px}.trows li>span:first-of-type{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.trows li b{font-family:var(--f-display);font-size:18px;text-align:center}
+.trows li span:last-child{font-weight:800}
+.trows li.re{background:color-mix(in srgb,var(--gold) 22%,var(--surface));font-size:18px}
+.trows li.io{outline:2px solid var(--lake)}
+.trows li em{font-style:normal;color:var(--lake);font-weight:700}
+.trows li.vuoto{display:block;color:var(--muted)}
+.cta{display:flex;flex-direction:column;gap:10px;align-items:flex-start;border-top:1px solid var(--line);padding-top:12px}
+.cta p{margin:0}
+.iscr{position:fixed;inset:0;z-index:20;background:rgba(8,12,18,.62);display:grid;place-items:center;padding:16px max(16px,env(safe-area-inset-right,0px)) 16px max(16px,env(safe-area-inset-left,0px))}
+.isbox{position:relative;width:min(440px,100%);max-height:calc(100% - 20px);overflow:auto;background:var(--surface);color:var(--fg);border-radius:18px;padding:24px;box-shadow:0 24px 60px rgba(0,0,0,.4)}
+.isbox h2{font-size:28px;margin:10px 0 6px}
+.isbox p{margin:0 0 12px;color:var(--muted)}
+.isbox label{display:block;font-weight:700;margin:6px 0 6px}
+.isbox input[type=email],.isbox input[type=text],.isbox select{width:100%;font:500 18px var(--f-body);padding:12px 14px;border-radius:12px;border:1.5px solid var(--line);background:var(--bg);color:var(--fg);margin-bottom:12px}
+.isbox input:focus{outline:3px solid var(--gold);outline-offset:1px}
+#isCodice{letter-spacing:.3em;font-variant-numeric:tabular-nums;font-size:24px!important;text-align:center}
+.isbox .chk{display:flex;gap:10px;align-items:flex-start;font-weight:500;color:var(--muted);font-size:14.5px;margin-bottom:14px}
+.isbox .chk input{margin-top:3px;width:18px;height:18px}
+.isbox .btn{width:100%}
+.isx{position:absolute;right:10px;top:10px;width:40px;height:40px;border-radius:50%;border:0;background:var(--bg);color:var(--fg);font-size:24px;cursor:pointer}
+.iserr{color:#c2412c!important;font-weight:700;min-height:1px;margin-top:10px!important}
+@media (max-width:1000px){.tgrid{grid-template-columns:1fr 1fr}.poster{grid-column:1/-1;max-height:300px}.poster img{height:300px;object-fit:cover;object-position:center 30%}}
+@media (max-width:820px){.tgrid{grid-template-columns:1fr}.poster{max-height:240px}.poster img{height:240px}}
+.altri{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px}
+.altri a{display:flex;flex-direction:column;gap:6px;text-decoration:none;background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.altri img{aspect-ratio:16/9;object-fit:cover;width:100%;display:block}
+.altri span{padding:0 12px 12px;font-weight:700}
+@media (max-width:560px){
+  .grid{grid-template-columns:1fr 1fr;gap:12px}
+  .card:not(.big) .tx{padding:10px 10px 12px;gap:4px}
+  .card:not(.big) h3{font-size:17px}
+  .card:not(.big) p,.card:not(.big) .modes{display:none}
+  .card:not(.big) .acts{flex-direction:column;align-items:stretch;gap:8px;margin-top:4px}
+  .card:not(.big) .acts .btn{min-height:40px}
+  .card:not(.big) .acts a.more{text-align:center;font-size:13.5px}
+  .card:not(.big) .ph .sign{font-size:10.5px;padding:5px 7px 4px;left:6px;top:6px;max-width:calc(100% - 12px);overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+  .altri{grid-template-columns:1fr 1fr}
+}
+/* il video dell'apertura: un giro intorno al Lago di Vico al tramonto, dal mondo di Grand Tuscia */
+.hero .hero-v{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 40%;opacity:0;transition:opacity 1.2s}
+.hero .hero-v.on{opacity:1}
+@media (prefers-reduced-motion:reduce){.hero .hero-v{display:none}}
+/* RADIO NOCCHIA sul sito (engine/tg-radio-nocchia.js, caricata al primo tocco) */
+.radio.via{opacity:0;pointer-events:none;transform:translateY(12px)}
+.radio{transition:opacity .3s,transform .3s;position:fixed;z-index:15;left:max(12px,env(safe-area-inset-left,0px));bottom:max(12px,env(safe-area-inset-bottom,0px));max-width:min(380px,calc(100vw - 24px));font-family:var(--f-body)}
+.r-pill{display:flex;align-items:center;gap:10px;min-height:52px;padding:6px 8px 6px 12px;border-radius:999px;border:1px solid #ffffff2e;background:color-mix(in srgb,var(--night) 94%,transparent);backdrop-filter:blur(8px);color:#f1efe8;cursor:pointer;box-shadow:0 10px 28px rgba(0,0,0,.35);text-align:left;max-width:100%}
+.r-pt{display:flex;flex-direction:column;min-width:0;line-height:1.15}
+.r-pt b{font:800 14.5px var(--f-display)}
+.r-pt span{font-size:12.5px;color:#b9c0bb;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:220px}
+.r-play{display:grid;place-items:center;width:38px;height:38px;border-radius:50%;background:var(--gold);color:#22170a;font-size:14px;flex:none}
+.r-ico{display:flex;align-items:flex-end;gap:2px;height:20px;width:20px;flex:none}
+.r-ico i{display:block;width:4px;height:6px;border-radius:2px;background:var(--gold)}
+.radio.on .r-ico i{animation:rbar .9s ease-in-out infinite}
+.radio.on .r-ico i:nth-child(2){animation-delay:-.3s}.radio.on .r-ico i:nth-child(3){animation-delay:-.6s}
+@keyframes rbar{0%,100%{height:5px}50%{height:19px}}
+.r-box{margin-top:8px;background:var(--night);color:#e9ece7;border:1px solid #ffffff22;border-radius:16px;padding:14px 16px;display:flex;flex-direction:column;gap:6px;box-shadow:0 18px 40px rgba(0,0,0,.4)}
+.r-top{display:flex;justify-content:space-between;align-items:center}
+.r-on{font:800 11px var(--f-sign);letter-spacing:.12em;color:var(--gold)}
+.r-x{width:36px;height:36px;border-radius:50%;border:0;background:#ffffff14;color:#fff;font-size:20px;cursor:pointer}
+.r-prog{font:800 19px var(--f-display)}
+.r-cond{font-size:13.5px;color:#aeb6b1}
+.r-now{margin:4px 0;min-height:44px;font-size:15px;color:#f1efe8;border-left:3px solid var(--gold);padding-left:10px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.r-ctl{display:flex;flex-wrap:wrap;gap:8px}
+.r-ctl .btn.ghost{color:#eef0ea}
+.r-nota{margin:4px 0 0;font-size:12.5px;color:#8f9893}
+@media (prefers-reduced-motion:reduce){.radio.on .r-ico i{animation:none;height:14px}}
+@media (max-width:560px){.r-pt span{max-width:160px}}
+/* OGGI IN TUSCIA: meteo (Open-Meteo), eventi (funzione tg-eventi su Supabase), oroscopo (engine/tg-oroscopo.js) */
+.oggi{padding-top:clamp(36px,6vw,64px)}
+.ogrid{display:grid;grid-template-columns:1fr 1.3fr 1.1fr;gap:18px;align-items:start}
+.obox{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:18px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.obar{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
+.obar h3{font-size:21px}
+.obox .note{margin:0}
+.mlist,.elist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.mlist li{display:grid;grid-template-columns:30px 1fr auto;gap:8px;align-items:center;padding:8px 10px;border-radius:10px;background:var(--bg)}
+.mlist li i{font-style:normal;font-size:22px;text-align:center}
+.mlist li b{display:block;font-weight:700;line-height:1.15}
+.mlist li span{font-size:13px;color:var(--muted)}
+.mlist li strong{font-family:var(--f-display);font-size:22px;font-variant-numeric:tabular-nums}
+.mlist li.vuoto,.elist li.vuoto{display:block;color:var(--muted);background:none;padding:4px 0}
+.elist li a{display:flex;flex-direction:column;gap:3px;padding:9px 11px;border-radius:10px;background:var(--bg);text-decoration:none;border-left:3px solid var(--hazel)}
+.elist li a:hover{border-left-color:var(--gold)}
+.elist li b{font-weight:700;line-height:1.25}
+.elist li span{font-size:12.5px;color:var(--muted)}
+.elist li span em{font-style:normal;font:800 11px var(--f-sign);letter-spacing:.06em;text-transform:uppercase;color:var(--hazel)}
+.segni{display:grid;grid-template-columns:repeat(6,1fr);gap:4px}
+.segni button{min-height:40px;border:1px solid var(--line);background:var(--bg);border-radius:10px;font-size:19px;cursor:pointer;color:var(--fg)}
+.segni button[aria-selected="true"]{background:var(--sign);border-color:var(--sign);color:var(--sign-fg)}
+.ocard{display:flex;flex-direction:column;gap:8px}
+.ocard h4{margin:0;font:800 22px var(--f-display);display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.ocard h4 small{font:600 13px var(--f-body);color:var(--muted)}
+.ocard h4 em{margin-left:auto;font-style:normal;color:var(--gold);letter-spacing:1px;font-size:15px}
+.ocard p{margin:0;font-size:16.5px}
+.ocard ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px;font-size:14.5px;color:var(--muted)}
+.ocard ul b{color:var(--fg)}
+.ocard .row{display:flex;flex-wrap:wrap;gap:8px}
+@media (max-width:1000px){.ogrid{grid-template-columns:1fr 1fr}.ogrid .oro{grid-column:1/-1}}
+@media (max-width:700px){.ogrid{grid-template-columns:1fr}}
+/* TV e radio in evidenza nell'apertura */
+.media{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:16px;max-width:560px}
+.mcard{display:flex;align-items:center;gap:12px;min-height:64px;padding:10px 10px 10px 12px;border-radius:16px;border:1px solid #ffffff38;background:rgba(11,18,32,.66);backdrop-filter:blur(6px);color:#fff;text-decoration:none;text-align:left;cursor:pointer;font:inherit;transition:transform .2s,border-color .2s}
+.mcard:hover{transform:translateY(-2px);border-color:var(--gold)}
+.mic{flex:none;display:grid;place-items:center;width:42px;height:42px;border-radius:12px;background:#ffffff1c;font-size:22px}
+.mtx{display:flex;flex-direction:column;min-width:0;line-height:1.2}
+.mtx b{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font:800 16px var(--f-display)}
+.mtx>span{font-size:13px;color:#d3d8d4;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.live{display:inline-flex;align-items:center;gap:4px;font:800 9.5px var(--f-sign);letter-spacing:.1em;text-transform:uppercase;font-style:normal;background:#c2412c;color:#fff;padding:2px 6px 1px;border-radius:4px}
+.live i{width:6px;height:6px;border-radius:50%;background:#fff;animation:lv 1.4s infinite}
+@keyframes lv{50%{opacity:.25}}
+.mgo{flex:none;margin-left:auto;display:grid;place-items:center;width:34px;height:34px;border-radius:50%;background:var(--gold);color:#22170a;font-size:12px}
+.mcard.on{border-color:var(--gold)}
+.mcard.wide{grid-column:1/-1;min-height:56px}.mcard.wide .mtx>span{white-space:normal}
+.trono5 .mtx{min-width:0}.trono5 ol{list-style:none;margin:6px 0 6px;padding:0;display:grid;gap:3px}.trono5 li{display:grid;grid-template-columns:18px minmax(0,1fr) auto;gap:8px;align-items:baseline;font-size:14px;line-height:1.25;color:#fff}.trono5 li b{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.trono5 li b small{color:#c9cfd9;font-weight:500;font-size:12px}.trono5 li i{font-style:normal;font-family:var(--f-display);font-size:14px;color:var(--gold);text-align:center}.trono5 li span{font-variant-numeric:tabular-nums;font-weight:700}.trono5 li.vuoto{display:block;color:#c9cfd9;font-size:13px}.trono5 .mtx>span{font-size:13px}
+@media (max-width:560px){.media{grid-template-columns:1fr}.mcard{min-height:56px}}
+@media (min-width:1000px){.hero .media{position:absolute;top:clamp(56px,10vw,120px);right:max(16px,env(safe-area-inset-right,0px));width:360px;margin:0;grid-template-columns:1fr;gap:12px}
+  .hero .media::before{content:"In onda adesso";font:800 12px var(--f-sign);letter-spacing:.12em;text-transform:uppercase;color:var(--gold);text-shadow:0 1px 6px rgba(0,0,0,.6)}
+  .hero .mcard{min-height:76px;padding:12px 12px 12px 14px;background:rgba(11,18,32,.72)}
+  .hero .mic{width:50px;height:50px;font-size:26px}.hero .mtx b{font-size:18px}.hero .mtx>span{white-space:normal}}
+@media (prefers-reduced-motion:reduce){.live i{animation:none}.mcard{transition:none}}
+/* le clip dei giochi */
+.card .ph video.anteprima{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .3s}
+.card .ph .clipT{position:absolute;right:10px;bottom:10px;font:800 11px var(--f-sign);letter-spacing:.08em;text-transform:uppercase;background:rgba(9,14,24,.75);color:#fff;padding:4px 8px 3px;border-radius:4px}
+.g-hero video.clipH{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+/* giochi in arrivo */
+.card.soon .ph{display:grid;place-items:end start;padding:16px;background:linear-gradient(135deg,var(--c1),var(--c2));overflow:hidden}
+.card.soon .ph::before{content:"";position:absolute;inset:0;background:repeating-linear-gradient(120deg,rgba(255,255,255,.07) 0 2px,transparent 2px 22px)}
+.card.soon .ph::after{content:"";position:absolute;right:-30px;bottom:-40px;width:200px;height:200px;background:rgba(0,0,0,.18);clip-path:polygon(50% 0,100% 38%,82% 100%,18% 100%,0 38%)}
+.card.soon .ph b{position:relative;z-index:1;font:800 clamp(24px,3vw,32px)/1 var(--f-display);color:#fff;text-shadow:0 2px 12px rgba(0,0,0,.35)}
+.card.soon .ph .presto-t{position:absolute;right:10px;top:10px;left:auto;z-index:1;background:var(--gold);color:#22170a;box-shadow:none}
+.card.soon .acts .btn{background:transparent;border-color:var(--line);color:var(--fg)}
+.place li span.pr{color:var(--muted)}
+.card.soon .tx h3{display:none}
+@media (max-width:560px){.card.soon .ph b{font-size:18px}.card.soon .ph{padding:10px}.card.soon .ph .sign:not(.presto-t){display:none}.card.soon .acts .btn{font-size:13.5px;padding:0 10px}}
+/* bersagli comodi al tocco */
+.card .acts a.more{min-height:40px;display:inline-flex;align-items:center;justify-content:center}
+.back{min-height:44px}
+.logo{min-height:44px}
+.pane .vai{min-height:44px;display:inline-flex;align-items:center}
+footer a{display:inline-block;padding:10px 2px}
+/* il Trono spiegato */
+.spiega{background:var(--night);color:#eef0ea;border-color:transparent}
+.spiega .tag{color:var(--gold)}
+.spiega h3{font-size:24px;line-height:1.1}
+.spiega p{margin:0;color:#c5cbc6;font-size:15.5px}
+.spiega p b{color:var(--gold)}
+.sale{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
+.sale li{font-size:14.5px;color:#aeb6b1;border-left:3px solid var(--gold);padding-left:10px}
+.sale b{display:block;color:#eef0ea;font-size:15.5px}
+@media (max-width:1000px){.tgrid .spiega{grid-column:1/-1}}
+@media (max-width:820px){.tgrid .spiega{grid-column:auto}}
+/* Grand Tuscia Adventure in evidenza */
+.gta{background:var(--night);color:#eef0ea;padding-block:clamp(36px,6vw,64px)}
+.gta-in{display:grid;grid-template-columns:1.35fr 1fr;gap:clamp(20px,3vw,40px);align-items:center}
+.gta-ph{position:relative;display:block;border-radius:var(--r);overflow:hidden;aspect-ratio:16/9;box-shadow:0 18px 44px rgba(0,0,0,.45)}
+.gta-ph img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .4s}
+.gta-ph:hover img{transform:scale(1.03)}
+.gta-play{position:absolute;left:16px;bottom:16px;display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 18px 0 14px;border-radius:999px;background:var(--gold);color:#22170a;font:800 15px var(--f-body);box-shadow:0 8px 24px rgba(0,0,0,.4)}
+.gta-tx{display:flex;flex-direction:column;gap:12px}
+.gta h2{font-size:clamp(32px,4.6vw,54px);font-weight:800}
+.gta-tx>p{margin:0;color:#c5cbc6;font-size:18px}
+.gta-li{list-style:none;margin:4px 0 8px;padding:0;display:grid;grid-template-columns:1fr 1fr;gap:12px 18px}
+.gta-li li{font-size:14.5px;color:#aeb6b1;border-left:3px solid var(--gold);padding-left:10px}
+.gta-li b{display:block;color:#eef0ea;font-size:15.5px}
+.gta .row{display:flex;flex-wrap:wrap;gap:10px}
+@media (max-width:820px){.gta-in{grid-template-columns:1fr}.gta-li{grid-template-columns:1fr}}
+@media (prefers-reduced-motion:reduce){.gta-ph img{transition:none}}
+/* pagine per scuole, comuni, sponsor */
+.pg .hero h1{max-width:16ch}
+[id]{scroll-margin-top:72px}
+.pg section+section{padding-top:0}
+.pg h2.t2{font-size:clamp(28px,3.8vw,42px);font-weight:800;margin-bottom:10px}
+.pg .lead{font-size:clamp(17px,1.8vw,19px);max-width:62ch;margin:0 0 26px;color:var(--muted)}
+.tempi{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;counter-reset:t;list-style:none;margin:0;padding:0}
+.tempi li{counter-increment:t;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:18px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.tempi li::before{content:counter(t);display:grid;place-items:center;width:40px;height:40px;border-radius:50%;background:var(--sign);color:var(--sign-fg);font:800 18px var(--f-display)}
+.tempi h3{font-size:21px}
+.tempi .dur{font:800 11.5px var(--f-sign);letter-spacing:.1em;text-transform:uppercase;color:var(--hazel)}
+.tempi p{margin:0;font-size:15.5px;color:var(--muted)}
+.duo{display:grid;grid-template-columns:1fr 1fr;gap:22px;align-items:start}
+.box{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:22px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.box h3{font-size:22px}
+.box p{margin:0;color:var(--muted)}
+.box ul,.ops ul{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
+.box li,.ops li{color:var(--fg)}
+.tbl{width:100%;border-collapse:collapse;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;font-size:15.5px}
+.tbl th,.tbl td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top}
+.tbl th{font:800 12px var(--f-sign);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);background:var(--bg)}
+.tbl tr:last-child td{border-bottom:0}
+.tbl td:first-child{font-weight:700;white-space:nowrap}
+.tbl a{color:var(--lake);font-weight:700}
+.scroll{overflow-x:auto;border-radius:var(--r)}
+.ops{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.op{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:20px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.op.hi{border:2px solid var(--gold)}
+.op .lv{font:800 11.5px var(--f-sign);letter-spacing:.1em;text-transform:uppercase;color:var(--sign)}
+.op h3{font-size:23px}
+.op p{margin:0;color:var(--muted);font-size:15.5px}
+.op .chi{margin-top:auto;padding-top:10px;border-top:1px solid var(--line);font-size:14.5px;color:var(--muted)}
+.percorso{display:flex;flex-wrap:wrap;gap:8px;align-items:center;list-style:none;margin:0;padding:0}
+.percorso li{background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:9px 16px;font-weight:700}
+.percorso li:not(:last-child)::after{content:"→";margin-left:14px;color:var(--muted);font-weight:400}
+.percorso li:last-child{background:var(--sign);color:var(--sign-fg);border-color:var(--sign)}
+.no{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.no li::before{content:"✕ ";color:#c2412c;font-weight:800}
+.si li::before{content:"✓ ";color:var(--hazel)}
+.fine{background:var(--night);color:#e9ece7;border-radius:var(--r);padding:clamp(22px,4vw,36px);display:flex;flex-wrap:wrap;gap:18px;align-items:center;justify-content:space-between}
+.fine h2{font-size:clamp(24px,3vw,34px)}
+.fine p{margin:6px 0 0;color:#c3c9c4}
+.fine .mail{margin:0}
+.pglinks{display:flex;flex-wrap:wrap;gap:10px;margin-top:22px}
+.pane .vai{display:inline-block;margin-top:14px;color:var(--gold);font-weight:800}
+.pg .report{background:var(--surface);color:var(--fg);border:1px solid var(--line)}
+.pg .report .lv{color:var(--sign)}.pg .kpi span,.pg .report .note{color:var(--muted)}
+@media (max-width:980px){.tempi{grid-template-columns:1fr 1fr}.ops{grid-template-columns:1fr}}
+@media (max-width:820px){.duo{grid-template-columns:1fr}}
+@media (max-width:520px){.tempi{grid-template-columns:1fr}.tbl td:first-child{white-space:normal}}
+</style>
+<header class="top"><div class="wrap">
+  <a class="logo" href="#"><i aria-hidden="true"></i>TUSCIA GAMES</a>
+  <nav><a href="#mondo">Grand Tuscia</a><a href="#giochi">I giochi</a><a href="#trono">Classifica</a><a href="#oggi">Oggi</a><a href="#" id="navTv" target="_blank" rel="noopener">TV Nocchia</a><a href="#mappa">La mappa</a><a href="#comuni">Comuni e sponsor</a><button class="btn ghost sm" type="button" id="navIscr" data-iscriviti>Iscriviti</button><a class="btn play sm" id="navGioca" href="#" target="_blank" rel="noopener">Gioca</a></nav>
+</div></header>
+
+<main id="home">
+  <div class="hero">
+    <img src="img/hero.jpg" alt="Il Lago di Vico al tramonto, tra il Monte Fogliano e il Monte Venere, nel mondo di Grand Tuscia">
+    <video class="hero-v" id="heroV" muted loop playsinline preload="none" poster="img/hero-v.jpg" aria-hidden="true" tabindex="-1">
+      <source data-src="img/hero.mp4" type="video/mp4"><source data-src="img/hero.webm" type="video/webm">
+    </video>
+    <div class="wrap">
+      <span class="sign">Lago di Vico · Monti Cimini · Agro Falisco</span>
+      <h1 style="margin-top:16px">Gioca la Tuscia e poi <em>vieni a viverla</em> davvero.</h1>
+      <p id="heroP">Giochi ambientati nei posti veri: il lago, i noccioleti, le feste dei paesi. Ogni partita ti lascia qualcosa da andare a vedere.</p>
+      <div class="row"><a class="btn play" id="heroGioca" href="#" target="_blank" rel="noopener">Gioca a Grand Tuscia Adventure</a><a class="btn ghost" href="#giochi">Scegli un gioco</a></div>
+      <div class="media" aria-label="TV e radio della Tuscia">
+        <a class="mcard" id="heroTv" href="#" target="_blank" rel="noopener"><span class="mic" aria-hidden="true">📺</span><span class="mtx"><b>TV Nocchia <em class="live"><i></i>Diretta</em></b><span>Giochi, Trono, eventi, meteo e oroscopo</span></span><span class="mgo" aria-hidden="true">▶</span></a>
+        <button class="mcard" id="heroRadio" type="button" aria-label="Accendi o spegni Radio Nocchia"><span class="mic" aria-hidden="true">📻</span><span class="mtx"><b>Radio Nocchia</b><span id="heroRadioT">Ascolta la radio della Tuscia</span></span><span class="mgo" id="heroRadioP" aria-hidden="true">▶</span></button>
+        <a class="mcard wide trono5" id="heroTrono" href="#trono"><span class="mtx"><b>👑 Il Trono di Nocchie <em class="live"><i></i>Classifica</em></b><ol id="heroTop5" aria-label="I primi cinque"><li class="vuoto">Chi è il più rispettato della Tuscia…</li></ol><span id="heroTronoT">La sfida dei comuni: scegli il tuo e portalo in alto</span></span><span class="mgo" aria-hidden="true">›</span></a>
+      </div>
+      <form class="subito" id="subito" novalidate>
+        <label for="suMail">Entra nel Trono di Nocchie: iscriviti con la mail</label>
+        <div class="sur"><input id="suMail" type="email" inputmode="email" autocomplete="email" placeholder="la tua mail"><button class="btn play" type="submit" id="suVai">Iscriviti</button></div><small class="suEta">Dai 14 anni in su. Più piccoli? Si gioca lo stesso, senza salvare.</small>
+        <p class="suerr" id="suErr" role="alert"></p>
+        <small>Gratis, niente password: ti arriva un codice di 6 cifre. Si può anche giocare subito senza iscriversi. <a href="https://grandtuscia.netlify.app/privacy.html" target="_blank" rel="noopener">Privacy</a></small>
+      </form>
+    </div>
+  </div>
+
+  <div class="now"><div class="wrap" id="adesso"></div></div>
+
+  <section class="gta" id="mondo"><div class="wrap gta-in">
+    <a class="gta-ph" id="gtaFoto" href="#" target="_blank" rel="noopener"><img src="img/mondo.jpg" width="1440" height="810" alt="Grand Tuscia Adventure al tramonto: Caprarola con Palazzo Farnese, dietro il Lago di Vico, il Monte Fogliano e il Monte Venere"><span class="gta-play" aria-hidden="true">▶ Gioca</span></a>
+    <div class="gta-tx">
+      <span class="tag">Il gioco principale · gratis dal telefono</span>
+      <h2>Grand Tuscia Adventure</h2>
+      <p>Il mondo aperto della Tuscia: il Lago di Vico, i noccioleti, Viterbo, Ronciglione, Carbognano, Fabrica di Roma. Da qui entri in tutti gli altri giochi.</p>
+      <ul class="gta-li">
+        <li><b>Coltivi il tuo podere</b>nocciole, campi, terreni da comprare</li>
+        <li><b>Guidi trattore, Ape e Vespa</b>sulle strade vere, da un paese all'altro</li>
+        <li><b>Lavori per i paesi</b>e fai salire il tuo nel Trono di Nocchie</li>
+        <li><b>Accendi Radio Nocchia</b>la radio della Tuscia, mentre guidi. <button type="button" class="linkbtn" data-radio style="color:var(--gold)">Ascoltala qui ▶</button></li>
+      </ul>
+      <div class="row"><a class="btn play" id="gtaGioca" href="#" target="_blank" rel="noopener">Entra nel mondo</a><button class="btn ghost" type="button" data-iscriviti>Iscriviti e salva la partita</button></div>
+    </div>
+  </div></section>
+
+
+  <section id="giochi"><div class="wrap">
+    <div class="head"><h2>I giochi</h2><p>Ognuno parte da una cosa vera del territorio. Tre modi di giocare: passeggiata, competizione, divertimento.</p></div>
+    <div class="grid" id="lista"><p class="err">Sto caricando i giochi…</p></div>
+    <div id="presto" class="presto" hidden>
+      <div class="head" style="margin:44px 0 18px"><div><span class="sign">Prossimamente</span><h2 style="margin-top:10px;font-size:clamp(26px,3.4vw,38px)">In arrivo</h2></div><p>Tre giochi nuovi in lavorazione. Iscriviti e ti avvisiamo quando escono.</p></div>
+      <div class="grid" id="prestoLista"></div>
+    </div>
+  </div></section>
+
+  <section class="trono" id="trono"><div class="wrap">
+    <div class="head"><div><span class="sign">Classifica</span><h2 style="margin-top:10px">Il Trono di Nocchie</h2></div>
+      <p>Dal vivo da Grand Tuscia Adventure: chi ha più stima tra i giocatori, e quale paese è davanti.</p></div>
+    <div class="tgrid">
+      <div class="tbox spiega">
+        <span class="tag">Che cos'è</span>
+        <h3>Chi siede sul trono è il più rispettato della Tuscia</h3>
+        <p>Nel mondo di Grand Tuscia i soldi del raccolto servono a farsi rispettare: ogni lavoro che fai per un paese ti fa guadagnare <b>stima</b>. Il Trono di Nocchie è la classifica della stima, e chi sta in cima è il re delle nocchie.</p>
+        <ul class="sale">
+          <li><b>Raccogli e vendi le nocciole</b>nel tuo podere, con le mani o col trattore</li>
+          <li><b>Rimetti a posto i paesi</b>la fontana di Carbognano, le case della piazza, le mura di Falerii Novi</li>
+          <li><b>Il paese si fida di te</b>con la stima ti lascia comprare il trattore e la raccoglitrice</li>
+          <li><b>Gioca per il tuo comune</b>quando ti iscrivi dici per che paese giochi: la tua stima lo fa salire nella sfida dei comuni della Tuscia</li>
+        </ul>
+      </div>
+      <div class="tbox">
+        <div class="tbar"><h3>I giocatori</h3><div class="seg" role="tablist" aria-label="Periodo"><button role="tab" id="tr-sempre" aria-selected="true">Sempre</button><button role="tab" id="tr-mese" aria-selected="false">Questo mese</button></div></div>
+        <ol class="trows" id="trGioc"><li class="vuoto">Carico la classifica…</li></ol>
+        <p class="note" id="trNota"></p>
+      </div>
+      <div class="tbox">
+        <div class="tbar"><h3>La sfida dei comuni</h3><div class="seg" role="tablist" aria-label="Come contare"><button role="tab" id="tc-punti" aria-selected="true">Per punti</button><button role="tab" id="tc-testa" aria-selected="false">A testa</button></div></div>
+        <div class="rows" id="trPaesi"></div>
+        <div class="cta"><p id="trCtaT">Entra anche tu: ti basta la mail, e i tuoi punti contano per il tuo paese.</p><button class="btn play" type="button" data-iscriviti>Iscriviti e gioca</button></div>
+      </div>
+    </div>
+  </div></section>
+
+  <section class="oggi" id="oggi"><div class="wrap">
+    <div class="head"><div><span class="sign">Oggi in Tuscia</span><h2 style="margin-top:10px">Meteo, eventi e stelle</h2></div>
+      <p>Che tempo fa, cosa c'è da fare questa settimana e cosa dicono le stelle. Lo stesso di <a href="#" id="oggiTv">TV Nocchia</a>, la televisione della Tuscia.</p></div>
+    <div class="ogrid">
+      <article class="obox" aria-labelledby="mtTit"><div class="obar"><h3 id="mtTit">🌤️ Il meteo</h3><span class="note" id="mtQuando"></span></div>
+        <ul class="mlist" id="mtLista"><li class="vuoto">Guardo il cielo…</li></ul>
+        <p class="note">Dati meteo: <a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo.com</a> (CC BY 4.0)</p></article>
+      <article class="obox" aria-labelledby="evTit"><div class="obar"><h3 id="evTit">🎪 Eventi della settimana</h3></div>
+        <ul class="elist" id="evLista"><li class="vuoto">Cerco le feste in piazza…</li></ul>
+        <p class="note" id="evNota">Solo eventi e belle notizie, dai siti d'informazione della Tuscia: l'articolo si legge sul loro sito.</p></article>
+      <article class="obox oro" aria-labelledby="orTit"><div class="obar"><h3 id="orTit">✨ L'oroscopo de Nocchia</h3><span class="note">per gioco</span></div>
+        <div class="segni" id="orSegni" role="tablist" aria-label="Scegli il tuo segno"></div>
+        <div class="ocard" id="orCard" aria-live="polite"></div></article>
+    </div>
+    <div class="pglinks"><a class="btn sign-b" href="#" id="oggiTv2" target="_blank" rel="noopener">📺 Guarda TV Nocchia</a><button class="btn ghost" type="button" data-radio>📻 Ascolta Radio Nocchia</button></div>
+  </div></section>
+
+  <section id="mappa"><div class="wrap">
+    <div class="head"><h2>La mappa</h2><p>Tocca un paese: vedi i giochi che si svolgono lì.</p></div>
+    <div class="mapbox">
+      <div class="map"><svg viewBox="0 0 720 520" role="group" aria-label="Mappa della Tuscia: tocca un paese per vedere i suoi giochi">
+        <rect width="720" height="520" fill="var(--surface)"/>
+        <path d="M60 470 C 180 420, 300 455, 420 420 S 640 380, 700 300" fill="none" stroke="var(--line)" stroke-width="10" stroke-linecap="round"/>
+        <g opacity=".9"><path d="M120 80 l40 -46 l38 46z M150 60 l30 -40 l40 52z" fill="color-mix(in srgb,var(--hazel) 55%,var(--surface))"/></g>
+        <ellipse cx="248" cy="250" rx="62" ry="54" fill="color-mix(in srgb,var(--lake) 70%,var(--surface))"/>
+        <ellipse cx="248" cy="250" rx="94" ry="88" fill="none" stroke="color-mix(in srgb,var(--hazel) 45%,var(--surface))" stroke-width="10" stroke-dasharray="2 10" stroke-linecap="round"/>
+        <text class="t" x="214" y="254" style="fill:#fff">Lago di Vico</text>
+        <path d="M640 420 l26 -60 l26 60z" fill="color-mix(in srgb,var(--muted) 35%,var(--surface))"/><text class="t" x="596" y="440" style="font-size:11px;fill:var(--muted)">Soratte</text>
+        <g id="pins"></g>
+      </svg></div>
+      <div class="place" id="place"></div>
+    </div>
+  </div></section>
+
+
+  <section class="pro" id="comuni"><div class="wrap">
+    <div class="head"><h2>Per comuni, scuole e attività</h2><p>Chi gioca scopre un posto e poi ci va. Mettiamo nel gioco il vostro, nel punto giusto e con il suo nome vero.</p></div>
+    <div class="tabs" role="tablist" aria-label="Per chi">
+      <button role="tab" id="t-enti" aria-selected="true" aria-controls="p-enti">Comuni e Pro Loco</button>
+      <button role="tab" id="t-scuole" aria-selected="false" aria-controls="p-scuole">Scuole</button>
+      <button role="tab" id="t-attivita" aria-selected="false" aria-controls="p-attivita">Attività e sponsor</button>
+    </div>
+
+    <div class="pane" role="tabpanel" id="p-enti" aria-labelledby="t-enti">
+      <div class="pitch"><h3>Il vostro paese, dentro il gioco e curato</h3>
+        <p>La piazza, il monumento, la festa: costruiti in low poly al posto giusto, con la scheda "Dal vero" che dice quando venire e cosa vedere. Ogni scoperta finisce nel Tuscia Codex del giocatore.</p><a class="vai" href="#per-comuni">Tutti i dettagli per i Comuni →</a></div>
+      <div class="offer">
+        <div class="pk"><span class="lv">Patrocinio</span><b>Il Comune che sostiene il gioco</b><p>Il logo del Comune nella scheda del paese, in cambio della diffusione del gioco sui vostri canali.</p></div>
+        <div class="pk hi"><span class="lv">Territorio</span><b>Il paese curato tutto l'anno</b><p>La cura del paese nel gioco: monumenti e piazze rifatti, la festa con la sua settimana speciale, aggiornamenti durante l'anno.</p></div>
+        <div class="pk"><span class="lv">Evento</span><b>La settimana della festa</b><p>Una settimana a tema sulla data vera della festa: luci, folla, una gara a tempo e una clip da condividere.</p></div>
+      </div>
+    </div>
+
+    <div class="pane" role="tabpanel" id="p-scuole" aria-labelledby="t-scuole" hidden>
+      <div class="pitch"><h3>Storia e natura della Tuscia, imparate giocando</h3>
+        <p>Una lezione in classe che parte dal gioco: i ragazzi esplorano Falerii Novi, il lago o il trasporto della Macchina, e raccolgono le schede del Codex. Poi, se si può, la gita nel posto vero.</p><a class="vai" href="#per-scuole">Il metodo, il kit e una lezione d'esempio →</a></div>
+      <div class="offer">
+        <div class="pk"><span class="lv">In classe</span><b>Pronti all'uso</b><p>I giochi si aprono dal browser della LIM o dai tablet, senza installare niente e senza account per i ragazzi.</p></div>
+        <div class="pk hi"><span class="lv">Progetto scuola</span><b>Su misura per la classe</b><p>Un percorso su misura per la classe: schede per l'insegnante, domande, una sfida tra classi con la classifica.</p></div>
+        <div class="pk"><span class="lv">Per età</span><b>Dagli 8 anni</b><p>Testi brevi e controlli semplici. La modalità Passeggiata si gioca senza fretta e senza punteggi.</p></div>
+      </div>
+    </div>
+
+    <div class="pane" role="tabpanel" id="p-attivita" aria-labelledby="t-attivita" hidden>
+      <div class="pitch"><h3>Un luogo vero nel mondo, non un banner</h3>
+        <p>Agriturismo, cantina, azienda di nocciole, noleggio: la vostra sede entra nel mondo dove si trova davvero, con la sua scheda e "Come arrivarci". Il giocatore non paga mai e non vede pubblicità: vi trova lungo la strada.</p><a class="vai" href="#per-sponsor">Tutti i dettagli per gli sponsor →</a></div>
+      <div class="offer">
+        <div class="pk"><span class="lv">Presenza</span><b>Il vostro luogo sulla mappa</b><p>Il vostro luogo nel mondo, la scheda nel Codex, "Come arrivarci", il link e il punto sulla mappa.</p></div>
+        <div class="pk hi"><span class="lv">Voce</span><b>Il luogo che parla</b><p>Tutta la Presenza, più una battuta di Radio Nocchia nel suo stile e una missione che passa da voi.</p></div>
+        <div class="pk"><span class="lv">Evento</span><b>Una settimana tutta vostra</b><p>Una settimana speciale attorno al vostro luogo, su una data vera: caccia a tempo, premio e clip per i social.</p></div>
+      </div>
+      <p class="esempio">Già nel mondo: il Consorzio delle nocciole a Fabrica di Roma, con il suo piazzale, i silos e la bottega dove si comprano le scorte.</p>
+    </div>
+
+    <div class="how">
+      <div><h3>Come si parte</h3><p class="prezzi">Le condizioni le concordiamo insieme, caso per caso: scriveteci.</p>
+        <ol class="flow"><li><b>Ci scrivete</b>chi siete e cosa volete far scoprire.</li><li><b>Sopralluogo e foto</b>per rifare il posto com'è.</li><li><b>Nel gioco in due settimane</b>i testi li scriviamo noi e li approvate voi.</li><li><b>Ogni tre mesi i numeri</b>quanti lo hanno visto, raggiunto, scoperto.</li></ol></div>
+      <div class="report" aria-label="Esempio di rendiconto trimestrale">
+        <span class="lv">Rendiconto · esempio</span><h3>Il vostro luogo, ultimi 3 mesi</h3>
+        <div class="kpi"><div><b>2.340</b><span>l'hanno visto</span></div><div><b>860</b><span>ci sono arrivati</span></div><div><b>310</b><span>hanno aperto la scheda</span></div><div><b>74</b><span>"Come arrivarci"</span></div></div>
+        <p class="note">Numeri inventati per mostrare il formato. Le statistiche sono anonime: niente dati personali dei giocatori.</p>
+      </div>
+    </div>
+    <ul class="rules"><li>Nome e posizione veri, sempre.</li><li>Niente pop-up, spot o interruzioni del gioco.</li><li>Al massimo 4 luoghi privati per paese.</li><li>Scoprire il territorio resta gratis per tutti.</li></ul>
+    <div class="mail"><span>Scrivi a</span><code id="mailT">infotusciagames@gmail.com</code><a class="btn play sm" href="mailto:infotusciagames@gmail.com">Scrivi una mail</a><button class="btn ghost sm" id="copia" type="button">Copia l'indirizzo</button></div>
+  </div></section>
+</main>
+
+<main id="scheda" hidden></main>
+
+<!-- PAGINA PER LE SCUOLE (#per-scuole, scuole.html) -->
+<main id="per-scuole" class="pg" hidden>
+  <div class="hero g-hero"><img src="img/citta.jpg" alt="La città romana di Falerii Novi ricostruita nel gioco La Città sotto i Campi"><div class="wrap">
+    <a class="back" href="#comuni">← Comuni, scuole e attività</a><span class="sign">Per le scuole</span>
+    <h1 style="margin-top:16px">Si gioca in classe. Poi si va a vedere il posto vero.</h1>
+    <p>Un metodo in quattro tempi per la storia, la natura e le tradizioni della Tuscia. Il gioco fa venire le domande, la lezione dà le risposte, l'uscita le fa ricordare.</p>
+    <div class="row"><a class="btn play" href="#kit">Il kit per l'insegnante</a><a class="btn ghost" href="#esempio">Guarda una lezione</a></div>
+  </div></div>
+
+  <section><div class="wrap">
+    <h2 class="t2">Il metodo: gioca, scopri, vai a vedere</h2>
+    <p class="lead">Ogni lezione segue gli stessi quattro tempi, qualunque sia il gioco. L'insegnante guida, il gioco mostra, i ragazzi lavorano in piccoli gruppi.</p>
+    <ol class="tempi">
+      <li><span class="dur">Prima · 15 minuti</span><h3>La domanda</h3><p>L'insegnante racconta la storia in cinque minuti e scrive alla lavagna le domande della classe. Si gioca solo quando c'è qualcosa da scoprire.</p></li>
+      <li><span class="dur">In classe · 60 minuti</span><h3>Il gioco</h3><p>A gruppi di 2 o 3, con tre ruoli che girano ogni dieci minuti: chi muove, chi legge le lezioni ad alta voce, chi compila la scheda.</p></li>
+      <li><span class="dur">Dopo · 30 minuti</span><h3>La verifica</h3><p>Scheda per gli studenti, domande a crocetta, una domanda aperta. Si valuta quello che si è capito: il punteggio del gioco non entra nel voto.</p></li>
+      <li><span class="dur">Uscita · mezza giornata</span><h3>Il posto vero</h3><p>La classe ritrova dal vero quello che ha visto sullo schermo e riprende le domande del primo giorno. Facoltativa, ma è il momento che si ricorda.</p></li>
+    </ol>
+  </div></section>
+
+  <section><div class="wrap duo">
+    <div class="box"><h3>Perché funziona</h3><ul>
+      <li>I ragazzi vedono la città, il bosco o la festa prima di leggerne: le parole difficili hanno già un'immagine.</li>
+      <li>I testi nel gioco sono brevi e compaiono quando si arriva nel posto giusto.</li>
+      <li>Il lavoro a ruoli tiene dentro tutto il gruppo, anche chi non gioca mai.</li>
+      <li>Ogni scoperta diventa una scheda del Tuscia Codex: si può stampare e collezionare in classe.</li>
+      <li>La modalità Passeggiata si gioca senza fretta e senza punteggi.</li>
+    </ul></div>
+    <div class="box"><h3>Cosa serve in classe</h3><ul>
+      <li>La LIM o un proiettore; meglio ancora un tablet o un PC ogni 2 o 3 studenti.</li>
+      <li>Un browser: non si installa niente.</li>
+      <li>Nessun account per i ragazzi e nessun dato personale raccolto.</li>
+      <li>Controlli semplici: frecce o WASD, oppure il tocco sul tablet.</li>
+      <li>Età consigliata: dagli 8 anni, dalla 3ª primaria alla secondaria di primo grado.</li>
+    </ul></div>
+  </div></section>
+
+  <section id="esempio"><div class="wrap">
+    <h2 class="t2">Una lezione d'esempio: la città sotto i campi</h2>
+    <p class="lead">Classe 5ª primaria o 1ª media, due ore. Falerii Novi è una città romana fondata nel 241 a.C. e oggi sepolta sotto i campi di Fabrica di Roma: nel 2020 gli archeologi l'hanno mappata tutta col georadar, senza scavare.</p>
+    <div class="duo">
+      <div class="box"><h3>Come si svolge</h3><ol class="steps">
+        <li><b>1</b><p><strong>Il racconto.</strong>Roma distrugge Falerii Veteres, sulla rupe di Civita Castellana, e sposta i Falisci in pianura. Perché?</p></li>
+        <li><b>2</b><p><strong>L'esplorazione guidata.</strong>Una freccia porta in 14 tappe, dalla Porta di Giove alle mura: foro, terme, teatro, domus, botteghe. A ogni tappa una lezione e un quiz.</p></li>
+        <li><b>3</b><p><strong>Il lavoro dell'archeologo.</strong>La città torna sepolta: i ragazzi passano il georadar e vedono comparire muri e strade.</p></li>
+        <li><b>4</b><p><strong>La verifica.</strong>Le parole dell'archeologo, la linea del tempo, il confronto tra la città romana e il proprio paese.</p></li>
+      </ol></div>
+      <div class="box"><h3>Cosa impara la classe</h3><ul>
+        <li>Collocare nel tempo la nascita di una città romana e capirne il perché.</li>
+        <li>Riconoscere le parti di una città: cardo e decumano, foro, basilica, terme, teatro, domus, tabernae.</li>
+        <li>Spiegare con parole proprie come il georadar vede sotto terra.</li>
+        <li>Collegare il gioco ai resti veri: le mura di tufo, la Porta di Giove, l'abbazia di Santa Maria di Falleri.</li>
+      </ul><a class="btn sign-b sm" href="#citta" style="align-self:flex-start;margin-top:6px">La scheda del gioco</a></div>
+    </div>
+  </div></section>
+
+  <section id="kit"><div class="wrap">
+    <h2 class="t2">Il kit per l'insegnante</h2>
+    <p class="lead">Per ogni gioco un fascicolo pronto da usare, che si può modificare e stampare.</p>
+    <div class="ops">
+      <div class="op"><span class="lv">Per l'insegnante</span><h3>Scheda didattica</h3><p>Classe, materie, durata e obiettivi. Il racconto da fare prima di giocare, le domande stimolo, lo svolgimento minuto per minuto.</p></div>
+      <div class="op hi"><span class="lv">Per i ragazzi</span><h3>Scheda di lavoro</h3><p>Esercizi da fare durante e dopo il gioco: abbinamenti, linea del tempo, "allora e oggi", un disegno. Più le carte del Tuscia Codex da collezionare.</p></div>
+      <div class="op"><span class="lv">Per valutare</span><h3>Verifica e uscita</h3><p>Domande con le soluzioni, una griglia di valutazione su quattro livelli e la guida all'uscita nel posto vero.</p></div>
+    </div>
+  </div></section>
+
+  <section><div class="wrap">
+    <h2 class="t2">Un gioco per ogni materia</h2>
+    <p class="lead">Lo stesso metodo vale per tutti i giochi. Ecco da dove parte ciascuno.</p>
+    <div class="scroll"><table class="tbl">
+      <thead><tr><th>Gioco</th><th>Materie</th><th>Di cosa si parla</th></tr></thead>
+      <tbody>
+        <tr><td><a href="#citta">La Città sotto i Campi</a></td><td>Storia, scienze</td><td>Una città romana, i Falisci, come lavora un archeologo</td></tr>
+        <tr><td><a href="#santarosa">Sotto col Ciuffo</a></td><td>Storia, educazione civica</td><td>Il trasporto della Macchina di Santa Rosa a Viterbo, patrimonio UNESCO; il lavoro di squadra dei facchini</td></tr>
+        <tr><td><a href="#ciminodh">CiminoDH</a></td><td>Scienze, geografia</td><td>La faggeta del Monte Cimino, patrimonio UNESCO; il bosco e i suoi alberi</td></tr>
+        <tr><td><a href="#funghi">Funghi del Cimino</a></td><td>Scienze</td><td>Funghi e bosco: riconoscere, rispettare, non raccogliere quello che non si conosce</td></tr>
+        <tr><td><a href="#vicosail">VicoSail</a></td><td>Geografia, scienze</td><td>Un lago dentro un vulcano spento, il vento e come una vela lo usa</td></tr>
+        <tr><td><a href="#vicopesca">VicoPesca</a></td><td>Scienze</td><td>I pesci del Lago di Vico e la riserva naturale</td></tr>
+        <tr><td><a href="#vicovolo">VicoVolo</a></td><td>Geografia, scienze</td><td>La caldera vista dall'alto, le correnti d'aria, leggere un paesaggio</td></tr>
+        <tr><td><a href="#carrettini">Corsa dei Carrettini</a></td><td>Scienze, tecnologia</td><td>Gravità, pendenza e attrito, con i carrettini di legno di Fabrica di Roma</td></tr>
+        <tr><td><a href="#corseavuoto">Corse a Vuoto</a></td><td>Storia, educazione civica</td><td>Il Carnevale di Ronciglione e le tradizioni dei paesi</td></tr>
+      </tbody></table></div>
+    <div class="op" style="margin-top:14px"><span class="lv">Dati degli alunni</span><h3>In classe si gioca senza account</h3><p>Nessuna iscrizione, nessuna mail, nessun dato degli alunni: la partita resta nel browser della LIM o del tablet. Il salvataggio con la mail è riservato a chi ha almeno 14 anni, come prevede la legge italiana; sotto quell'età si gioca lo stesso, solo senza salvare. Niente pubblicità, niente acquisti, niente notifiche.</p></div>
+    <p class="note" style="margin-top:10px">Pronto oggi: il kit di Falerii Novi. Gli altri si preparano su richiesta, a partire dal programma della classe.</p>
+  </div></section>
+
+  <section><div class="wrap duo">
+    <div class="box"><h3>La sfida tra classi</h3><p>Su richiesta, più classi della stessa scuola o di paesi diversi giocano la modalità Competizione nella stessa settimana, con una classifica di classe sul sito. Si gareggia sul ripasso, non sul voto.</p></div>
+    <div class="box"><h3>Come si parte</h3><ol class="flow" style="color:var(--muted)">
+      <li><b style="color:var(--fg)">Ci scrivete</b>classe, materia e periodo dell'anno.</li>
+      <li><b style="color:var(--fg)">Scegliamo il gioco</b>e adattiamo il kit al vostro programma.</li>
+      <li><b style="color:var(--fg)">Giocate in classe</b>quando volete: il gioco è sempre aperto.</li>
+      <li><b style="color:var(--fg)">Se si può, l'uscita</b>vi aiutiamo a organizzarla con il Comune.</li>
+    </ol></div>
+  </div></section>
+
+  <section><div class="wrap"><div class="fine"><div><h2>Volete provarlo con la vostra classe?</h2><p>Le condizioni le concordiamo con la scuola, caso per caso.</p></div>
+    <div class="mail"><code>infotusciagames@gmail.com</code><a class="btn play sm" href="mailto:infotusciagames@gmail.com">Scrivi una mail</a><button class="btn ghost sm" type="button" data-copia>Copia l'indirizzo</button></div></div></div></section>
+</main>
+
+<!-- PAGINA PER I COMUNI (#per-comuni, comuni.html) -->
+<main id="per-comuni" class="pg" hidden>
+  <div class="hero g-hero"><img src="img/santarosa.jpg" alt="Viterbo e la Macchina di Santa Rosa nel gioco Sotto col Ciuffo"><div class="wrap">
+    <a class="back" href="#comuni">← Comuni, scuole e attività</a><span class="sign">Per Comuni e Pro Loco</span>
+    <h1 style="margin-top:16px">Il vostro paese nel gioco, com'è davvero.</h1>
+    <p>La piazza, il monumento, la festa, nel punto giusto e con il nome vero. Chi gioca scopre il paese, apre la scheda "Dal vero" e trova quando venire e cosa vedere.</p>
+    <div class="row"><a class="btn play" href="#forme">Le tre forme</a><a class="btn ghost" href="#come-comuni">Come si parte</a></div>
+  </div></div>
+
+  <section><div class="wrap">
+    <h2 class="t2">Cosa entra nel gioco</h2>
+    <p class="lead">Nel mondo di Grand Tuscia i paesi sono costruiti dalle loro vie vere: le piazze, i monumenti, le case lungo le strade. Oggi ci sono già Viterbo, Ronciglione, Carbognano e Fabrica di Roma.</p>
+    <div class="ops">
+      <div class="op"><span class="lv">Il luogo</span><h3>Piazze e monumenti</h3><p>Chiese, rocche, torri, fontane e porte rifatti in low poly sulle foto del sopralluogo, dove si trovano davvero.</p></div>
+      <div class="op"><span class="lv">La conoscenza</span><h3>La scheda "Dal vero"</h3><p>Quattro fatti, due righe di storia, quando venire, "Portami lì". Ogni scoperta finisce nel Tuscia Codex del giocatore.</p><a class="vai" href="#per-comuni">Tutti i dettagli per i Comuni →</a></div>
+      <div class="op"><span class="lv">La festa</span><h3>Il calendario vero</h3><p>Nella settimana della festa il paese cambia nel gioco: luci, folla, una gara a tempo, una clip da condividere.</p></div>
+    </div>
+  </div></section>
+
+  <section id="forme"><div class="wrap">
+    <h2 class="t2">Tre forme di collaborazione</h2>
+    <p class="lead">Si può partire dalla più leggera e crescere. Le condizioni le concordiamo con ogni Comune.</p>
+    <div class="ops">
+      <div class="op"><span class="lv">Patrocinio</span><h3>Il Comune che sostiene il gioco</h3><ul><li>Il logo del Comune nella scheda del paese</li><li>Il paese citato come partner del progetto</li></ul><p class="chi">Voi: diffondete il gioco sui canali del Comune, della biblioteca e delle scuole.</p></div>
+      <div class="op hi"><span class="lv">Territorio</span><h3>Il paese curato tutto l'anno</h3><ul><li>Piazze e monumenti rifatti dalle foto del sopralluogo</li><li>Le schede del Codex sui luoghi del paese, scritte con voi</li><li>La settimana della festa ogni anno</li><li>Aggiornamenti durante l'anno e il rendiconto ogni tre mesi</li></ul><p class="chi">Voi: le foto, un referente, l'approvazione dei testi.</p></div>
+      <div class="op"><span class="lv">Evento</span><h3>La settimana della festa</h3><ul><li>Una settimana a tema sulla data vera della festa</li><li>Una gara o una caccia a tempo, con la classifica del paese</li><li>Una clip pronta per i social del Comune e della Pro Loco</li></ul><p class="chi">Voi: le date, il programma, due foto della festa.</p></div>
+    </div>
+  </div></section>
+
+  <section><div class="wrap duo">
+    <div class="box"><h3>La sfida dei paesi</h3><p>Nel Trono di Nocchie ogni giocatore gioca anche per il suo paese: le nocciole raccolte e i lavori fatti nel mondo diventano punti per il paese. È un modo semplice per coinvolgere i ragazzi e chi è andato a vivere lontano.</p><a class="btn sign-b sm" href="#trono" style="align-self:flex-start">Vedi la classifica</a></div>
+    <div class="box"><h3>Le scuole del paese</h3><p>Il Comune può portare il metodo didattico nelle scuole del territorio: una lezione in classe con il gioco, poi l'uscita nel posto vero, magari proprio nel vostro paese.</p><a class="btn sign-b sm" href="#per-scuole" style="align-self:flex-start">Il metodo per le scuole</a></div>
+  </div></section>
+
+  <section><div class="wrap duo">
+    <div class="report" aria-label="Esempio di rendiconto trimestrale per un Comune">
+      <span class="lv">Rendiconto · esempio</span><h3>Il vostro paese, ultimi 3 mesi</h3>
+      <div class="kpi"><div><b>4.120</b><span>sono passati dal paese</span></div><div><b>1.380</b><span>hanno scoperto un monumento</span></div><div><b>520</b><span>hanno aperto "Dal vero"</span></div><div><b>96</b><span>"Portami lì"</span></div></div>
+      <p class="note">Numeri inventati per mostrare il formato. Le statistiche sono anonime: niente dati personali dei giocatori.</p>
+    </div>
+    <div class="box" id="come-comuni"><h3>Come si parte</h3><ol class="flow" style="color:var(--muted)">
+      <li><b style="color:var(--fg)">Ci scrivete</b>cosa volete far scoprire del paese.</li>
+      <li><b style="color:var(--fg)">Sopralluogo e foto</b>per rifare piazze e monumenti come sono.</li>
+      <li><b style="color:var(--fg)">Nel gioco in due settimane</b>i testi li scriviamo noi, li approvate voi.</li>
+      <li><b style="color:var(--fg)">Ogni tre mesi i numeri</b>quanti sono passati, cosa hanno scoperto.</li>
+    </ol></div>
+  </div></section>
+
+  <section><div class="wrap">
+    <ul class="rules" style="color:var(--muted);margin:0"><li>Nomi e posizioni veri, sempre.</li><li>I testi li approva il Comune.</li><li>Niente pop-up, spot o interruzioni del gioco.</li><li>Scoprire il territorio resta gratis per tutti.</li></ul>
+    <div class="fine" style="margin-top:24px"><div><h2>Mettiamo il vostro paese nel gioco?</h2><p>Scriveteci: rispondiamo con una proposta su misura.</p></div>
+      <div class="mail"><code>infotusciagames@gmail.com</code><a class="btn play sm" href="mailto:infotusciagames@gmail.com">Scrivi una mail</a><button class="btn ghost sm" type="button" data-copia>Copia l'indirizzo</button></div></div>
+  </div></section>
+</main>
+
+<!-- PAGINA PER GLI SPONSOR (#per-sponsor, sponsor.html) -->
+<main id="per-sponsor" class="pg" hidden>
+  <div class="hero g-hero"><img src="img/vicopesca.jpg" alt="Il Lago di Vico nel gioco VicoPesca"><div class="wrap">
+    <a class="back" href="#comuni">← Comuni, scuole e attività</a><span class="sign">Per attività e sponsor</span>
+    <h1 style="margin-top:16px">Un luogo vero nel gioco, non un banner.</h1>
+    <p>Agriturismi, cantine, aziende di nocciole, ristoranti, noleggi di barche e bici: la vostra sede entra nel mondo dove si trova davvero. Il giocatore non paga mai e non vede pubblicità: vi trova lungo la strada.</p>
+    <div class="row"><a class="btn play" href="#formule">Le tre formule</a><a class="btn ghost" href="#come-sponsor">Come si parte</a></div>
+  </div></div>
+
+  <section><div class="wrap">
+    <h2 class="t2">Dal gioco alla vostra porta</h2>
+    <p class="lead">Chi gioca passa davanti al vostro luogo, si ferma, legge la scheda e trova la strada per arrivarci. Ogni passaggio si conta, in forma anonima.</p>
+    <ol class="percorso"><li>Vi vede nel mondo</li><li>Ci arriva</li><li>Apre la scheda</li><li>"Come arrivarci"</li><li>Viene davvero</li></ol>
+  </div></section>
+
+  <section id="formule"><div class="wrap">
+    <h2 class="t2">Tre formule</h2>
+    <p class="lead">Le condizioni le concordiamo con ogni attività, caso per caso.</p>
+    <div class="ops">
+      <div class="op"><span class="lv">Presenza</span><h3>Il vostro luogo sulla mappa</h3><ul><li>La sede nel mondo, con una forma low poly fatta su misura</li><li>La scheda nel Tuscia Codex</li><li>"Come arrivarci", il vostro link e il punto sulla mappa</li><li>Il rendiconto ogni tre mesi</li></ul><p class="chi">Per chi vuole farsi trovare da chi esplora la zona.</p></div>
+      <div class="op hi"><span class="lv">Voce</span><h3>Il luogo che parla</h3><ul><li>Tutto quello della Presenza</li><li>Una battuta di Radio Nocchia, nel suo stile</li><li>Una missione del gioco che passa da voi</li><li>Un annuncio nel programma della radio</li></ul><p class="chi">Per chi vuole che i giocatori entrino, non solo passino.</p></div>
+      <div class="op"><span class="lv">Evento</span><h3>Una settimana tutta vostra</h3><ul><li>Una settimana speciale attorno al vostro luogo, su una data vera</li><li>Luci, folla, una caccia o una gara a tempo</li><li>Un premio e una clip pronta per i vostri social</li></ul><p class="chi">Per una sagra, un'apertura, la vendemmia, la raccolta delle nocciole.</p></div>
+    </div>
+    <p class="esempio" style="color:var(--muted);margin-top:18px">Già nel mondo: il Consorzio delle nocciole a Fabrica di Roma, con il suo piazzale, i silos e la bottega dove si comprano le scorte.</p>
+  </div></section>
+
+  <section><div class="wrap duo">
+    <div class="box"><h3>Cosa misuriamo per voi</h3><ul>
+      <li>Quanti hanno visto il vostro luogo e quanti ci sono arrivati</li>
+      <li>Quanti hanno aperto la scheda e "Come arrivarci"</li>
+      <li>I clic sul vostro link</li>
+      <li>Le missioni completate e gli annunci ascoltati (Voce)</li>
+      <li>Da dove vengono i giocatori, per zona</li>
+    </ul><p class="note">Solo numeri anonimi: nessun dato personale dei giocatori, mai.</p></div>
+    <div class="box"><h3>Cosa non facciamo</h3><ul class="no">
+      <li>Luoghi spostati o nomi falsi: la posizione è sempre quella vera.</li>
+      <li>Pop-up, spot o interruzioni del gioco.</li>
+      <li>Cartelloni pubblicitari nel paesaggio.</li>
+      <li>Nomi di piazze e monumenti pubblici venduti a un privato.</li>
+      <li>Più di 4 luoghi privati per paese: il paese resta il protagonista.</li>
+    </ul><p class="note">A fine accordo il vostro luogo resta nel mondo, senza link e senza battuta.</p></div>
+  </div></section>
+
+  <section id="come-sponsor"><div class="wrap duo">
+    <div class="box"><h3>Come si parte</h3><ol class="flow" style="color:var(--muted)">
+      <li><b style="color:var(--fg)">Ci scrivete</b>chi siete, dove siete, cosa offrite.</li>
+      <li><b style="color:var(--fg)">Sopralluogo e foto</b>per rifare la vostra sede com'è.</li>
+      <li><b style="color:var(--fg)">Nel gioco in due settimane</b>i testi li scriviamo noi, li approvate voi.</li>
+      <li><b style="color:var(--fg)">Ogni tre mesi i numeri</b>e ne parliamo di persona.</li>
+    </ol></div>
+    <div class="report" aria-label="Esempio di rendiconto trimestrale per un'attività">
+      <span class="lv">Rendiconto · esempio</span><h3>Il vostro luogo, ultimi 3 mesi</h3>
+      <div class="kpi"><div><b>2.340</b><span>l'hanno visto</span></div><div><b>860</b><span>ci sono arrivati</span></div><div><b>310</b><span>hanno aperto la scheda</span></div><div><b>74</b><span>"Come arrivarci"</span></div></div>
+      <p class="note">Numeri inventati per mostrare il formato.</p>
+    </div>
+  </div></section>
+
+  <section><div class="wrap"><div class="fine"><div><h2>Volete farvi trovare nel gioco?</h2><p>Scriveteci: vi rispondiamo con una proposta per il vostro luogo.</p></div>
+    <div class="mail"><code>infotusciagames@gmail.com</code><a class="btn play sm" href="mailto:infotusciagames@gmail.com">Scrivi una mail</a><button class="btn ghost sm" type="button" data-copia>Copia l'indirizzo</button></div></div></div></section>
+</main>
+
+<div class="iscr" id="iscr" hidden role="dialog" aria-modal="true" aria-labelledby="isTit">
+  <div class="isbox">
+    <button class="isx" type="button" id="isChiudi" aria-label="Chiudi">×</button>
+    <div id="isPasso1">
+      <span class="sign">Il Trono di Nocchie</span>
+      <h2 id="isTit">Iscriviti in 30 secondi</h2>
+      <p>Solo la mail: niente password. Ti mandiamo un codice di 6 cifre.</p>
+      <label for="isMail">La tua mail</label>
+      <input id="isMail" type="email" inputmode="email" autocomplete="email" placeholder="nome@esempio.it">
+      <label class="chk"><input id="isNews" type="checkbox"> Facoltativo: mandatemi novità, eventi e offerte dei luoghi della Tuscia. Si toglie quando vuoi.</label>
+      <button class="btn play" type="button" id="isManda">Mandami il codice</button>
+      <p class="note">Per salvare la partita devi avere almeno 14 anni. Se sei più piccolo, gioca senza salvare: va bene lo stesso.</p>
+      <p class="iserr" id="isErr1" role="alert"></p>
+      <p class="note">Hai già una partita? Scrivi la stessa mail: la ritrovi su questo telefono. Come usiamo la mail: <a href="https://grandtuscia.netlify.app/privacy.html" target="_blank" rel="noopener">privacy</a>.</p>
+    </div>
+    <div id="isPasso2" hidden>
+      <span class="sign">Controlla la mail</span>
+      <h2>Scrivi il codice</h2>
+      <p id="isMailT">Ti abbiamo mandato un codice.</p>
+      <label for="isCodice">Codice di 6 cifre</label>
+      <input id="isCodice" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="123456">
+      <button class="btn play" type="button" id="isVerifica">Entra</button>
+      <p class="iserr" id="isErr2" role="alert"></p>
+      <p class="note">Non arriva? Guarda nello spam. <button type="button" class="linkbtn" id="isRimanda">Mandamene un altro</button> · <button type="button" class="linkbtn" id="isCambia">Cambia mail</button></p>
+    </div>
+    <div id="isPasso3" hidden>
+      <span class="sign">Sei dentro</span>
+      <h2>Come ti chiami nel Trono?</h2>
+      <p>Il soprannome è quello che vedono gli altri. La mail non la vede nessuno.</p>
+      <label for="isNome">Soprannome</label>
+      <input id="isNome" type="text" maxlength="20" autocomplete="nickname" placeholder="es. Zi Nando">
+      <label for="isPaese">Per che comune giochi?</label>
+      <select id="isPaese"><option value="">Scegli il comune…</option></select>
+      <p class="note">La tua stima conta per il tuo comune nella sfida tra i paesi. Si può cambiare una volta ogni 30 giorni.</p>
+      <button class="btn play" type="button" id="isSalvaNome">Salva</button>
+      <p class="iserr" id="isErr3" role="alert"></p>
+    </div>
+    <div id="isPasso4" hidden>
+      <span class="sign">Fatto</span>
+      <h2 id="isBenv">Benvenuto!</h2>
+      <p id="isDopoT">Ora gioca: la tua partita si salva da sola, e ogni nocciola che raccogli conta per il tuo paese.</p>
+      <a class="btn play" id="isGioca" href="#" target="_blank" rel="noopener">Gioca ora</a>
+    </div>
+    <div id="isFuori" hidden>
+      <span class="sign">Solo sul sito</span>
+      <h2>L'iscrizione si fa sul sito</h2>
+      <p>Questa è un'anteprima: qui non si può collegare al server delle partite. Sul sito vero ti iscrivi con la mail in 30 secondi.</p>
+      <a class="btn play" href="https://grandtuscia.netlify.app/" target="_blank" rel="noopener">Apri il sito</a>
+    </div>
+  </div>
+</div>
+
+<aside class="radio" id="radio" aria-label="Radio Nocchia">
+  <button class="r-pill" id="rPill" type="button" aria-expanded="false" aria-controls="rBox"><span class="r-ico" aria-hidden="true"><i></i><i></i><i></i></span><span class="r-pt"><b>Radio Nocchia</b><span id="rPillT">Ascolta la radio della Tuscia</span></span><span class="r-play" id="rPlay" aria-hidden="true">▶</span></button>
+  <div class="r-box" id="rBox" hidden>
+    <div class="r-top"><span class="r-on" id="rFreq">IN ONDA</span><button class="r-x" id="rChiudi" type="button" aria-label="Riduci il lettore">–</button></div>
+    <b class="r-prog" id="rProg">Radio Nocchia</b>
+    <span class="r-cond" id="rCond"></span>
+    <p class="r-now" id="rNow" aria-live="polite">Accendo la radio…</p>
+    <div class="r-ctl"><button class="btn sm play" id="rOnOff" type="button">Spegni</button><button class="btn sm ghost" id="rAvanti" type="button" title="Passa al prossimo">Avanti ⏭</button><button class="btn sm ghost" id="rStaz" type="button" title="Cambia programma">Stazione ⇄</button></div>
+    <p class="r-nota">Musica e voci nascono qui, nel tuo telefono: niente canzoni famose, tutto originale. È la stessa radio che senti in Grand Tuscia Adventure, guidando il trattore. Con le immagini: <a id="rTv" href="#" target="_blank" rel="noopener" style="color:var(--gold);font-weight:700">guarda TV Nocchia</a>.</p>
+  </div>
+</aside>
+
+<footer><div class="wrap"><span>Tuscia Games · i giochi della Tuscia, fatti da un viterbese che vive in Francia.</span><span><a href="#" id="piedeTv" target="_blank" rel="noopener">TV Nocchia</a> · <a href="#per-scuole">Scuole</a> · <a href="#per-comuni">Comuni</a> · <a href="#per-sponsor">Sponsor</a></span><span><a href="https://grandtuscia.netlify.app/privacy.html" target="_blank" rel="noopener">Privacy</a> · <a href="#" id="piedeCookie">Cookie</a> · <a href="mailto:infotusciagames@gmail.com">infotusciagames@gmail.com</a></span></div></footer>
+
+<script>window.TG_SITO=1</script>
+<script src="tg-stats-config.js"></script>
+<script src="tg-consenso.js"></script>
+<script src="tg-account.js"></script>
+<script src="tg-giochi.js"></script>
+<script src="schede.js"></script>
+<script src="tg-oroscopo.js"></script>
+<script>
+(function(){
+'use strict';
+const TG=window.TG||{};
+// dove stanno i giochi: sul sito vero accanto a questa pagina (../<cartella>/); altrove sul sito pubblicato
+const BASE=(window.TG_SITO_BASE)||(/netlify\.app|tusciagames/.test(location.host)?new URL('../',location.href).href:'https://grandtuscia.netlify.app/');
+const ord=TG.ORDINE_SITO||[],pos=g=>{const i=ord.indexOf(g.id);return i<0?99:i};
+const giochi=(TG.GIOCHI||[]).slice().sort((a,b)=>pos(a)-pos(b)).filter(g=>TG.SCHEDE&&TG.SCHEDE[g.id]).map(g=>Object.assign({},g,TG.SCHEDE[g.id],{url:g.cartella?BASE+g.cartella+'/':g.link}));
+const M=Object.assign({id:'mondo'},TG.MONDO,{url:BASE+'gioca.html'});
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+if(!giochi.length){$('lista').innerHTML='<p class="err">I giochi non si sono caricati. Ricarica la pagina.</p>';return}
+['navGioca','heroGioca','gtaGioca','gtaFoto'].forEach(i=>$(i).href=M.url);
+['navTv','piedeTv','rTv','heroTv'].forEach(i=>{const e=$(i);if(e)e.href=BASE+'tv-lite.html?utm_source=sito'});
+// il video dell'apertura: niente se chi guarda chiede meno movimento o risparmia dati; si vede quando parte davvero
+(function(){const v=$('heroV');if(!v)return;const c=navigator.connection||{};
+  if(matchMedia('(prefers-reduced-motion: reduce)').matches||c.saveData||/(^|-)2g$/.test(c.effectiveType||''))return;
+  v.querySelectorAll('source').forEach(x=>x.src=x.dataset.src);v.preload='auto';v.load();
+  v.addEventListener('playing',()=>v.classList.add('on'),{once:true});
+  const p=v.play();if(p&&p.catch)p.catch(()=>{});})();
+$('heroP').textContent=`${giochi.length} giochi ambientati nei posti veri: il lago, i noccioleti, le feste dei paesi. Ogni partita ti lascia qualcosa da andare a vedere.`;
+const MODI='<div class="modes"><span>Passeggiata</span><span>Competizione</span><span>Divertimento</span></div>';
+// la griglia: il mondo in grande, poi i giochi
+const card=(g,big)=>`<article class="card${big?' big':''}">
+  <div class="ph"><img src="img/${g.id}.jpg" alt="${esc(g.nome)}: una scena del gioco" loading="lazy" decoding="async" width="720" height="405"><span class="sign">${esc(g.paese)}</span></div>
+  <div class="tx">${big?'<span class="tag">Il mondo · da qui si entra in tutti i giochi</span>':''}<h3>${esc(g.nome)}</h3><p>${esc(g.riga)}</p>${MODI}
+  <div class="acts"><a class="btn play sm" href="${g.url}" target="_blank" rel="noopener">Gioca</a>${big?'':`<a class="more" href="#${g.id}">La scheda →</a>`}</div></div></article>`;
+$('lista').innerHTML=giochi.map(g=>card(g)).join('');
+// le clip dei giochi: sul computer, passando col mouse sull'immagine parte il video del gioco (si scarica solo allora)
+const CLIP=TG.CLIP||[],DIRS=(document.querySelector('script[src*="schede.js"]')||{}).src||location.href,clipDi=id=>CLIP.includes(id)?new URL('clip/'+id+'-s.mp4',DIRS).href:null; // sulle card la versione piccola (640px); nella scheda e in TV quella grande
+if(matchMedia('(hover:hover)').matches&&!matchMedia('(prefers-reduced-motion: reduce)').matches)$('lista').querySelectorAll('.card').forEach((c,i)=>{const g=giochi[i],src=g&&clipDi(g.id);if(!src)return;const ph=c.querySelector('.ph');let v=null;
+  ph.addEventListener('mouseenter',()=>{if(!v){v=document.createElement('video');v.muted=true;v.loop=true;v.playsInline=true;v.src=src;v.className='anteprima';v.onerror=()=>{v.remove();v=null};ph.appendChild(v)}v.style.opacity=1;const p=v.play();if(p&&p.catch)p.catch(()=>{})});
+  ph.addEventListener('mouseleave',()=>{if(v){v.pause();v.style.opacity=0}});
+  c.querySelector('.ph .sign').insertAdjacentHTML('afterend','<span class="clipT" aria-hidden="true">▶ video</span>')});
+// i giochi in arrivo (TG.PRESTO in schede.js): niente Gioca, solo "Avvisami quando esce"
+const presto=TG.PRESTO||[];
+if(presto.length){$('presto').hidden=false;
+  $('prestoLista').innerHTML=presto.map(g=>`<article class="card soon" id="presto-${g.id}">
+  <div class="ph" style="--c1:${g.tono[0]};--c2:${g.tono[1]}" role="img" aria-label="${esc(g.nome)}: in arrivo"><span class="sign">${esc(g.paese)}</span><span class="sign presto-t">Presto</span><b>${esc(g.nome)}</b></div>
+  <div class="tx"><span class="tag" style="color:var(--sign)">In arrivo</span><h3>${esc(g.nome)}</h3><p>${esc(g.riga)}</p>
+  <div class="acts"><button class="btn sm" type="button" data-iscriviti data-presto="${g.id}">Avvisami quando esce</button></div></div></article>`).join('');}
+// adesso in Tuscia: i giochi della stagione (questo mese o il prossimo)
+const mese=new Date().getMonth()+1,MESI=['','Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
+const ev=[];for(let k=0;k<12&&ev.length<2;k++){const m=(mese-1+k)%12+1;for(const g of giochi)if(g.quando&&g.quando.mesi.includes(m)&&!ev.some(e=>e.g===g)&&ev.length<2)ev.push({m,g})}
+$('adesso').innerHTML='<b class="lab">Adesso in Tuscia</b>'+ev.map(e=>`<div class="ev"><span class="d">${e.m===mese?'Adesso':MESI[e.m]}</span><span>${esc(e.g.quando.testo)} · <a href="#${e.g.id}">${esc(e.g.nome)}</a></span></div>`).join('');
+// la mappa
+const L=TG.LUOGHI,pins=$('pins'),place=$('place');
+pins.innerHTML=Object.entries(L).map(([k,p])=>`<g class="pin" data-p="${k}" tabindex="0" role="button" aria-label="${esc(p.n)}"><circle cx="${p.x}" cy="${p.y}" r="11"/><text class="t" x="${p.x+16}" y="${p.y+5}">${esc(p.n)}</text></g>`).join('');
+function scegli(k){const p=L[k];pins.querySelectorAll('.pin').forEach(e=>e.classList.toggle('on',e.dataset.p===k));
+  const gs=[...(M.luogo===k?[M]:[]),...giochi.filter(g=>g.luogo===k),...(TG.PRESTO||[]).filter(g=>g.luogo===k).map(g=>Object.assign({presto:1},g))];
+  place.innerHTML=`<span class="sign">${esc(p.n)}</span><h3>${esc(p.n)}</h3><p>${esc(p.d)}</p>${gs.length?'<ul>'+gs.map(g=>`<li><a href="${g.presto?'#presto-'+g.id:g.id==='mondo'?g.url:'#'+g.id}"${g.id==='mondo'?' target="_blank" rel="noopener"':''}>${esc(g.nome)}<span class="${g.presto?'pr':''}">${g.presto?'In arrivo':g.id==='mondo'?'Gioca →':'La scheda →'}</span></a></li>`).join('')+'</ul>':'<p>Qui per ora si passa col trattore nel mondo aperto.</p>'}`}
+pins.addEventListener('click',e=>{const g=e.target.closest('.pin');if(g)scegli(g.dataset.p)});
+pins.addEventListener('keydown',e=>{const g=e.target.closest('.pin');if(g&&(e.key==='Enter'||e.key===' ')){e.preventDefault();scegli(g.dataset.p)}});
+scegli('lago');
+// IL TRONO DI NOCCHIE, dal vivo (engine/tg-account.js: tg_trono e tg_trono_paesi).
+const A=TG.Account,ANTEPRIMA=!window.TG_SITO_LIVE&&!/netlify\.app|tusciagames/.test(location.host);
+const NOMEP=k=>({carbognano:'Carbognano',caprarola:'Caprarola',fabrica:'Fabrica di Roma',falerii:'Falerii Novi',viterbo:'Viterbo',ronciglione:'Ronciglione'}[k]||k);
+// se il server non risponde (per esempio nell'anteprima in chat), l'ultima fotografia VERA della classifica, con la sua data
+const FOTO={data:'24 ottobre 2026',righe:[{pos:1,nome:'O bifo',punti:134},{pos:2,nome:'The Founder',punti:10}],totale:2},
+  FOTOP={righe:[{paese:'carbognano',punti:96,giocatori:1},{paese:'caprarola',punti:48,giocatori:2},{paese:'fabrica',punti:16,giocatori:1}]};
+const entro=(p,ms)=>Promise.race([p,new Promise((_,no)=>setTimeout(()=>no(new Error('tempo')),ms))]);
+let periodo='sempre';
+async function trono(){const ol=$('trGioc');let d=null,es=false;
+  try{if(!A)throw 0;d=await entro(A.trono(periodo,null,10),9000)}catch(e){d=FOTO;es=true}
+  const R=d.righe||[];
+  ol.innerHTML=R.length?R.map(r=>`<li class="${r.io?'io':''}${r.pos===1?' re':''}"><b>${r.pos===1?'👑':r.pos}</b><span>${esc(r.nome)}${r.io?' <em>(tu)</em>':''}${r.comuneNome?` <small>· ${esc(r.comuneNome)}</small>`:''}</span><span>${Number(r.punti).toLocaleString('it-IT')}</span></li>`).join('')
+    :`<li class="vuoto">${periodo==='mese'?'Questo mese il trono è ancora libero.':'Il trono è ancora libero.'} Il primo che si iscrive e gioca ci sale.</li>`;
+  if(d.io&&!R.some(r=>r.io))ol.insertAdjacentHTML('beforeend',`<li class="io"><b>${d.io.pos}</b><span>${esc(d.io.nome)} <em>(tu)</em></span><span>${Number(d.io.punti).toLocaleString('it-IT')}</span></li>`);
+  $('trNota').textContent=es?`Classifica vera al ${FOTO.data}: quella dal vivo si aggiorna sul sito.`:`${d.totale||0} giocatori in classifica · punti = stima guadagnata nel mondo.`;
+  if(periodo==='sempre'&&R[0]){HERO_TR.top=R.slice(0,5);heroTrono()}}
+const HERO_TR={top:null,comune:null};
+function heroTrono(){const ol=$('heroTop5'),t=$('heroTronoT');if(!ol)return;
+  if(HERO_TR.top)ol.innerHTML=HERO_TR.top.map(r=>`<li><i>${r.pos===1?'👑':r.pos}</i><b>${esc(r.nome)}${r.comuneNome?` <small>· ${esc(r.comuneNome)}</small>`:''}</b><span>${Number(r.punti).toLocaleString('it-IT')}</span></li>`).join('');
+  if(HERO_TR.comune)t.textContent=`Sfida dei comuni: ${HERO_TR.comune}`}
+// LA SFIDA DEI COMUNI: ogni giocatore gioca per il suo comune (tg_trono_comuni): la somma dei punti, oppure la media a testa (così vince anche un paese piccolo)
+let perTesta=false;
+async function paesi(){let d=null,es=false;try{if(!A||!A.comuniTrono)throw 0;d=await entro(A.comuniTrono('sempre'),9000)}catch(e){d={righe:[]};es=true}
+  const R=(d.righe||[]).slice().sort((a,b)=>perTesta?a.posMedia-b.posMedia:a.pos-b.pos).slice(0,8),val=r=>perTesta?r.media:r.punti,max=Math.max(1,...R.map(val));
+  $('trPaesi').innerHTML=R.length?R.map((r,i)=>`<div class="r${r.paese===d.mio?' io':''}"><b>${i===0?'👑':i+1}</b><span>${esc(r.nome)} <small>· ${r.giocatori} ${r.giocatori===1?'giocatore':'giocatori'}</small></span><span class="bar"><i style="width:${val(r)/max*100}%"></i></span><span>${Number(val(r)).toLocaleString('it-IT')}${perTesta?'<small>/testa</small>':''}</span></div>`).join('')+`<p class="note">${perTesta?'Media di stima per giocatore: un paese piccolo può battere Viterbo.':'Somma della stima di tutti i giocatori di ogni comune.'}</p>`
+    :`<p class="note">${es?'La sfida dei comuni si vede sul sito dal vivo. ':''}Nessun comune ha ancora punti: iscriviti, scegli il tuo e porta i primi.</p>`;
+  const P=(d.righe||[]).slice().sort((a,b)=>a.pos-b.pos);if(P[0]){HERO_TR.comune=`comanda ${P[0].nome}${P[1]?', insegue '+P[1].nome:''}`;heroTrono()}}
+document.querySelectorAll('.trono .seg [role=tab]').forEach(b=>b.onclick=()=>{const g=b.parentNode;g.querySelectorAll('[role=tab]').forEach(x=>x.setAttribute('aria-selected',x===b));
+  if(b.id.startsWith('tr-')){periodo=b.id==='tr-mese'?'mese':'sempre';trono()}else{perTesta=b.id==='tc-testa';paesi()}});
+trono();paesi();
+{const pc=$('piedeCookie');if(pc)pc.onclick=e=>{e.preventDefault();if(TG.Consenso)TG.Consenso.apri()}}
+// l'elenco dei comuni nel modulo d'iscrizione
+async function comuniSelect(){const sel=$('isPaese');if(!sel||sel.options.length>1||!A||!A.comuni)return;try{const C=await A.comuni();C.forEach(c=>{const o=document.createElement('option');o.value=c.id;o.textContent=c.nome;if(A.paese===c.id)o.selected=true;sel.appendChild(o)})}catch(e){}}
+// L'ISCRIZIONE: mail → codice di 6 cifre → soprannome. La stessa partita del mondo (stesso sito, stesso accesso).
+const PASSI=['isPasso1','isPasso2','isPasso3','isPasso4','isFuori'];
+function passo(id){PASSI.forEach(p=>$(p).hidden=p!==id);const f=$(id).querySelector('input');if(f)setTimeout(()=>f.focus(),50)}
+function apri(){$('iscr').hidden=false;document.body.style.overflow='hidden';
+  if(ANTEPRIMA||!A){passo('isFuori');return}
+  if(A.stato==='registrato')passo(A.soprannome?'isPasso4':'isPasso3');else if(A.attesa){$('isMailT').textContent=`Ti abbiamo mandato un codice a ${A.attesa.email}.`;passo('isPasso2')}else passo('isPasso1')}
+function chiudi(){$('iscr').hidden=true;document.body.style.overflow=''}
+document.querySelectorAll('[data-iscriviti]').forEach(b=>b.addEventListener('click',apri));
+// "Avvisami quando esce": la casella delle novità parte già spuntata (si può togliere)
+document.querySelectorAll('[data-presto]').forEach(b=>b.addEventListener('click',()=>{$('isNews').checked=true},true));
+$('isChiudi').onclick=chiudi;$('iscr').addEventListener('click',e=>{if(e.target===$('iscr'))chiudi()});addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('iscr').hidden)chiudi()});
+const occupato=(b,on,t)=>{b.disabled=on;if(t)b.textContent=t};
+$('isManda').onclick=async()=>{const b=$('isManda');$('isErr1').textContent='';occupato(b,true,'Mando…');
+  try{const at=await A.registra($('isMail').value,$('isNews').checked,'sito-2026-10');$('isMailT').textContent=`Ti abbiamo mandato un codice a ${at.email}.`;passo('isPasso2')}catch(e){$('isErr1').textContent=e.message}occupato(b,false,'Mandami il codice')};
+$('isMail').addEventListener('keydown',e=>{if(e.key==='Enter')$('isManda').click()});
+$('isVerifica').onclick=async()=>{const b=$('isVerifica');$('isErr2').textContent='';occupato(b,true,'Controllo…');
+  try{await A.verifica($('isCodice').value);dopo()}catch(e){$('isErr2').textContent=e.message}occupato(b,false,'Entra')};
+$('isCodice').addEventListener('input',e=>{const v=e.target.value.replace(/\D/g,'');e.target.value=v;if(v.length===6)$('isVerifica').click()});
+$('isRimanda').onclick=async()=>{try{await A.rimanda();$('isErr2').textContent='Codice nuovo mandato: vale solo l\'ultimo.'}catch(e){$('isErr2').textContent=e.message}};
+$('isCambia').onclick=()=>{A.annulla();passo('isPasso1')};
+$('isSalvaNome').onclick=async()=>{const b=$('isSalvaNome');$('isErr3').textContent='';occupato(b,true,'Salvo…');
+  try{await A.scegliSoprannome($('isNome').value);const pid=$('isPaese').value;if(pid&&pid!==A.paese){try{await A.scegliPaese(pid)}catch(e){$('isErr3').textContent='Soprannome salvato. Il comune no: '+e.message}}dopo();paesi()}catch(e){$('isErr3').textContent=e.message}occupato(b,false,'Salva')};
+$('isNome').addEventListener('keydown',e=>{if(e.key==='Enter')$('isSalvaNome').click()});
+// iscriversi subito dalla home: la mail nel riquadro in alto, poi il codice nel pannello
+$('subito').addEventListener('submit',async e=>{e.preventDefault();const b=$('suVai');$('suErr').textContent='';
+  if(ANTEPRIMA||!A){apri();return}
+  if(A.stato==='registrato'){apri();return}
+  occupato(b,true,'Mando…');
+  try{const at=await A.registra($('suMail').value,false,'sito-2026-10');$('isMail').value=at.email;apri();$('isMailT').textContent=`Ti abbiamo mandato un codice a ${at.email}.`;passo('isPasso2')}
+  catch(err){$('suErr').textContent=err.message}occupato(b,false,'Iscriviti')});
+function dopo(){if(!A.soprannome){comuniSelect();passo('isPasso3');return}$('isBenv').textContent=`Benvenuto, ${A.soprannome}!`;if(A.paese&&A.nomeComune)$('isDopoT').textContent=`Ora gioca: la tua partita si salva da sola, e la tua stima conta per ${A.nomeComune(A.paese)} nella sfida dei comuni.`;passo('isPasso4');testata();trono()}
+$('isGioca').href=M.url;
+function testata(){const b=$('navIscr');if(A&&A.stato==='registrato'){$('subito').classList.add('dentro');$('subito').querySelector('small').textContent=A.soprannome?`Sei nel Trono come ${A.soprannome}. Buona partita!`:'Sei iscritto: scegli il soprannome per entrare nel Trono.';b.textContent=A.soprannome?A.soprannome:'Il tuo profilo';$('trCtaT').textContent=A.soprannome?`Sei nel Trono come ${A.soprannome}. Gioca per far salire il tuo paese.`:'Scegli il soprannome per entrare nel Trono.';
+  document.querySelectorAll('.trono [data-iscriviti]').forEach(x=>x.textContent=A.soprannome?'Gioca ora':'Scegli il soprannome')}}
+if(A&&!ANTEPRIMA){A.on(ev=>{if(ev==='stato'||ev==='soprannome'||ev==='entrato'){testata();if(ev==='entrato'&&!$('iscr').hidden)dopo()}});A.pronto.then(()=>{testata();trono();if(A.dalLink&&A.stato==='registrato'){apri();dopo()}})}
+document.querySelectorAll('.trono [data-iscriviti]').forEach(x=>x.addEventListener('click',e=>{if(A&&A.stato==='registrato'&&A.soprannome){e.stopImmediatePropagation();window.open(M.url,'_blank','noopener')}},true));
+// RADIO NOCCHIA: il modulo del gioco (window.RadioNocchia), scaricato al primo tocco; l'audio parte solo dal tocco (regola dei browser)
+(function(){
+  const box=$('rBox'),pill=$('rPill'),R={api:null,carica:null};
+  const DIR=(document.querySelector('script[src*="schede.js"]')||{}).src||location.href;
+  function apriBox(si){box.hidden=!si;pill.setAttribute('aria-expanded',si)}
+  function carica(){if(window.RadioNocchia)return Promise.resolve(window.RadioNocchia);if(R.carica)return R.carica;
+    R.carica=new Promise((ok,no)=>{const sc=document.createElement('script');sc.src=new URL('tg-radio-nocchia.js',DIR).href;sc.onload=()=>window.RadioNocchia?ok(window.RadioNocchia):no(new Error('radio'));sc.onerror=()=>no(new Error('radio'));document.head.appendChild(sc)});return R.carica}
+  function mostra(st){const on=!!st.acceso;$('radio').classList.toggle('on',on);$('rPlay').textContent=on?'❚❚':'▶';$('rOnOff').textContent=on?'Spegni':'Accendi';
+    const P=st.programma||{};$('rProg').textContent=P.nome||'Radio Nocchia';$('rFreq').textContent=on?`IN ONDA${P.freq?' · '+P.freq:''}`:'SPENTA';
+    $('rCond').textContent=P.conduttore?`con ${P.conduttore}${P.descrizione?' · '+P.descrizione:''}`:'';
+    let t='';if(!on)t='La radio è spenta. Premi Accendi.';else if(st.tipo==='canzone'&&st.canzone)t=`♪ ${st.canzone.titolo} — ${st.canzone.artista} (${st.canzone.stile})`;else if(st.testo)t=(st.conduttore?st.conduttore+': ':'')+st.testo;
+    if(t)$('rNow').textContent=t;{const hr=$('heroRadio');if(hr){hr.classList.toggle('on',on);$('heroRadioT').textContent=on?(st.tipo==='canzone'&&st.canzone?'♪ '+st.canzone.titolo:'In onda: '+(P.nome||'Radio Nocchia')):'Ascolta la radio della Tuscia';$('heroRadioP').textContent=on?'❚❚':'▶'}}
+    $('rPillT').textContent=on?(st.tipo==='canzone'&&st.canzone?'♪ '+st.canzone.titolo:P.nome||'In onda'):'Ascolta la radio della Tuscia'}
+  async function accendi(apri){
+    // l'audio si sblocca qui, dentro il tocco, poi si passa alla radio
+    let ctx=null;try{const AC=window.AudioContext||window.webkitAudioContext;ctx=R.ctx||(R.ctx=new AC());ctx.resume&&ctx.resume()}catch(e){}
+    if(apri!==false)apriBox(true);$('rNow').textContent='Accendo la radio…';
+    try{const api=await carica();if(!R.api){R.api=api.init({ctx});api.onStato(mostra)}R.api.accendi()}
+    catch(e){$('rNow').textContent='La radio non si è accesa. Controlla la connessione e riprova.'}}
+  pill.addEventListener('click',()=>{if(R.api&&R.api.stato().acceso){R.api.spegni();return}accendi()});
+  $('rOnOff').onclick=()=>{if(R.api&&R.api.stato().acceso)R.api.spegni();else accendi()};
+  $('rAvanti').onclick=()=>{if(R.api)R.api.avanti()};
+  $('rStaz').onclick=()=>{if(R.api){R.api.stazione(1);if(!R.api.stato().acceso)accendi()}};
+  $('rChiudi').onclick=()=>apriBox(false);
+  document.querySelectorAll('[data-radio]').forEach(b=>b.addEventListener('click',e=>{e.preventDefault();accendi()}));
+  { const hr=$('heroRadio'); if(hr) hr.addEventListener('click',()=>{ if(R.api&&R.api.stato().acceso) R.api.spegni(); else accendi(false); }); }
+  // mentre i riquadri di TV e radio dell'apertura si vedono, la pillola in basso si fa da parte (non li copre); col lettore aperto resta
+  { const hr=$('heroRadio'),rad=$('radio'); if(hr&&rad&&'IntersectionObserver' in window){ new IntersectionObserver(es=>{const vede=es[0].isIntersecting;rad.classList.toggle('via',vede&&box.hidden)},{threshold:0.01}).observe(hr); } }
+})();
+// OGGI IN TUSCIA
+(function(){
+  ['oggiTv','oggiTv2'].forEach(i=>{const e=$(i);if(e)e.href=BASE+'tv-lite.html?utm_source=sito'});
+  // il meteo: Open-Meteo, cinque posti, una sola richiesta
+  const MP=[['Viterbo',42.4168,12.1045],['Caprarola',42.3266,12.2370],['Lago di Vico',42.3200,12.1720],['Ronciglione',42.2903,12.2143],['Fabrica di Roma',42.3349,12.2996]];
+  const CIELO=c=>c===0?['☀️','sereno']:c<=2?['🌤️','poco nuvoloso']:c===3?['☁️','nuvoloso']:c<=48?['🌫️','nebbia']:c<=57?['🌦️','pioviggine']:c<=67?['🌧️','pioggia']:c<=77?['🌨️','neve']:c<=82?['🌦️','rovesci']:c<=86?['❄️','neve']:['⛈️','temporale'];
+  (async()=>{try{
+    const q=new URLSearchParams({latitude:MP.map(p=>p[1]).join(','),longitude:MP.map(p=>p[2]).join(','),current:'temperature_2m,weather_code',daily:'weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max',timezone:'Europe/Rome',forecast_days:'2'});
+    const r=await Promise.race([fetch('https://api.open-meteo.com/v1/forecast?'+q),new Promise((_,no)=>setTimeout(()=>no(0),8000))]);if(!r.ok)throw 0;
+    let d=await r.json();if(!Array.isArray(d))d=[d];
+    $('mtLista').innerHTML=d.map((x,i)=>{const[ic,de]=CIELO(x.current.weather_code),[ic2,de2]=CIELO(x.daily.weather_code[1]),p=x.daily.precipitation_probability_max[0];
+      return `<li><i aria-hidden="true">${ic}</i><span><b>${esc(MP[i][0])}</b>${de} · ${Math.round(x.daily.temperature_2m_min[0])}°/${Math.round(x.daily.temperature_2m_max[0])}°${p>=40?` · pioggia ${p}%`:''}<br>domani ${ic2} ${de2}, ${Math.round(x.daily.temperature_2m_min[1])}°/${Math.round(x.daily.temperature_2m_max[1])}°</span><strong>${Math.round(x.current.temperature_2m)}°</strong></li>`}).join('');
+    $('mtQuando').textContent='adesso';
+  }catch(e){$('mtLista').innerHTML='<li class="vuoto">Il meteo non risponde adesso. Riprova tra poco, oppure guardalo su TV Nocchia.</li>'}})();
+  // gli eventi: la funzione tg-eventi (solo eventi e belle notizie della Tuscia, con titolo, fonte e link)
+  const FOTO_EV={data:'25 ottobre 2026',voci:[
+    {titolo:'Weekend: inaugurazione della chiesa di Santa Maria delle Fortezze, Bach a Palazzo Farnese, trekking e laboratori, sagre e sapori d’autunno',fonte:'TusciaUp',link:'https://www.tusciaup.com/weekend-inaugurazione-della-chiesa-di-santa-maria-delle-fortezze-bach-a-palazzo-farnese-trekking-e-laboratori-sagre-e-sapori-dautunno/386545',paese:'Viterbo'},
+    {titolo:'Viterbo, al via la nona edizione della Notte di Mezzo: Halloween tra magia e mistero',fonte:'OnTuscia',link:'https://www.ontuscia.it/novita/viterbo-al-via-la-nona-edizione-della-notte-di-mezzo-halloween-tra-magia-e-mistero-399371',paese:'Viterbo'},
+    {titolo:'Latera celebra l’autunno con la Sagra della Castagna: quattro giorni di festa',fonte:'OnTuscia',link:'https://www.ontuscia.it/novita/latera-celebra-lautunno-con-la-sagra-della-castagna-quattro-giorni-di-festa-399356',paese:'Latera'},
+    {titolo:'La terra in autunno: trekking e laboratori per la 40ª Sagra del Marrone di Latera',fonte:'OnTuscia',link:'https://www.ontuscia.it/novita/la-terra-in-autunno-trekking-e-laboratori-per-la-40a-sagra-del-marrone-di-latera-399334',paese:'Latera'},
+    {titolo:'Vasanello, torna l’atteso appuntamento con la tradizionale Fiera del Mercato e delle attrezzature agricole',fonte:'OnTuscia',link:'https://www.ontuscia.it/novita/vasanello-torna-latteso-appuntamento-con-la-tradizionale-fiera-del-mercato-e-delle-attrezzature-agricole-399318',paese:'Vasanello'},
+    {titolo:'In 350 tra nonni e nipoti alla festa delle Generazioni (VIDEO)',fonte:'Tuscia Times',link:'https://www.tusciatimes.eu/in-350-tra-nonni-e-nipoti-alla-festa-delle-generazioni-video/',paese:'Viterbo'}]};
+  const mostraEv=(voci,foto)=>{$('evLista').innerHTML=voci.length?voci.slice(0,6).map(v=>`<li><a href="${esc(v.link)}" target="_blank" rel="noopener"><b>${esc(v.titolo)}</b><span><em>${esc(v.paese||'Tuscia')}</em> · ${esc(v.fonte)}</span></a></li>`).join(''):'<li class="vuoto">Questa settimana i giornali non parlano ancora di feste. Torna tra qualche giorno!</li>';
+    if(foto)$('evNota').textContent=`Eventi al ${FOTO_EV.data}: quelli aggiornati si vedono sul sito. Solo eventi e belle notizie, dai siti d'informazione della Tuscia.`};
+  (async()=>{try{const C=window.TG_STATS_CONFIG||{};if(!C.url)throw 0;
+    const r=await Promise.race([fetch(C.url.replace(/\/$/,'')+'/functions/v1/tg-eventi',{headers:{apikey:C.key,Authorization:'Bearer '+C.key}}),new Promise((_,no)=>setTimeout(()=>no(0),12000))]);if(!r.ok)throw 0;
+    const d=await r.json();mostraEv(d.voci||[],false)}catch(e){mostraEv(FOTO_EV.voci,true)}})();
+  // l'oroscopo: si sceglie il segno (lo ricordiamo su questo telefono), parte da quello di oggi
+  const O=TG.Oroscopo;if(!O){document.querySelector('.oro').hidden=true;return}
+  const Z=O.oggi();let mio=null;try{mio=localStorage.getItem('tg-segno')}catch(e){}
+  if(!Z.some(z=>z.id===mio))mio=null;
+  $('orSegni').innerHTML=Z.map(z=>`<button type="button" role="tab" data-s="${z.id}" title="${esc(z.nome)}" aria-label="${esc(z.nome)}">${z.glifo}</button>`).join('');
+  function segno(id,ricorda){const z=Z.find(x=>x.id===id)||Z[0];
+    $('orSegni').querySelectorAll('button').forEach(b=>b.setAttribute('aria-selected',b.dataset.s===z.id));
+    const g=z.gioco,url=g?(g.cartella?BASE+g.cartella+'/':BASE+'gioca.html'):M.url;
+    const testo=`Il mio oroscopo de Nocchia (${z.nome}): "${z.frase}" Gioco consigliato: ${g?g.nome:'Grand Tuscia'}. ${BASE}`;
+    $('orCard').innerHTML=`<h4>${z.glifo} ${esc(z.nome)}<small>${esc(z.date)}${!mio&&!ricorda?' · il segno di oggi':''}</small><em aria-label="${z.stelle} stelle su 5">${'★'.repeat(z.stelle)}</em></h4>
+      <p>${esc(z.frase)}</p>
+      <ul><li>🎮 Gioco consigliato dalle stelle: <b>${esc(g?g.nome:'Grand Tuscia Adventure')}</b></li><li>📍 Posto fortunato: <b>${esc(z.posto?z.posto.nome:'Lago di Vico')}</b></li><li>🍀 Numero fortunato: <b>${z.numero}</b></li></ul>
+      <div class="row"><a class="btn play sm" href="${url}" target="_blank" rel="noopener">Gioca ${esc(g?g.nome:'')}</a><a class="btn wa sm" href="https://wa.me/?text=${encodeURIComponent(testo)}" target="_blank" rel="noopener">Mandalo a un amico</a></div>`;
+    if(ricorda){mio=z.id;try{localStorage.setItem('tg-segno',z.id)}catch(e){}}}
+  $('orSegni').addEventListener('click',e=>{const b=e.target.closest('button');if(b)segno(b.dataset.s,true)});
+  segno(mio||O.segnoDi(),false);
+})();
+// le schede per chi: comuni, scuole, attività
+const tabs=[...document.querySelectorAll('.tabs [role=tab]')];
+function tab(t){tabs.forEach(b=>{const on=b===t;b.setAttribute('aria-selected',on);document.getElementById(b.getAttribute('aria-controls')).hidden=!on})}
+tabs.forEach((b,i)=>{b.onclick=()=>tab(b);b.onkeydown=e=>{if(e.key==='ArrowRight'||e.key==='ArrowLeft'){const n=tabs[(i+(e.key==='ArrowRight'?1:tabs.length-1))%tabs.length];n.focus();tab(n)}}});
+async function copia(e,code){try{await navigator.clipboard.writeText(code.textContent);e.target.textContent='Copiato'}catch(x){const s=getSelection(),r=document.createRange();r.selectNodeContents(code);s.removeAllRanges();s.addRange(r)}}
+$('copia').onclick=e=>copia(e,$('mailT'));
+document.querySelectorAll('[data-copia]').forEach(b=>b.onclick=e=>copia(e,b.parentNode.querySelector('code')));
+// la scheda di un gioco
+function scheda(g){const v=g.vero,i=giochi.indexOf(g),altri=giochi.filter(x=>x!==g&&x.luogo===g.luogo).concat(giochi.filter(x=>x!==g&&x.luogo!==g.luogo)).slice(0,4);
+  const sfida=encodeURIComponent(`Ho giocato a ${g.nome}, un gioco della Tuscia: riesci a fare meglio? ${g.url}`);
+  const ck=(TG.CLIP||[]).includes(g.id)&&!matchMedia('(prefers-reduced-motion: reduce)').matches;
+  return `<div class="hero g-hero"><img src="img/${g.id}.jpg" alt="${esc(g.nome)}: una scena del gioco">${ck?`<video class="clipH" src="clip/${g.id}.mp4" poster="clip/${g.id}.jpg" muted loop playsinline autoplay aria-hidden="true"></video>`:''}<div class="wrap">
+    <a class="back" href="#giochi">← Tutti i giochi</a><span class="sign">${esc(g.paese)}</span>
+    <h1 style="margin-top:16px">${esc(g.nome)}</h1><p>${esc(g.riga)}</p>
+    <div class="row"><a class="btn play" href="${g.url}" target="_blank" rel="noopener">Gioca ora</a><div class="modes">${['Passeggiata','Competizione','Divertimento'].map(m=>`<span style="color:#dfe3df;border-color:#ffffff40">${m}</span>`).join('')}</div></div></div></div>
+  <section><div class="wrap g-grid"><div>
+    <h2>Come si gioca</h2><ol class="steps">${g.passi.map((p,k)=>`<li><b>${k+1}</b><p><strong>${esc(p[0])}.</strong>${esc(p[1])}</p></li>`).join('')}</ol>
+    </div>
+    <aside class="real"><span class="sign">Dal vero</span><h2 style="margin:0">${esc(v.titolo)}</h2>
+      <div class="facts">${v.fatti.map(f=>`<div><span>${esc(f[0])}</span><b>${esc(f[1])}</b></div>`).join('')}</div>
+      <p style="margin:0">${esc(v.testo)}</p>
+      <div class="share"><a class="btn sign-b sm" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(v.mappa)}" target="_blank" rel="noopener">Portami lì</a>
+      <a class="btn wa sm" href="https://wa.me/?text=${sfida}" target="_blank" rel="noopener">Sfida un amico</a></div></aside>
+  </div></section>
+  <section style="padding-top:0"><div class="wrap"><h2 style="font-size:clamp(26px,3.2vw,36px);margin-bottom:14px">Altri giochi</h2><div class="altri">${altri.map(a=>`<a href="#${a.id}"><img src="img/${a.id}.jpg" alt="" loading="lazy" width="720" height="405"><span>${esc(a.nome)}</span></a>`).join('')}</div></div></section>`}
+// due viste: la home, e la scheda di un gioco (#<id>)
+// tre pagine per chi collabora (#per-scuole, #per-comuni, #per-sponsor): sul sito anche scuole.html, comuni.html, sponsor.html
+const PAGINE={'per-scuole':'Per le scuole','per-comuni':'Per i Comuni','per-sponsor':'Per attività e sponsor'};
+let ultima=null;
+function vista(){let id=(location.hash||'').slice(1)||document.body.dataset.scheda||'';
+  // un'ancora dentro una pagina (es. #kit) resta in quella pagina
+  const el0=id&&document.getElementById(id),dentro=el0&&el0.closest('main.pg'),ancora=dentro&&dentro.id!==id?el0:null;
+  const g=giochi.find(x=>x.id===id),pg=PAGINE[id]?id:dentro?dentro.id:null;
+  $('home').hidden=!!(g||pg);$('scheda').hidden=!g;Object.keys(PAGINE).forEach(k=>$(k).hidden=k!==pg);
+  if(g){$('scheda').innerHTML=scheda(g);document.title=g.nome+' · Tuscia Games';scrollTo(0,0)}
+  else if(pg){document.title=PAGINE[pg]+' · Tuscia Games';if(ancora)ancora.scrollIntoView();else if(ultima!==pg)scrollTo(0,0)}
+  else{document.title='Tuscia Games';const el=id&&document.getElementById(id);if(el)el.scrollIntoView();else if(ultima)scrollTo(0,0)}
+  ultima=pg||g&&g.id||null}
+addEventListener('hashchange',vista);vista();
+})();
+</script>
+
+</body></html>

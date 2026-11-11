@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://grandtuscia.netlify.app/</loc><changefreq>weekly</changefreq><priority>1.0</priority></url>
+  <url><loc>https://grandtuscia.netlify.app/tv.html</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://grandtuscia.netlify.app/gioca.html</loc><changefreq>weekly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://grandtuscia.netlify.app/carrettini/</loc></url>
+  <url><loc>https://grandtuscia.netlify.app/ciminodh/</loc></url>
+  <url><loc>https://grandtuscia.netlify.app/citta/</loc></url>
+  <url><loc>https://grandtuscia.netlify.app/corseavuoto/</loc></url>
+  <url><loc>https://grandtuscia.netlify.app/funghi/</loc></url>
+  <url><loc>https://grandtuscia.netlify.app/vicopesca/</loc></url>
+  <url><loc>https://grandtuscia.netlify.app/vicosail/</loc></url>
+  <url><loc>https://grandtuscia.netlify.app/vicovolo/</loc></url>
+  <url><loc>https://grandtuscia.netlify.app/santarosa/</loc></url>
+  <url><loc>https://grandtuscia.netlify.app/classifica/</loc><changefreq>daily</changefreq></url>
+  <url><loc>https://grandtuscia.netlify.app/tuscia-games/scuole.html</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://grandtuscia.netlify.app/tuscia-games/comuni.html</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://grandtuscia.netlify.app/tuscia-games/sponsor.html</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://grandtuscia.netlify.app/tuscia-games/santarosa.html</loc></url>
+  <url><loc>https://grandtuscia.netlify.app/tuscia-games/corseavuoto.html</loc></url>
+  <url><loc>https://grandtuscia.netlify.app/tuscia-games/carrettini.html</loc></url>
+  <url><loc>https://grandtuscia.netlify.app/tuscia-games/vicosail.html</loc></url>
+  <url><loc>https://grandtuscia.netlify.app/tuscia-games/vicopesca.html</loc></url>
+  <url><loc>https://grandtuscia.netlify.app/tuscia-games/vicovolo.html</loc></url>
+  <url><loc>https://grandtuscia.netlify.app/tuscia-games/funghi.html</loc></url>
+  <url><loc>https://grandtuscia.netlify.app/tuscia-games/ciminodh.html</loc></url>
+  <url><loc>https://grandtuscia.netlify.app/tuscia-games/citta.html</loc></url>
+</urlset>

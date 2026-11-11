@@ -1,0 +1,2080 @@
+<!doctype html><html lang="it"><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="description" content="Funghi del Cimino: cerca porcini e finferli nei boschi tra Caprarola e Carbognano, contro tre fungaioli. Gioco gratis della Tuscia."><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Funghi del Cimino</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Young+Serif&family=Karla:wght@400;500;700&family=DM+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: canvas a tutto schermo, HUD agli angoli, pannelli "cartellino d'erbario" sopra il bosco */
+:root{
+  --bark:#1a1813;
+  --bark-2:#27231a;
+  --moss:#a3b765;
+  --moss-deep:#5f7231;
+  --lichen:#e6e2cf;
+  --lichen-dim:#b1ab93;
+  --porcino:#cf8f48;
+  --amanita:#e0503a;
+  --deadly:#b9c27a;
+  --glass:rgba(24,22,17,.84);
+  --line:rgba(230,226,207,.16);
+  --f-display:"Young Serif",Georgia,"Times New Roman",serif;
+  --f-body:"Karla",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"DM Mono",ui-monospace,Menlo,Consolas,monospace;
+  color-scheme:dark;
+}
+[hidden]{display:none!important}
+html,body{height:100%}
+body{margin:0;background:var(--bark);color:var(--lichen);font-family:var(--f-body);overflow:hidden;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
+canvas#gl{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible{outline:2px solid var(--moss);outline-offset:3px}
+
+/* ---------- overlay ---------- */
+.overlay{position:fixed;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;padding:max(16px,env(safe-area-inset-top,0px)) 16px max(16px,env(safe-area-inset-bottom,0px));overflow-y:auto;background:linear-gradient(180deg,rgba(18,16,12,.55),rgba(18,16,12,.82))}
+.sheet{width:100%;max-width:880px;display:grid;gap:22px;padding-block:12px;margin:auto}
+.eyebrow{font-family:var(--f-mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--moss)}
+h1{font-family:var(--f-display);font-weight:400;font-size:clamp(40px,8vw,76px);line-height:.95;margin:6px 0 0;text-wrap:balance;letter-spacing:-.01em}
+h1 em{font-style:normal;color:var(--porcino)}
+.lede{max-width:58ch;color:var(--lichen-dim);font-size:16px;line-height:1.55;margin:10px 0 0}
+.modes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+@media (max-width:720px){.modes{grid-template-columns:1fr}}
+.mode{display:grid;grid-template-rows:auto auto 1fr auto;gap:8px;text-align:left;padding:18px 18px 16px;border-radius:14px;border:1px solid var(--line);background:var(--glass);transition:transform .15s,border-color .15s,background .15s;min-width:0}
+.mode:hover{transform:translateY(-2px);border-color:var(--moss);background:rgba(36,33,24,.92)}
+.mode .tag{font-family:var(--f-mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--lichen-dim)}
+.mode h2{font-family:var(--f-display);font-weight:400;font-size:26px;margin:0;color:var(--lichen)}
+.mode p{margin:0;font-size:14.5px;line-height:1.45;color:var(--lichen-dim)}
+.mode .go{font-weight:700;font-size:14px;color:var(--moss)}
+.mode[data-mode="competizione"] .go{color:var(--porcino)}
+.mode[data-mode="effetti"] .go{color:#7fc4ff}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.btn{padding:11px 18px;border-radius:999px;border:1px solid var(--line);background:rgba(230,226,207,.06);font-weight:700;font-size:14.5px}
+.btn:hover{background:rgba(230,226,207,.12)}
+.btn.primary{background:var(--moss);color:var(--bark);border-color:var(--moss)}
+.btn.primary:hover{background:#b6c979}
+.keys{font-size:13.5px;color:var(--lichen-dim);line-height:1.6}
+.keys kbd{font-family:var(--f-mono);font-size:12px;padding:1px 6px;border:1px solid var(--line);border-radius:5px;color:var(--lichen)}
+.fine{font-size:12.5px;color:var(--lichen-dim);line-height:1.5;max-width:70ch;border-top:1px solid var(--line);padding-top:12px}
+
+/* ---------- erbario ---------- */
+.herb{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px}
+.card{display:grid;grid-template-columns:72px minmax(0,1fr);gap:12px;align-items:start;padding:12px;border-radius:12px;background:var(--glass);border:1px solid var(--line)}
+.card img{width:72px;height:72px;border-radius:10px;background:rgba(230,226,207,.06)}
+.card.unseen img{filter:brightness(0) opacity(.55)}
+.card h3{font-family:var(--f-display);font-weight:400;font-size:17px;margin:0;line-height:1.15}
+.card .lat{font-style:italic;font-size:12.5px;color:var(--lichen-dim);margin-top:2px}
+.card .pill{display:inline-block;margin-top:7px;font-family:var(--f-mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;padding:2px 7px;border-radius:999px;border:1px solid currentColor}
+.pill.ok{color:var(--moss)} .pill.tox{color:var(--amanita)} .pill.deadly{color:var(--deadly)}
+.card .note{grid-column:1/-1;font-size:13px;line-height:1.45;color:var(--lichen-dim);margin:0}
+.herb-count{font-family:var(--f-mono);font-size:13px;color:var(--lichen-dim)}
+
+/* ---------- HUD ---------- */
+#hud{position:fixed;inset:0;z-index:10;pointer-events:none}
+.hud-tl{position:absolute;left:16px;top:calc(12px + env(safe-area-inset-top,0px));display:grid;gap:6px}
+.hud-tr{position:absolute;right:16px;top:calc(12px + env(safe-area-inset-top,0px));display:flex;gap:8px;align-items:center;pointer-events:auto}
+.chip{background:var(--glass);border:1px solid var(--line);border-radius:10px;padding:7px 12px;display:flex;gap:14px;align-items:baseline}
+.chip .lbl{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--lichen-dim)}
+.chip .val{font-family:var(--f-mono);font-size:20px;font-variant-numeric:tabular-nums;color:var(--lichen)}
+.chip .val.warn{color:var(--amanita)}
+.modename{font-family:var(--f-display);font-size:15px;color:var(--moss)}
+.modename .zone{font-family:var(--f-mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--lichen-dim);margin-left:6px}
+.iconbtn{width:40px;height:40px;border-radius:50%;background:var(--glass);border:1px solid var(--line);display:grid;place-items:center;font-size:15px}
+.compass{width:40px;height:40px;border-radius:50%;background:var(--glass);border:1px solid var(--line);position:relative}
+.compass i{position:absolute;inset:0;display:block}
+.compass i b{position:absolute;left:50%;top:3px;transform:translateX(-50%);font-family:var(--f-mono);font-size:11px;font-weight:500;color:var(--amanita);font-style:normal}
+.fiuto{width:150px}
+.meter{height:6px;border-radius:3px;background:rgba(230,226,207,.12);overflow:hidden;margin-top:5px}
+.meter span{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--moss-deep),var(--moss),var(--porcino));transition:width .25s}
+#reticle{position:absolute;left:50%;top:50%;width:10px;height:10px;margin:-5px 0 0 -5px;border-radius:50%;border:2px solid rgba(230,226,207,.7);transition:transform .15s,border-color .15s}
+#reticle.on{transform:scale(1.9);border-color:var(--moss)}
+#reticle.bad{border-color:var(--amanita)}
+#target{position:absolute;left:50%;top:calc(50% + 22px);transform:translateX(-50%);text-align:center;white-space:nowrap;background:var(--glass);border:1px solid var(--line);border-radius:10px;padding:6px 12px;font-size:14px}
+#target small{display:block;font-family:var(--f-mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--lichen-dim);margin-top:2px}
+#toasts{position:absolute;left:50%;top:calc(70px + env(safe-area-inset-top,0px));transform:translateX(-50%);display:grid;gap:6px;justify-items:center;width:min(92vw,440px)}
+.toast{background:var(--glass);border:1px solid var(--line);border-radius:10px;padding:8px 14px;font-size:14px;text-align:center;animation:tin .25s ease-out}
+.toast b{font-family:var(--f-display);font-weight:400}
+.toast.good b{color:var(--moss)} .toast.bad b{color:var(--amanita)} .toast.gold b{color:var(--porcino)} .toast.blue b{color:#7fc4ff}
+@keyframes tin{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+#basket{position:absolute;left:50%;bottom:calc(14px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);display:flex;gap:6px;flex-wrap:wrap;justify-content:center;max-width:calc(100vw - 300px)}
+#basket .b{display:flex;align-items:center;gap:5px;background:var(--glass);border:1px solid var(--line);border-radius:999px;padding:3px 10px 3px 3px;font-family:var(--f-mono);font-size:13px}
+#basket img{width:24px;height:24px;border-radius:50%}
+#fxbar{position:absolute;left:16px;bottom:calc(160px + env(safe-area-inset-bottom,0px));display:grid;gap:6px;justify-items:start}
+@media (pointer:fine){#fxbar{bottom:calc(20px + env(safe-area-inset-bottom,0px))}}
+.fxc{display:flex;gap:10px;align-items:baseline;background:var(--glass);border:1px solid var(--line);border-radius:999px;padding:5px 14px;font-family:var(--f-mono);font-size:13px;font-variant-numeric:tabular-nums}
+.fxc b{font-family:var(--f-display);font-weight:400;font-size:15px}
+#radar{position:absolute;right:16px;top:calc(64px + env(safe-area-inset-top,0px));width:124px;height:124px;border-radius:50%;background:var(--glass);border:1px solid var(--line)}
+#cCombo{align-items:center}
+.pop{position:absolute;left:50%;top:43%;transform:translateX(-50%);font-family:var(--f-display);font-size:32px;color:var(--moss);text-shadow:0 2px 10px rgba(0,0,0,.55);animation:rise .9s ease-out forwards;pointer-events:none}
+.pop.gold{color:var(--porcino)}.pop.neg{color:var(--amanita)}
+@keyframes rise{from{opacity:0;transform:translate(-50%,10px)}20%{opacity:1}to{opacity:0;transform:translate(-50%,-44px)}}
+#cRank{display:grid;gap:3px;min-width:180px}
+#cRank div{display:flex;justify-content:space-between;gap:16px;font-family:var(--f-mono);font-size:12.5px;color:var(--lichen-dim);font-variant-numeric:tabular-nums}
+#cRank .me{color:var(--porcino);font-weight:500}
+.exam-grid{display:grid;grid-template-columns:170px minmax(0,1fr);gap:22px;align-items:start}
+@media (max-width:560px){.exam-grid{grid-template-columns:1fr}}
+#xImg{width:170px;height:170px;border-radius:14px;background:var(--glass);border:1px solid var(--line)}
+dl.clues{display:grid;grid-template-columns:auto minmax(0,1fr);gap:8px 16px;margin:14px 0 0}
+dl.clues dt{font-family:var(--f-mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--lichen-dim);padding-top:3px}
+dl.clues dd{margin:0;font-size:15.5px;line-height:1.45}
+.btn.opt:disabled{cursor:default;opacity:.55}
+.btn.opt.right{background:var(--moss);color:var(--bark);border-color:var(--moss);opacity:1}
+.btn.opt.wrong{border-color:var(--amanita);color:var(--amanita);opacity:1}
+.okc{color:var(--moss);font-weight:700}.badc{color:var(--amanita);font-weight:700}
+#oExam .lat{font-family:var(--f-body);font-style:italic;color:var(--lichen-dim)}
+h2.sub{font-family:var(--f-display);font-weight:400;font-size:clamp(26px,4.5vw,36px);margin:10px 0 0}
+.card .fxname{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--lichen-dim)}
+.toast.vis b{color:#d49bff}
+
+/* ---------- touch controls ---------- */
+#stick{position:absolute;left:22px;bottom:calc(22px + env(safe-area-inset-bottom,0px));width:124px;height:124px;border-radius:50%;background:rgba(24,22,17,.45);border:1px solid var(--line);pointer-events:auto;touch-action:none}
+#knob{position:absolute;left:50%;top:50%;width:52px;height:52px;margin:-26px 0 0 -26px;border-radius:50%;background:rgba(230,226,207,.28);border:1px solid rgba(230,226,207,.4)}
+.tbtns{position:absolute;right:20px;bottom:calc(26px + env(safe-area-inset-bottom,0px));display:grid;gap:12px;justify-items:end;pointer-events:auto}
+.tbtn{min-width:84px;height:84px;border-radius:50%;background:rgba(24,22,17,.6);border:1px solid var(--line);font-weight:700;font-size:14px;touch-action:none}
+.tbtn.ready{background:var(--moss);color:var(--bark);border-color:var(--moss)}
+.tbtn.small{min-width:60px;height:60px;font-size:12px}
+@media (max-width:560px){#basket{max-width:calc(100vw - 32px);bottom:calc(160px + env(safe-area-inset-bottom,0px))}}
+
+/* ---------- risultati ---------- */
+.big{font-family:var(--f-display);font-size:clamp(56px,12vw,96px);line-height:1;color:var(--porcino);font-variant-numeric:tabular-nums}
+.tally{display:flex;flex-wrap:wrap;gap:8px}
+.tally .b{display:flex;align-items:center;gap:8px;background:var(--glass);border:1px solid var(--line);border-radius:999px;padding:4px 12px 4px 4px;font-size:14px}
+.tally img{width:30px;height:30px;border-radius:50%}
+.tally .n{font-family:var(--f-mono)}
+
+/* ---------- schermo pulito: HUD compatto e trasparente, controlli ai bordi ---------- */
+.overlay{padding-top:max(52px,calc(env(safe-area-inset-top,0px) + 44px))}
+.hud-tl{left:max(10px,env(safe-area-inset-left,0px));top:calc(8px + env(safe-area-inset-top,0px));gap:5px;max-width:calc(100vw - 210px)}
+.hud-tl{justify-items:start}
+.hud-tl .row{gap:5px!important}
+.hud-tr{right:max(10px,env(safe-area-inset-right,0px));top:calc(8px + env(safe-area-inset-top,0px));gap:6px}
+.chip{background:rgba(24,22,17,.55);border-radius:8px;padding:3px 8px;gap:7px;align-items:center}
+.chip .lbl{font-size:10px;letter-spacing:.08em}
+.chip .val{font-size:15px;line-height:1.25}
+.modename{font-size:13px;line-height:1.2;text-shadow:0 1px 3px rgba(0,0,0,.85)}
+.modename .zone{font-size:10px;color:var(--lichen);margin-left:4px}
+.chip.fiuto:not([hidden]){width:auto;display:flex!important}
+.fiuto .meter{width:64px;margin-top:0}
+.iconbtn{width:44px;height:44px;background:rgba(24,22,17,.5)}
+.compass{width:30px;height:30px;background:rgba(24,22,17,.5);flex:none}
+.compass i b{top:1px;font-size:10px}
+#cRank{min-width:0;gap:1px;padding:4px 9px}
+#cRank div{font-size:12px;gap:12px}
+#radar{right:max(10px,env(safe-area-inset-right,0px));top:calc(60px + env(safe-area-inset-top,0px));width:96px;height:96px;background:rgba(24,22,17,.45)}
+#toasts{top:auto;bottom:calc(58px + env(safe-area-inset-bottom,0px));width:min(80vw,400px);gap:5px}
+.toast{background:rgba(24,22,17,.74);padding:6px 12px;font-size:13px;line-height:1.35}
+#target{font-size:13px;padding:4px 10px;background:rgba(24,22,17,.62)}
+#basket{bottom:calc(12px + env(safe-area-inset-bottom,0px))}
+#basket .b{background:rgba(24,22,17,.6);font-size:12px}
+#basket img{width:22px;height:22px}
+.fxc{padding:3px 10px;font-size:12px;background:rgba(24,22,17,.6)}
+.fxc b{font-size:13.5px}
+#stick{left:max(14px,env(safe-area-inset-left,0px));bottom:calc(14px + env(safe-area-inset-bottom,0px));width:108px;height:108px;background:rgba(24,22,17,.22);border-color:rgba(230,226,207,.22)}
+#knob{width:46px;height:46px;margin:-23px 0 0 -23px;background:rgba(230,226,207,.22);border-color:rgba(230,226,207,.35)}
+.tbtns{right:max(14px,env(safe-area-inset-right,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));gap:10px}
+.tbtn{min-width:66px;height:66px;background:rgba(24,22,17,.38);font-size:13px;border-color:rgba(230,226,207,.25)}
+.tbtn.small{min-width:50px;height:50px;font-size:11.5px}
+@media (pointer:coarse){
+  #toasts{bottom:calc(142px + env(safe-area-inset-bottom,0px))}
+  #basket{bottom:calc(16px + env(safe-area-inset-bottom,0px));max-width:calc(100vw - 240px)}
+  #fxbar{left:max(14px,env(safe-area-inset-left,0px));bottom:calc(134px + env(safe-area-inset-bottom,0px))}
+}
+@media (max-width:560px){
+  .hud-tl{max-width:calc(100vw - 150px)}
+  #hud #bSound{display:none}
+  #cRank div:not(.me):not(:first-child){display:none}
+  #radar{width:84px;height:84px;top:calc(58px + env(safe-area-inset-top,0px))}
+  #basket{bottom:calc(16px + env(safe-area-inset-bottom,0px));max-width:calc(100vw - 240px)}
+}
+@media (max-height:500px){
+  #toasts{bottom:calc(14px + env(safe-area-inset-bottom,0px));width:min(52vw,380px)}
+  #toasts .toast:nth-child(n+3){display:none}
+  #basket{bottom:auto;top:calc(8px + env(safe-area-inset-top,0px));left:auto;right:calc(max(10px,env(safe-area-inset-right,0px)) + 200px);transform:none;max-width:22vw;justify-content:flex-end}
+  #cRank div:not(.me):not(:first-child){display:none}
+  #radar{width:80px;height:80px;top:calc(58px + env(safe-area-inset-top,0px))}
+  #fxbar{bottom:calc(132px + env(safe-area-inset-bottom,0px))}
+  /* menu su telefono orizzontale: tutto più compatto, le tre modalità restano visibili */
+  .overlay{padding-top:max(46px,calc(env(safe-area-inset-top,0px) + 40px));padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+  .sheet{gap:12px;padding-block:0}
+  #oMenu h1{font-size:34px}
+  .lede{font-size:13.5px;line-height:1.4}
+  #oMenu .lede{margin-top:6px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .mode{padding:10px 12px;gap:4px}
+  .mode h2{font-size:20px}
+  .mode p{font-size:12.5px;line-height:1.35;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+  .fine{font-size:12px;padding-top:8px}
+}
+@media (prefers-reduced-motion:reduce){.toast{animation:none}.mode{transition:none}}
+</style>
+
+<canvas id="gl" aria-label="La campagna tra Caprarola e Carbognano"></canvas>
+
+<div id="hud" hidden>
+  <div class="hud-tl">
+    <div class="modename"><span id="hMode">Passeggiata</span> <span id="hZone" class="zone"></span></div>
+    <div class="row" style="gap:6px">
+      <div class="chip" id="cScore"><span class="lbl">Punti</span><span class="val" id="hScore">0</span></div>
+      <div class="chip" id="cTime"><span class="lbl">Tempo</span><span class="val" id="hTime">4:00</span></div>
+      <div class="chip" id="cHerb"><span class="lbl">Erbario</span><span class="val" id="hHerb">0/7</span></div>
+      <div class="chip" id="cFx"><span class="lbl">Effetti</span><span class="val" id="hFx">0/9</span></div>
+      <div class="chip" id="cCombo" hidden><span class="lbl">Serie</span><span class="val" id="hCombo" style="color:var(--porcino)">×1</span><div class="meter" style="width:54px;margin:0"><span id="hComboBar"></span></div></div>
+      <div class="chip" id="cKnow"><span class="lbl">Riconosciuti</span><span class="val" id="hKnow">0/0</span></div>
+    </div>
+    <div class="chip rank" id="cRank" hidden></div>
+    <div class="chip fiuto" id="cFiuto" style="display:block"><span class="lbl">Fiuto</span><div class="meter"><span id="hFiuto"></span></div></div>
+  </div>
+  <div class="hud-tr">
+    <div class="compass" title="Bussola"><i id="needle"><b>N</b></i></div>
+    <button class="iconbtn" id="bSound" aria-label="Audio">♪</button>
+    <button class="iconbtn" id="bMap" aria-label="Mappa" style="font-family:var(--f-mono);font-size:13px">M</button>
+    <button class="iconbtn" id="bPause" aria-label="Pausa">❚❚</button>
+  </div>
+  <div id="reticle"></div>
+  <div id="target" hidden></div>
+  <div id="toasts"></div>
+  <div id="basket"></div>
+  <div id="fxbar"></div>
+  <canvas id="radar" width="240" height="240" hidden aria-label="Radar dei fungaioli"></canvas>
+  <div id="stick" hidden><div id="knob"></div></div>
+  <div class="tbtns" id="tbtns" hidden>
+    <button class="tbtn small" id="tJump" hidden>Salta</button>
+    <button class="tbtn" id="tPick">Raccogli</button>
+  </div>
+</div>
+
+<!-- Menu -->
+<div class="overlay" id="oMenu">
+  <div class="sheet">
+    <div>
+      <div class="eyebrow">Tra Caprarola e Carbognano · SP35 · fine settembre, dopo la pioggia</div>
+      <h1>Funghi del <em>Cimino</em></h1>
+      <p class="lede">Benvenuto nel bosco tra Caprarola e Carbognano: castagneti, cerri e filari di noccioli lungo la strada bianca. I funghi non si fanno trovare facilmente. Crescono a gruppi nei posti buoni, mezzi coperti dalle foglie, tra ghiande e sassi che li imitano. Ascolta i passi, guarda bene a terra.</p>
+    </div>
+    <div class="modes">
+      <button class="mode" data-mode="passeggiata"><span class="tag">Senza tempo · conoscere</span><h2>Passeggiata</h2><p>Cerca con calma e studia ogni fungo che trovi: cappello, lamelle, gambo. Riconoscilo e decidi se va nel cestino o resta nel bosco.</p><span class="go">Entra nel bosco →</span></button>
+      <button class="mode" data-mode="competizione"><span class="tag">5 minuti · contro 3 fungaioli</span><h2>Competizione</h2><p>Sor Checco, la Peppa e Nando conoscono i posti buoni. I funghi grossi valgono di più, le serie rapide moltiplicano i punti e a metà gara spunta una buttata nuova. Bacati e velenosi tolgono punti.</p><span class="go">Sfida i fungaioli →</span></button>
+      <button class="mode" data-mode="effetti"><span class="tag">Senza tempo · divertimento</span><h2>Effetti</h2><p>Qui ogni fungo ti cambia la percezione: diventi gigante, piccolo come Alice, vedi doppio, di notte, in miniatura, a tempo di tamburo. Nove effetti da provare, e un cinghiale che gira.</p><span class="go">Assaggia il bosco →</span></button>
+    </div>
+    <div class="row">
+      <button class="btn" id="bMapMenu">Guarda la mappa</button>
+      <button class="btn" id="bHerbMenu">Apri l'erbario</button>
+      <span class="keys" id="keysHelp"><kbd>W A S D</kbd> cammina · <kbd>Shift</kbd> corri · mouse per guardare · <kbd>clic</kbd> o <kbd>E</kbd> raccogli · <kbd>Spazio</kbd> salta · <kbd>M</kbd> mappa · <kbd>Esc</kbd> pausa</span>
+    </div>
+    <p class="fine">È un gioco, non una guida al riconoscimento, e gli effetti sono inventati. Nella realtà l'ovolaccio è velenoso, la tignosa verdognola è mortale e il fungo delle visioni non esiste. I funghi veri raccolti nel bosco vanno sempre fatti controllare da un micologo, per esempio all'Ispettorato micologico della ASL di Viterbo.</p>
+  </div>
+</div>
+
+<!-- Erbario -->
+<div class="overlay" id="oHerb" hidden>
+  <div class="sheet">
+    <div class="row" style="justify-content:space-between">
+      <div><div class="eyebrow">Erbario e diario degli effetti</div><h1 style="font-size:clamp(34px,6vw,52px)">Specie del castagneto</h1></div>
+      <span class="herb-count" id="herbCount"></span>
+    </div>
+    <div class="herb" id="herbGrid"></div>
+    <div class="row" style="justify-content:space-between;align-items:baseline"><h2 class="sub">Diario degli effetti</h2><span class="herb-count" id="fxCount"></span></div>
+    <div class="herb" id="fxGrid"></div>
+    <div class="row"><button class="btn primary" id="bHerbClose">Chiudi</button></div>
+  </div>
+</div>
+
+<!-- Esame del fungo -->
+<div class="overlay" id="oExam" hidden>
+  <div class="sheet" style="max-width:760px">
+    <div class="exam-grid">
+      <img id="xImg" alt="">
+      <div style="min-width:0">
+        <div class="eyebrow">Esame del fungo</div>
+        <h1 id="xTitle" style="font-size:clamp(30px,5vw,46px)">Che fungo è?</h1>
+        <dl class="clues" id="xClues"></dl>
+      </div>
+    </div>
+    <div id="xAsk" style="display:grid;gap:10px"><p class="lede" style="margin:0">Leggi gli indizi. Che fungo è?</p><div class="row" id="xOpts"></div></div>
+    <div id="xReveal" hidden style="display:grid;gap:10px">
+      <p class="lede" id="xVerdict" style="margin:0"></p>
+      <p class="lede" id="xLook" style="margin:0"></p>
+      <div class="row"><button class="btn primary" id="xKeep">Metti nel cestino</button><button class="btn" id="xLeave">Lascia nel bosco</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- Mappa -->
+<div class="overlay" id="oMap" hidden>
+  <div class="sheet" style="max-width:720px">
+    <div class="row" style="justify-content:space-between;align-items:end">
+      <div><div class="eyebrow">Mappa della zona</div><h1 style="font-size:clamp(30px,5vw,46px)">Tra Caprarola e Carbognano</h1></div>
+      <button class="btn primary" id="bMapClose">Chiudi</button>
+    </div>
+    <canvas id="mapCv" width="1000" height="1000" style="width:100%;height:auto;aspect-ratio:1;border-radius:14px;border:1px solid var(--line);display:block"></canvas>
+    <p class="fine">Ricalcata sulla mappa del rilievo: Caprarola sul crinale a sud-ovest, Carbognano sullo sperone a nord-est, la SP35 che li unisce salendo verso nord, le forre che scendono verso sud-est. Le distanze sono accorciate di circa dieci volte. La freccia rossa sei tu.</p>
+  </div>
+</div>
+
+<!-- Pausa -->
+<div class="overlay" id="oPause" hidden>
+  <div class="sheet" style="max-width:420px;text-align:center;justify-items:center">
+    <div class="eyebrow">In pausa</div>
+    <h1 style="font-size:48px">Una sosta sul tronco</h1>
+    <div class="row" style="justify-content:center">
+      <button class="btn primary" id="bResume">Riprendi</button>
+      <button class="btn" id="bHerbPause">Erbario</button>
+      <button class="btn" id="bSoundPause">Audio sì</button>
+      <button class="btn" id="bQuit">Esci al menu</button>
+    </div>
+    <button class="btn" id="bEndWalk" hidden>Termina la passeggiata</button>
+  </div>
+</div>
+
+<!-- Risultati -->
+<div class="overlay" id="oEnd" hidden>
+  <div class="sheet" style="max-width:640px">
+    <div>
+      <div class="eyebrow" id="eMode">Competizione · tempo scaduto</div>
+      <div class="big" id="eScore">0</div>
+      <p class="lede" id="eLine"></p>
+    </div>
+    <div class="tally" id="eTally"></div>
+    <div class="row">
+      <button class="btn primary" id="bAgain">Gioca ancora</button>
+      <button class="btn" id="bHerbEnd">Erbario</button>
+      <button class="btn" id="bMenu">Menu</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="../engine/tg-ponte.js"></script>
+<script>
+(() => {
+'use strict';
+const $ = s => document.querySelector(s);
+const TOUCH = matchMedia('(pointer: coarse)').matches;
+const rand = (a, b) => a + Math.random() * (b - a);
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const sstep = (a, b, x) => { const t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
+
+/* ================= specie ================= */
+const SPECIES = [
+  { id:'porcino',  name:'Porcino',            latin:'Boletus edulis',            pts:40,  kind:'ok',     hab:'trunk',   count:18, flee:true,
+    note:"Cappello bruno, gambo panciuto chiaro, spugna di pori sotto il cappello. Ai piedi di castagni e cerri, spesso vicino all'ovolaccio." },
+  { id:'finferlo', name:'Finferlo',           latin:'Cantharellus cibarius',     pts:10,  kind:'ok',     hab:'moss',    clusters:11, cl:[3,5],
+    note:"Giallo uovo, a imbuto, con pieghe che scendono lungo il gambo. Cresce a gruppetti nel muschio del castagneto." },
+  { id:'trombetta',name:'Trombetta dei morti',latin:'Craterellus cornucopioides',pts:15,  kind:'ok',     hab:'moss',    clusters:8, cl:[3,4],
+    note:"Nera, a forma di tromba, si mimetizza tra le foglie. A gruppi nelle zone umide e muschiose del bosco." },
+  { id:'mazza',    name:'Mazza di tamburo',   latin:'Macrolepiota procera',      pts:20,  kind:'ok',     hab:'clearing',count:12,
+    note:"Alta e slanciata, cappello a ombrello con squame brune e anello mobile. Nei prati e tra i filari dei noccioleti." },
+  { id:'ovolo',    name:'Ovolo buono',        latin:'Amanita caesarea',          pts:80,  kind:'ok',     hab:'edge',    count:6, flee:true,
+    note:"Cappello arancio, lamelle e gambo gialli, volva bianca alla base. Raro: ama il margine tra castagneto e noccioleto, dove arriva il sole." },
+  { id:'muscaria', name:'Ovolaccio',          latin:'Amanita muscaria',          pts:-30, kind:'tox',    hab:'trunk',   count:14,
+    note:"Rosso con verruche bianche, lamelle bianche. Velenoso. Dove c'è lui spesso c'è anche il porcino." },
+  { id:'falloide', name:'Tignosa verdognola', latin:'Amanita phalloides',        pts:-80, kind:'deadly', hab:'trunk',   count:8,
+    note:"Cappello verde oliva, lamelle bianche, anello e volva. Mortale anche in piccole quantità." },
+];
+const SP = Object.fromEntries(SPECIES.map(s => [s.id, s]));
+Object.assign(SP.porcino,  { grams:220, cap:'Bruno nocciola, vellutato e carnoso.', under:'Pori bianchi o giallini, come una spugna fine.', stem:'Panciuto, chiaro, con un sottile reticolo in alto.',
+  look:'il porcino malefico (<i>Rubroboletus satanas</i>), che ha pori rossi e gambo rossastro: velenoso.' });
+Object.assign(SP.finferlo, { grams:15, cap:'Giallo uovo, a imbuto, con il bordo ondulato.', under:'Pieghe spesse che scendono lungo il gambo, non vere lamelle.', stem:'Pieno, dello stesso giallo del cappello.',
+  look:'il falso gallinaccio (<i>Hygrophoropsis aurantiaca</i>), più arancione e con vere lamelle sottili.' });
+Object.assign(SP.trombetta,{ grams:8, cap:'Grigio-nero, cavo, a forma di tromba.', under:'Liscio o appena rugoso, grigio cenere.', stem:'Cavo, tutt\'uno con la tromba.',
+  look:'quasi niente: il difficile è vederla tra le foglie scure.' });
+Object.assign(SP.mazza,    { grams:70, cap:'Largo fino a 30 cm, con squame brune su fondo chiaro e un umbone scuro al centro.', under:'Lamelle bianche e fitte.', stem:'Alto e tigrato, con un anello doppio che scorre.', conf:'falloide',
+  look:'le lepiote piccole, alcune mortali: sotto i 10 cm di cappello meglio lasciarle.' });
+Object.assign(SP.ovolo,    { grams:90, cap:'Arancio vivo, liscio, senza verruche.', under:'Lamelle gialle.', stem:'Giallo, con anello giallo e una volva bianca a sacco alla base.', conf:'muscaria',
+  look:'l\'ovolaccio (<i>Amanita muscaria</i>), che però ha lamelle e gambo bianchi.' });
+Object.assign(SP.muscaria, { cap:'Rosso con verruche bianche (la pioggia a volte le lava via).', under:'Lamelle bianche.', stem:'Bianco, con anello e bulbo a cercini.', conf:'ovolo',
+  look:'l\'ovolo buono quando la pioggia ha lavato le verruche: guarda lamelle e gambo, qui sono bianchi.' });
+Object.assign(SP.falloide, { cap:'Verde oliva o giallastro, liscio, con fibre sottili a raggiera.', under:'Lamelle bianche.', stem:'Bianco, con anello e una volva bianca a sacco.', conf:'mazza',
+  look:'prataioli e colombine verdi. Lamelle bianche con anello e volva: si lascia sempre lì.' });
+const KIND_LABEL = { ok:'Commestibile', tox:'Velenoso', deadly:'Mortale' };
+
+/* ================= memoria locale ================= */
+const store = {
+  get(){ try { return JSON.parse(localStorage.getItem('funghi-cimino') || '{}'); } catch(e){ return {}; } },
+  set(o){ try { localStorage.setItem('funghi-cimino', JSON.stringify(o)); } catch(e){} }
+};
+const saved = Object.assign({ seen:{}, best:{}, fx:{} }, store.get());
+function persist(){ store.set(saved); }
+
+/* ================= renderer & scena ================= */
+const canvas = $('#gl');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias:true, powerPreference:'high-performance' });
+renderer.setPixelRatio(Math.min(devicePixelRatio || 1, TOUCH ? 1.5 : 1.75));
+const scene = new THREE.Scene();
+const FOG = new THREE.Color('#a9b596');
+scene.background = FOG.clone();
+scene.fog = new THREE.FogExp2(FOG, 0.015);
+const camera = new THREE.PerspectiveCamera(70, 1, 0.05, 1200);
+camera.rotation.order = 'YXZ';
+function resize(){
+  const w = innerWidth, h = innerHeight;
+  renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix();
+}
+addEventListener('resize', resize); resize();
+
+const hemi = new THREE.HemisphereLight('#e9efd2', '#3d3222', 0.95); scene.add(hemi);
+const sun = new THREE.DirectionalLight('#fff0c8', 0.75); sun.position.set(30, 60, 20); scene.add(sun);
+
+/* ================= il territorio tra Caprarola e Carbognano =================
+   Ricalcato sulla mappa del rilievo: 1 pixel della mappa = 0,5 m di gioco (la distanza vera è compressa).
+   Nord = -z. Caprarola a sud-ovest sul crinale, Carbognano a nord-est sullo sperone, la SP35 che li unisce
+   salendo a nord con il tornante, la SP67 verso nord-ovest, fossi e forre che scendono verso sud-est. */
+const HORIZON = new THREE.Group(), RAYS = new THREE.Group(); scene.add(HORIZON, RAYS); let SKY;
+const WORLD = 190;
+const PX = (px, py) => [(px - 1120) * 0.5, (py - 900) * 0.5];
+const pxList = a => a.map(([x, y]) => PX(x, y));
+
+// paesi (aree costruite, non si attraversano)
+const TOWNS = [
+  { name:'Caprarola', poly: pxList([[600,740],[740,740],[790,760],[840,820],[900,860],[960,890],[1010,930],[1022,1000],[1000,1080],[1025,1140],[990,1205],[920,1212],[850,1165],[780,1152],[600,1152]]) },
+  { name:'Carbognano', poly: pxList([[1150,760],[1185,690],[1210,600],[1262,560],[1330,515],[1362,568],[1422,608],[1560,640],[1560,862],[1452,902],[1380,932],[1300,902],[1232,862],[1165,822]]) },
+];
+function inPoly(poly, x, z){ let c = false; for (let i = 0, j = poly.length - 1; i < poly.length; j = i++){ const [xi, zi] = poly[i], [xj, zj] = poly[j]; if ((zi > z) !== (zj > z) && x < (xj - xi) * (z - zi) / (zj - zi) + xi) c = !c; } return c; }
+function segDist(x, z, ax, az, bx, bz){ const dx = bx - ax, dz = bz - az, L = dx*dx + dz*dz || 1; const t = clamp(((x - ax)*dx + (z - az)*dz) / L, 0, 1); const px = ax + dx*t, pz = az + dz*t; return [Math.hypot(x - px, z - pz), px, pz]; }
+function polyEdge(poly, x, z){ let best = [1e9, 0, 0]; for (let i = 0, j = poly.length - 1; i < poly.length; j = i++){ const r = segDist(x, z, poly[j][0], poly[j][1], poly[i][0], poly[i][1]); if (r[0] < best[0]) best = r; } return best; }
+function townAt(x, z){ for (const t of TOWNS) if (inPoly(t.poly, x, z)) return t; return null; }
+function townDist(x, z){ let d = 1e9; for (const t of TOWNS){ const e = polyEdge(t.poly, x, z)[0]; d = Math.min(d, inPoly(t.poly, x, z) ? -e : e); } return d; }
+function pushOutTown(o){
+  const t = townAt(o.x, o.z); if (!t) return;
+  const [, px, pz] = polyEdge(t.poly, o.x, o.z); let dx = px - o.x, dz = pz - o.z; const L = Math.hypot(dx, dz) || 1;
+  o.x = px + dx / L * 0.35; o.z = pz + dz / L * 0.35;
+}
+
+// fossi e forre (scendono verso sud-est)
+const GULLIES = [ pxList([[1080,520],[1070,600],[1052,680],[1036,745]]), pxList([[895,520],[915,600],[935,680],[948,745]]), pxList([[1160,955],[1176,1060],[1200,1160],[1222,1290]]), pxList([[1300,1290],[1325,1190],[1352,1110],[1390,1050]]) ];
+function gullyD(x, z){ let d = 1e9; for (const g of GULLIES) for (let i = 1; i < g.length; i++){ const r = segDist(x, z, g[i-1][0], g[i-1][1], g[i][0], g[i][1])[0]; if (r < d) d = r; } return d; }
+
+// altimetria: il crinale di Caprarola, la salita verso i 600 m a nord-ovest, lo sperone di Carbognano, la discesa a sud-est
+const g2 = (x, z, cx, cz, sx, sz) => Math.exp(-(((x - cx) / sx) ** 2 + ((z - cz) / sz) ** 2));
+function H(x, z){
+  const nw = clamp((-x - z - 70) / 270, 0, 1);
+  let h = 13 * g2(x, z, -175, 10, 120, 115) + 18 * sstep(0, 1, nw) + 5 * g2(x, z, 140, -95, 70, 60)
+        - 7 * sstep(0, 1, (x + z - 30) / 250) - 2.5 * g2(x, z, -5, -60, 45, 30)
+        + 1.2 * Math.sin(x * 0.05) * Math.cos(z * 0.045) + 0.6 * Math.sin(x * 0.13 + 1) * Math.sin(z * 0.11) + 0.25 * Math.sin(x * 0.3 + z * 0.27);
+  const gd = gullyD(x, z); if (gd < 16) h -= 5.5 * Math.exp(-((gd / 6.5) ** 2));
+  return h;
+}
+function MOSS(x, z){ return Math.sin(x*0.11+2)*Math.cos(z*0.13-1) + 0.5*Math.sin(x*0.31+z*0.27) + 0.25*Math.cos(x*0.53-z*0.41) + (gullyD(x, z) < 10 ? 0.5 : 0); }
+
+// strade: asfaltate (SP35, SP67, SP68) e strade bianche tra i noccioleti
+const ROADS = [
+  { name:'SP35', kind:'asfalto', w:5.4, px:[[925,885],[955,850],[968,805],[976,770],[1012,772],[1060,790],[1112,805],[1172,816]] },
+  { name:'SP35', kind:'asfalto', w:5.4, px:[[1008,1150],[1000,1200],[990,1250],[985,1300]] },
+  { name:'SP67', kind:'asfalto', w:5.0, px:[[1182,722],[1132,652],[1082,606],[1030,570],[975,522],[935,488]] },
+  { name:'SP68', kind:'asfalto', w:5.0, px:[[1440,885],[1482,902],[1545,940]] },
+  { name:'Strada bianca', kind:'bianca', w:3.8, px:[[1078,797],[1098,860],[1140,930],[1200,1000],[1262,1072],[1330,1150],[1382,1212],[1420,1300]] },
+  { name:'Strada bianca', kind:'bianca', w:3.8, px:[[974,782],[962,730],[942,662],[917,592],[892,515]] },
+  { name:'Strada bianca', kind:'bianca', w:3.6, px:[[1262,1072],[1322,1012],[1400,962],[1462,935]] },
+];
+const RGRID = new Map(), RG = 6;
+for (const r of ROADS){
+  const pts = pxList(r.px).map(([x, z]) => new THREE.Vector3(x, 0, z));
+  const curve = new THREE.CatmullRomCurve3(pts, false, 'centripetal');
+  const n = Math.max(8, Math.round(curve.getLength() / 1.5));
+  r.samples = curve.getSpacedPoints(n).map((p, i) => { const t = curve.getTangentAt(i / n); return { x:p.x, z:p.z, tx:t.x, tz:t.z }; });
+  for (const s of r.samples){ const k = Math.floor(s.x / RG) + ',' + Math.floor(s.z / RG); if (!RGRID.has(k)) RGRID.set(k, []); RGRID.get(k).push({ s, r }); }
+}
+function roadAt(x, z){
+  const cx = Math.floor(x / RG), cz = Math.floor(z / RG); let best = null, bd = 1e9;
+  for (let i = -1; i <= 1; i++) for (let j = -1; j <= 1; j++){ const a = RGRID.get((cx + i) + ',' + (cz + j)); if (!a) continue; for (const e of a){ const d = Math.hypot(e.s.x - x, e.s.z - z); if (d < bd){ bd = d; best = e.r; } } }
+  return { d:bd, road:best };
+}
+const SB1 = ROADS[4].samples;
+const START = { x:SB1[9].x, z:SB1[9].z, yaw:1.45 };
+const JUNCTION = SB1[0];
+
+const NOCC = [ { x0:-40, x1:10, z0:55, z1:110 }, { x0:45, x1:100, z0:20, z1:75 }, { x0:70, x1:125, z0:95, z1:150 }, { x0:150, x1:186, z0:40, z1:110 }, { x0:-45, x1:15, z0:140, z1:186 }, { x0:-186, x1:-120, z0:162, z1:188 }, { x0:0, x1:40, z0:-186, z1:-150 } ];
+const PRATI = [ { x:-60, z:-125, r:13 }, { x:15, z:5, r:11 }, { x:160, z:150, r:15 }, { x:-110, z:-165, r:12 }, { x:-80, z:175, r:10 } ];
+const CASALE = { x:135, z:165 };
+const PALAZZO = { x:-165, z:-50 }, CASTELLO = { x:140, z:-100 };
+const rectOut = (r, x, z) => Math.max(r.x0 - x, x - r.x1, r.z0 - z, z - r.z1);
+function zone(x, z){
+  if (townAt(x, z)) return 'town';
+  const rd = roadAt(x, z); if (rd.road && rd.d < rd.road.w / 2 + 0.3) return 'road';
+  if (NOCC.some(r => rectOut(r, x, z) < 0)) return 'nocc';
+  if (PRATI.some(p => Math.hypot(x - p.x, z - p.z) < p.r)) return 'prato';
+  return 'bosco';
+}
+const ZONE_LABEL = { road:'Strada', nocc:'Noccioleto', prato:'Prato', bosco:'Castagneto', town:'Paese' };
+function placeName(x, z){
+  const t = townAt(x, z); if (t) return t.name;
+  const rd = roadAt(x, z); if (rd.road && rd.d < rd.road.w / 2 + 0.3) return rd.road.name;
+  const zn = zone(x, z);
+  if (zn === 'bosco' && gullyD(x, z) < 9) return 'Forra';
+  if (zn === 'bosco' && townDist(x, z) < 25) return 'Castagneto sotto ' + (Math.hypot(x - PALAZZO.x, z - PALAZZO.z) < Math.hypot(x - CASTELLO.x, z - CASTELLO.z) ? 'Caprarola' : 'Carbognano');
+  if (Math.hypot(x - CASALE.x, z - CASALE.z) < 30) return 'Casale';
+  return ZONE_LABEL[zn];
+}
+function noccF(x, z){ let f = 0; for (const r of NOCC) f = Math.max(f, 1 - sstep(-2, 2, rectOut(r, x, z))); return f; }
+function pratoF(x, z){ let f = 0; for (const p of PRATI){ f = Math.max(f, 1 - sstep(p.r - 4, p.r + 1, Math.hypot(x - p.x, z - p.z))); } return f; }
+function roadF(x, z){ const rd = roadAt(x, z); return rd.road ? 1 - sstep(rd.road.w / 2, rd.road.w / 2 + 2.5, rd.d) : 0; }
+
+function canvasTex(w, h, draw, repeat){
+  const c = document.createElement('canvas'); c.width = w; c.height = h; draw(c.getContext('2d'), w, h);
+  const t = new THREE.CanvasTexture(c);
+  if (repeat){ t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(repeat, repeat); }
+  t.anisotropy = 4; return t;
+}
+const leafTex = canvasTex(256, 256, (x) => {
+  x.fillStyle = '#4f3722'; x.fillRect(0, 0, 256, 256);
+  const cols = ['#7a4f27','#8d5b28','#4f331b','#9a7434','#6b4a2c','#3f2c1b','#836634','#5d4b26','#6e3f1f'];
+  for (let i = 0; i < 1100; i++){
+    const px = Math.random()*256, py = Math.random()*256, a = Math.random()*6.28, rx = 3+Math.random()*5, ry = 1.8+Math.random()*2.4;
+    x.fillStyle = cols[i % cols.length]; x.globalAlpha = 0.85;
+    for (const dx of [-256,0,256]) for (const dy of [-256,0,256]){
+      if (px+dx < -10 || px+dx > 266 || py+dy < -10 || py+dy > 266) continue;
+      x.beginPath(); x.ellipse(px+dx, py+dy, rx, ry, a, 0, 6.28); x.fill();
+    }
+  }
+}, 140);
+
+const groundGeo = new THREE.PlaneGeometry(WORLD*2+40, WORLD*2+40, 215, 215);
+groundGeo.rotateX(-Math.PI/2);
+{
+  const p = groundGeo.attributes.position, cols = [];
+  const moss = new THREE.Color('#7f9a45'), grass = new THREE.Color('#aebd66'), soil = new THREE.Color('#d8c48a'), stone = new THREE.Color('#cbbfa6'), base = new THREE.Color('#ffffff'), c = new THREE.Color();
+  for (let i = 0; i < p.count; i++){
+    const x = p.getX(i), z = p.getZ(i); p.setY(i, H(x, z));
+    const nf = noccF(x, z), pf = pratoF(x, z), tf = 1 - sstep(-1, 3, townDist(x, z)), open = Math.max(nf, pf, tf);
+    c.copy(base).lerp(moss, sstep(0.5, 0.95, MOSS(x, z)) * 0.85 * (1 - open))
+      .lerp(soil, nf * 0.75).lerp(grass, pf * 0.9).lerp(soil, roadF(x, z) * 0.5).lerp(stone, tf * 0.9);
+    const n = 0.9 + Math.random()*0.2; cols.push(c.r*n, c.g*n, c.b*n);
+  }
+  groundGeo.setAttribute('color', new THREE.Float32BufferAttribute(cols, 3));
+  groundGeo.computeVertexNormals();
+}
+scene.add(new THREE.Mesh(groundGeo, new THREE.MeshLambertMaterial({ map:leafTex, vertexColors:true })));
+{ const far = new THREE.Mesh(new THREE.PlaneGeometry(2600, 2600).rotateX(-Math.PI/2), new THREE.MeshLambertMaterial({ color:'#5f5a36' })); far.position.y = -26; scene.add(far); }
+
+/* ================= strade: asfalto e strade bianche ================= */
+{
+  const bianca = canvasTex(128, 256, (x) => {
+    x.fillStyle = '#c9b48a'; x.fillRect(0, 0, 128, 256);
+    for (let i = 0; i < 1400; i++){ x.fillStyle = ['#b19c72','#dccaa0','#a58f66','#e6d8b6','#9d8a63'][i % 5]; x.fillRect(Math.random()*128, Math.random()*256, 1 + Math.random()*3, 1 + Math.random()*2.5); }
+    x.fillStyle = 'rgba(120,98,66,.28)'; x.fillRect(22, 0, 22, 256); x.fillRect(84, 0, 22, 256);
+    for (let i = 0; i < 90; i++){ x.fillStyle = ['#7d9138','#90a246','#6c8431'][i % 3]; x.fillRect(54 + Math.random()*20, Math.random()*256, 2, 3 + Math.random()*6); }
+    for (let i = 0; i < 70; i++){ x.fillStyle = '#7d9138'; x.fillRect(Math.random() < .5 ? Math.random()*8 : 120 + Math.random()*8, Math.random()*256, 2, 3 + Math.random()*6); }
+  });
+  const asfalto = canvasTex(128, 256, (x) => {
+    x.fillStyle = '#5d5c57'; x.fillRect(0, 0, 128, 256);
+    for (let i = 0; i < 2600; i++){ x.fillStyle = ['#6a6964','#4f4e4a','#77756e','#56554f'][i % 4]; x.fillRect(Math.random()*128, Math.random()*256, 1 + Math.random()*2, 1 + Math.random()*2); }
+    for (let i = 0; i < 12; i++){ x.strokeStyle = 'rgba(30,30,28,.5)'; x.lineWidth = 1; x.beginPath(); let px = Math.random()*128, py = Math.random()*256; x.moveTo(px, py); for (let k = 0; k < 5; k++){ px += (Math.random() - .5) * 20; py += Math.random() * 18; x.lineTo(px, py); } x.stroke(); }
+    x.fillStyle = 'rgba(235,232,220,.75)'; x.fillRect(7, 0, 3, 256); x.fillRect(118, 0, 3, 256);
+    x.fillStyle = 'rgba(160,150,120,.5)'; x.fillRect(0, 0, 5, 256); x.fillRect(123, 0, 5, 256);
+  });
+  bianca.wrapT = asfalto.wrapT = THREE.RepeatWrapping;
+  const mats = { bianca: new THREE.MeshLambertMaterial({ map:bianca, color:'#cbbd9c', polygonOffset:true, polygonOffsetFactor:-2 }), asfalto: new THREE.MeshLambertMaterial({ map:asfalto, polygonOffset:true, polygonOffsetFactor:-2 }) };
+  for (const r of ROADS){
+    const pos = [], uv = [], idx = []; const W = r.w / 2; let v = 0;
+    r.samples.forEach((s, n) => {
+      const nx = -s.tz, nz = s.tx;
+      for (const sd of [-1, 1]){ const px = s.x + nx*W*sd, pz = s.z + nz*W*sd; pos.push(px, H(px, pz) + 0.08, pz); uv.push(sd < 0 ? 0 : 1, v); }
+      if (n > 0){ const a = (n-1)*2; idx.push(a, a+1, a+2, a+1, a+3, a+2); }
+      v += 1.5 / (r.kind === 'asfalto' ? 7 : 5);
+    });
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); g.setIndex(idx); g.computeVertexNormals();
+    scene.add(new THREE.Mesh(g, mats[r.kind]));
+  }
+}
+
+/* ================= alberi: castagni e cerri nel bosco, noccioli nei filari ================= */
+const trees = []; const GRID = 8; const grid = new Map();
+const gk = (x, z) => Math.floor(x/GRID) + ',' + Math.floor(z/GRID);
+function nearTrees(x, z){
+  const out = [], cx = Math.floor(x/GRID), cz = Math.floor(z/GRID);
+  for (let i = -1; i <= 1; i++) for (let j = -1; j <= 1; j++){ const a = grid.get((cx+i)+','+(cz+j)); if (a) out.push(...a); }
+  return out;
+}
+function addObstacle(o){ trees.push(o); const k = gk(o.x, o.z); if (!grid.has(k)) grid.set(k, []); grid.get(k).push(o); }
+const BOSCO = [], HAZEL = [];
+addObstacle({ x:CASALE.x, z:CASALE.z, r:7 });
+for (let tries = 0; tries < 60000 && BOSCO.length < 1600; tries++){
+  const x = rand(-WORLD, WORLD), z = rand(-WORLD, WORLD);
+  if (townDist(x, z) < 3) continue;
+  if (roadAt(x, z).d < 4.2) continue;
+  if (NOCC.some(r => rectOut(r, x, z) < 2.5)) continue;
+  if (PRATI.some(p => Math.hypot(x - p.x, z - p.z) < p.r + 1.5)) continue;
+  if (Math.hypot(x - CASALE.x, z - CASALE.z) < 16) continue;
+  if (nearTrees(x, z).some(t => Math.hypot(t.x-x, t.z-z) < 3.5)) continue;
+  const kind = Math.random() < (gullyD(x, z) < 12 ? 0.35 : 0.62) ? 'castagno' : 'cerro';
+  const o = { x, z, r: kind === 'castagno' ? rand(0.5, 0.85) : rand(0.32, 0.5), tree:true, kind };
+  addObstacle(o); BOSCO.push(o);
+}
+for (const r of NOCC){
+  for (let x = r.x0 + 2.5; x < r.x1 - 1; x += 5.5) for (let z = r.z0 + 2.5; z < r.z1 - 1; z += 5.5){
+    const hx = x + rand(-.3, .3), hz = z + rand(-.3, .3);
+    if (roadAt(hx, hz).d < 3.5 || townDist(hx, hz) < 2 || Math.hypot(hx - CASALE.x, hz - CASALE.z) < 14) continue;
+    const o = { x:hx, z:hz, r:0.55, hazel:true }; addObstacle(o); HAZEL.push(o);
+  }
+}
+{
+  const m = new THREE.Matrix4(), q = new THREE.Quaternion(), s = new THREE.Vector3(), p = new THREE.Vector3(), c = new THREE.Color(), e = new THREE.Euler();
+  const barkTex = canvasTex(64, 256, (x) => {
+    x.fillStyle = '#9a9a92'; x.fillRect(0, 0, 64, 256);
+    for (let i = 0; i < 26; i++){ const cx = Math.random()*64; x.strokeStyle = 'rgba(40,34,28,.45)'; x.lineWidth = 1.5 + Math.random()*2.5; x.beginPath(); x.moveTo(cx, 0); for (let y = 0; y <= 256; y += 16) x.lineTo(cx + Math.sin(y*0.05 + i)*4, y); x.stroke(); }
+    for (let i = 0; i < 200; i++){ x.fillStyle = 'rgba(230,225,210,.14)'; x.fillRect(Math.random()*64, Math.random()*256, 2 + Math.random()*5, 1); }
+  });
+  const trunkGeo = new THREE.CylinderGeometry(0.72, 1, 1, 10, 1, true); trunkGeo.translate(0, 0.5, 0);
+  const trunks = new THREE.InstancedMesh(trunkGeo, new THREE.MeshLambertMaterial({ map:barkTex }), BOSCO.length);
+  const blob = new THREE.IcosahedronGeometry(1, 1);
+  const canopy = new THREE.InstancedMesh(blob, new THREE.MeshLambertMaterial({ flatShading:true }), BOSCO.length * 3 + HAZEL.length * 3);
+  const CAST = ['#4f6a26','#5c7a2b','#667f2e','#4a6424','#8f8a34','#9c8a32'], CERR = ['#56682f','#4a5e2a','#5f6f34'];
+  let ci = 0;
+  BOSCO.forEach((t, i) => {
+    const cast = t.kind === 'castagno', h = cast ? rand(9, 13) : rand(13, 17);
+    q.setFromEuler(e.set(rand(-.04, .04), rand(0, 6.28), rand(-.04, .04)));
+    m.compose(p.set(t.x, H(t.x, t.z) - 0.3, t.z), q, s.set(t.r, h, t.r)); trunks.setMatrixAt(i, m);
+    c.set(cast ? '#7a6048' : '#8e877a').multiplyScalar(rand(0.85, 1.1)); trunks.setColorAt(i, c);
+    const spread = cast ? 3.6 : 2.6;
+    for (let k = 0; k < 3; k++){
+      q.setFromEuler(e.set(0, rand(0, 6.28), 0));
+      const sx = cast ? rand(3.8, 5.4) : rand(3, 4.4);
+      m.compose(p.set(t.x + rand(-spread, spread), H(t.x, t.z) + h - rand(0.5, cast ? 3.5 : 4.5), t.z + rand(-spread, spread)), q, s.set(sx, rand(1.8, 2.8), sx * rand(.8, 1.2)));
+      canopy.setMatrixAt(ci, m); c.set((cast ? CAST : CERR)[(Math.random() * (cast ? CAST : CERR).length) | 0]); canopy.setColorAt(ci, c); ci++;
+    }
+  });
+  const stemGeo = new THREE.CylinderGeometry(0.045, 0.07, 3.4, 5); stemGeo.translate(0, 1.7, 0);
+  const stems = new THREE.InstancedMesh(stemGeo, new THREE.MeshLambertMaterial({ color:'#7a6a55' }), HAZEL.length * 5);
+  const HAZ = ['#6f8d33','#7d9a3a','#88a040','#6a862f'];
+  HAZEL.forEach((t, i) => {
+    const gy = H(t.x, t.z);
+    for (let k = 0; k < 5; k++){
+      const a = k * 1.256 + rand(-.3, .3), lean = rand(0.12, 0.3);
+      q.setFromEuler(e.set(Math.cos(a) * lean, 0, Math.sin(a) * lean));
+      m.compose(p.set(t.x + Math.sin(a) * 0.15, gy - 0.05, t.z + Math.cos(a) * 0.15), q, s.set(1, rand(.85, 1.15), 1)); stems.setMatrixAt(i*5 + k, m);
+    }
+    for (let k = 0; k < 3; k++){
+      q.setFromEuler(e.set(0, rand(0, 6.28), 0));
+      m.compose(p.set(t.x + rand(-1, 1), gy + rand(3, 3.9), t.z + rand(-1, 1)), q, s.set(rand(1.9, 2.5), rand(1.2, 1.7), rand(1.9, 2.5)));
+      canopy.setMatrixAt(ci, m); c.set(HAZ[(Math.random() * HAZ.length) | 0]); canopy.setColorAt(ci, c); ci++;
+    }
+  });
+  canopy.count = ci;
+  scene.add(trunks, canopy, stems);
+
+  const ricci = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(0.06, 0), new THREE.MeshLambertMaterial({ flatShading:true }), 1600);
+  const CAS = BOSCO.filter(t => t.kind === 'castagno');
+  for (let i = 0; i < 1600; i++){
+    const t = CAS[(Math.random() * CAS.length) | 0], a = rand(0, 6.28), d = rand(t.r + .3, 4), x = t.x + Math.cos(a) * d, z = t.z + Math.sin(a) * d;
+    q.setFromEuler(e.set(rand(0, 3), rand(0, 3), 0)); m.compose(p.set(x, H(x, z) + .03, z), q, s.set(1, .75, 1)); ricci.setMatrixAt(i, m);
+    c.set(Math.random() < .6 ? '#8f8b3a' : '#6a5230'); ricci.setColorAt(i, c);
+  }
+  scene.add(ricci);
+
+  // esche: ghiande, sassolini e foglie accartocciate che da lontano sembrano cappelli di fungo
+  const DN = TOUCH ? 2000 : 3200, dec = new THREE.InstancedMesh(new THREE.SphereGeometry(0.075, 7, 3, 0, Math.PI*2, 0, Math.PI/2), new THREE.MeshLambertMaterial(), DN);
+  const DC = ['#6b4222','#7a5230','#8b6a3a','#5e4a32','#a0703a','#c9a060','#8e3b22','#b8913e'];
+  for (let i = 0; i < DN; i++){
+    let x, z, n = 0; do { x = rand(-WORLD, WORLD); z = rand(-WORLD, WORLD); n++; } while (n < 10 && (zone(x, z) === 'road' || zone(x, z) === 'town'));
+    const sc = rand(0.6, 1.7);
+    q.setFromEuler(e.set(rand(-.3, .3), rand(0, 6), rand(-.3, .3))); m.compose(p.set(x, H(x, z) - .01, z), q, s.set(sc * rand(.8, 1.3), sc * rand(.4, .8), sc)); dec.setMatrixAt(i, m);
+    c.set(DC[i % DC.length]).multiplyScalar(rand(.8, 1.1)); dec.setColorAt(i, c);
+  }
+  scene.add(dec);
+}
+
+/* ================= sottobosco, erba, tufo, tronchi, cartello ================= */
+{
+  const m = new THREE.Matrix4(), q = new THREE.Quaternion(), s = new THREE.Vector3(), p = new THREE.Vector3(), e = new THREE.Euler(), c = new THREE.Color();
+  const fernTex = canvasTex(128, 256, (x) => {
+    x.clearRect(0, 0, 128, 256); x.strokeStyle = '#4e6b22'; x.lineWidth = 3;
+    x.beginPath(); x.moveTo(64, 256); x.quadraticCurveTo(70, 120, 60, 8); x.stroke();
+    for (let i = 0; i < 22; i++){
+      const t = i / 22, y = 250 - t * 235, len = 50 * Math.sin(Math.PI * (0.15 + t * 0.85)) + 6;
+      x.fillStyle = i % 2 ? '#678c2c' : '#5a7d27';
+      for (const d of [-1, 1]){ x.beginPath(); x.moveTo(64, y); x.quadraticCurveTo(64 + d*len*0.6, y - 14, 64 + d*len, y - 4); x.quadraticCurveTo(64 + d*len*0.5, y + 4, 64, y + 3); x.fill(); }
+    }
+  });
+  const fernGeo = new THREE.PlaneGeometry(1, 1.6); fernGeo.translate(0, 0.8, 0);
+  const N = TOUCH ? 1100 : 1700; const ferns = new THREE.InstancedMesh(fernGeo, new THREE.MeshLambertMaterial({ map:fernTex, alphaTest:0.5, side:THREE.DoubleSide }), N * 3);
+  for (let i = 0; i < N; i++){
+    let x, z, n = 0;
+    do { x = rand(-WORLD, WORLD); z = rand(-WORLD, WORLD); n++; } while (n < 20 && (zone(x, z) !== 'bosco' || (i % 3 === 0 && gullyD(x, z) > 12)));
+    const sc = rand(0.6, 1.3), y = H(x, z) - 0.05, r0 = rand(0, 6.28);
+    for (let k = 0; k < 3; k++){ q.setFromEuler(e.set(rand(-.5, -.25), r0 + k * 2.1, 0)); m.compose(p.set(x, y, z), q, s.set(sc, sc, sc)); ferns.setMatrixAt(i*3 + k, m); }
+  }
+  scene.add(ferns);
+
+  const grassTex = canvasTex(128, 128, (x) => {
+    x.clearRect(0, 0, 128, 128);
+    for (let i = 0; i < 46; i++){
+      const bx = 10 + Math.random() * 108, h = 50 + Math.random() * 74, lean = (Math.random() - .5) * 40;
+      x.strokeStyle = ['#7e9a3c','#93ab4b','#6a8534','#a9b85a','#b9ad62'][i % 5]; x.lineWidth = 2 + Math.random() * 2;
+      x.beginPath(); x.moveTo(bx, 128); x.quadraticCurveTo(bx + lean * .3, 128 - h * .6, bx + lean, 128 - h); x.stroke();
+    }
+  });
+  const grassGeo = new THREE.PlaneGeometry(1.1, .55); grassGeo.translate(0, .27, 0);
+  const GN = TOUCH ? 2800 : 4200; const tufts = new THREE.InstancedMesh(grassGeo, new THREE.MeshLambertMaterial({ map:grassTex, alphaTest:0.4, side:THREE.DoubleSide }), GN * 2);
+  for (let i = 0; i < GN; i++){
+    let x, z; const pick = i % 10;
+    if (pick < 4){ const cl = PRATI[i % PRATI.length], a = rand(0, 6.28), d = Math.sqrt(Math.random()) * (cl.r + 1); x = cl.x + Math.cos(a) * d; z = cl.z + Math.sin(a) * d; }
+    else if (pick < 7){ const r = NOCC[i % NOCC.length]; x = rand(r.x0, r.x1); z = rand(r.z0, r.z1); }
+    else { const r = ROADS[i % ROADS.length], sm = r.samples[(Math.random() * r.samples.length) | 0], sd = (Math.random() < .5 ? -1 : 1) * rand(r.w / 2 + 0.2, r.w / 2 + 1.6); x = sm.x - sm.tz * sd; z = sm.z + sm.tx * sd; }
+    if (townAt(x, z)) continue;
+    const sc = rand(0.7, 1.4), r0 = rand(0, 3);
+    for (let k = 0; k < 2; k++){ q.setFromEuler(e.set(0, r0 + k * 1.57, 0)); m.compose(p.set(x, H(x, z) - .02, z), q, s.set(sc, sc * rand(.8, 1.5), sc)); tufts.setMatrixAt(i * 2 + k, m); }
+  }
+  scene.add(tufts);
+
+  // massi e pareti di tufo, più fitti nelle forre
+  const rocks = new THREE.InstancedMesh(new THREE.DodecahedronGeometry(1, 0), new THREE.MeshLambertMaterial({ flatShading:true }), 220);
+  for (let i = 0; i < 220; i++){
+    let x, z, n = 0; do { x = rand(-WORLD, WORLD); z = rand(-WORLD, WORLD); n++; } while (n < 30 && (zone(x, z) !== 'bosco' || (i % 2 === 0 && gullyD(x, z) > 10)));
+    const sc = rand(0.4, i % 2 === 0 ? 2.2 : 1.5);
+    q.setFromEuler(e.set(rand(0, 3), rand(0, 3), rand(0, 3)));
+    m.compose(p.set(x, H(x, z) + sc * 0.2, z), q, s.set(sc * rand(1, 1.6), sc * 0.7, sc)); rocks.setMatrixAt(i, m);
+    c.set(['#9c8a66','#8a7a5c','#7f7a5a','#a39170'][i % 4]); rocks.setColorAt(i, c);
+    if (sc > 0.8) addObstacle({ x, z, r: sc * 1.1 });
+  }
+  scene.add(rocks);
+
+  // muretti a secco di blocchi di tufo lungo le strade bianche
+  const blocks = [];
+  for (const r of ROADS.filter(r => r.kind === 'bianca')){
+    for (let st = 14; st < r.samples.length - 12; st += 26){
+      const side = (st / 26) % 2 ? 1 : -1;
+      for (let k = 0; k < 10; k++){
+        const sm = r.samples[st + k]; if (!sm) break;
+        const off = side * (r.w / 2 + 1.2), x = sm.x - sm.tz * off, z = sm.z + sm.tx * off;
+        if (townAt(x, z)) continue;
+        blocks.push([x, z, 0, Math.atan2(sm.tx, sm.tz)]); if (k % 2 === 0) blocks.push([x, z, 1, Math.atan2(sm.tx, sm.tz)]);
+      }
+    }
+  }
+  const tuf = new THREE.InstancedMesh(new THREE.BoxGeometry(.5, .5, 1.55), new THREE.MeshLambertMaterial({ color:'#b39a6b' }), blocks.length);
+  blocks.forEach(([x, z, row, ang], i) => {
+    q.setFromEuler(e.set(0, ang, rand(-.03, .03)));
+    m.compose(p.set(x, H(x, z) + .22 + row * .48, z), q, s.set(1, 1, rand(.95, 1.02))); tuf.setMatrixAt(i, m);
+    c.set('#ffffff').multiplyScalar(rand(.8, 1.05)); tuf.setColorAt(i, c);
+    if (!row) addObstacle({ x, z, r: .45 });
+  });
+  scene.add(tuf);
+
+  const logGeo = new THREE.CylinderGeometry(0.35, 0.4, 1, 9); logGeo.rotateZ(Math.PI / 2);
+  const logs = new THREE.InstancedMesh(logGeo, new THREE.MeshLambertMaterial({ color:'#6b5a45' }), 70);
+  for (let i = 0; i < 70; i++){
+    let x, z, n = 0; do { x = rand(-WORLD + 5, WORLD - 5); z = rand(-WORLD + 5, WORLD - 5); n++; } while (n < 30 && (zone(x, z) !== 'bosco' || roadAt(x, z).d < 8));
+    const len = rand(4, 9), ang = rand(0, 3.14), sc = rand(0.7, 1.2);
+    q.setFromEuler(e.set(0, ang, 0));
+    m.compose(p.set(x, H(x, z) + 0.25 * sc, z), q, s.set(len, sc, sc)); logs.setMatrixAt(i, m);
+    for (let k = -2; k <= 2; k++) addObstacle({ x: x + Math.cos(ang) * k * len / 5, z: z - Math.sin(ang) * k * len / 5, r: 0.45 * sc });
+  }
+  scene.add(logs);
+
+  // cartello di legno all'incrocio tra la SP35 e la strada bianca
+  const signTex = canvasTex(512, 160, (x) => {
+    x.fillStyle = '#7a5a36'; x.fillRect(0, 0, 512, 160);
+    for (let i = 0; i < 40; i++){ x.strokeStyle = 'rgba(50,34,18,.35)'; x.beginPath(); const y = Math.random()*160; x.moveTo(0, y); x.bezierCurveTo(170, y + 6, 340, y - 6, 512, y + 3); x.stroke(); }
+    x.fillStyle = '#f1e6cc'; x.font = 'bold 44px Georgia, serif'; x.textBaseline = 'middle';
+    x.textAlign = 'left'; x.fillText('← Caprarola', 20, 52);
+    x.textAlign = 'right'; x.fillText('Carbognano →', 492, 112);
+  });
+  const sg = new THREE.Group();
+  const LM = h => new THREE.MeshLambertMaterial({ color:h });
+  sg.add(at(new THREE.Mesh(new THREE.CylinderGeometry(.06, .07, 2.4, 6), LM('#5a4128')), 0, 1.2, 0));
+  const board = new THREE.Mesh(new THREE.BoxGeometry(1.6, .5, .05), [LM('#6a4c2e'), LM('#6a4c2e'), LM('#6a4c2e'), LM('#6a4c2e'), new THREE.MeshLambertMaterial({ map:signTex }), new THREE.MeshLambertMaterial({ map:signTex })]);
+  sg.add(at(board, 0, 2.05, 0));
+  const js = SB1[4], sx = js.x + js.tz * 3.2, sz = js.z - js.tx * 3.2;
+  sg.position.set(sx, H(sx, sz), sz); sg.rotation.y = Math.atan2(START.x - sx, START.z - sz); scene.add(sg); addObstacle({ x:sx, z:sz, r:.2 });
+
+  // raggi di luce tra i rami
+  const rayMat = new THREE.MeshBasicMaterial({ color:'#fff3c9', transparent:true, opacity:0.07, blending:THREE.AdditiveBlending, depthWrite:false, side:THREE.DoubleSide, fog:false });
+  for (let i = 0; i < 36; i++){
+    let x, z, n = 0; do { x = rand(-WORLD, WORLD); z = rand(-WORLD, WORLD); n++; } while (n < 20 && zone(x, z) !== 'bosco');
+    const r = new THREE.Mesh(new THREE.CylinderGeometry(rand(0.4, 1.2), rand(2, 3.5), 24, 12, 1, true), rayMat);
+    r.position.set(x, H(x, z) + 11, z); r.rotation.set(0.22, 0, 0.18); RAYS.add(r);
+  }
+}
+
+/* ================= i paesi: case, Palazzo Farnese, il castello di Carbognano, il casale ================= */
+{
+  const m = new THREE.Matrix4(), q = new THREE.Quaternion(), s = new THREE.Vector3(), p = new THREE.Vector3(), e = new THREE.Euler(), c = new THREE.Color();
+  const wallTex = canvasTex(128, 128, (x) => {
+    x.fillStyle = '#ffffff'; x.fillRect(0, 0, 128, 128);
+    for (let i = 0; i < 500; i++){ x.fillStyle = `rgba(120,100,70,${Math.random() * .12})`; x.fillRect(Math.random()*128, Math.random()*128, 2 + Math.random()*6, 2 + Math.random()*4); }
+    for (const [wx, wy] of [[26, 22], [78, 22], [26, 70], [78, 70]]){
+      x.fillStyle = '#4b5d3a'; x.fillRect(wx - 5, wy, 34, 30);
+      x.fillStyle = '#2d241b'; x.fillRect(wx + 3, wy + 2, 18, 26);
+      x.fillStyle = 'rgba(255,255,255,.25)'; x.fillRect(wx - 5, wy - 3, 34, 3);
+    }
+    x.fillStyle = '#4a3726'; x.fillRect(50, 104, 24, 24);
+  });
+  const WALLS = ['#d9c19a','#cdb38a','#e0cfae','#c9a878','#d6b98f','#bfa27a','#e3d3b5'];
+  const houses = [];
+  const addHouse = (x, z, w, d, h, ang) => houses.push({ x, z, w, d, h, ang });
+  // Caprarola: la Via Dritta scende dal Palazzo Farnese verso sud-est, con le case allineate ai lati
+  const vdA = Math.atan2(55, 80), vdx = Math.sin(vdA), vdz = Math.cos(vdA);
+  for (let k = 3; k < 14; k++) for (const sd of [-1, 1]){
+    const bx = PALAZZO.x + vdx * k * 7.5 + vdz * sd * 8, bz = PALAZZO.z + vdz * k * 7.5 - vdx * sd * 8;
+    if (inPoly(TOWNS[0].poly, bx, bz)) addHouse(bx, bz, 7, 6.5, rand(8, 12), vdA);
+  }
+  for (const t of TOWNS){
+    const xs = t.poly.map(v => v[0]), zs = t.poly.map(v => v[1]);
+    for (let x = Math.max(-WORLD - 20, Math.min(...xs)); x < Math.min(WORLD + 20, Math.max(...xs)); x += 7.5) for (let z = Math.max(-WORLD - 20, Math.min(...zs)); z < Math.min(WORLD + 20, Math.max(...zs)); z += 7.5){
+      const hx = x + rand(-1.2, 1.2), hz = z + rand(-1.2, 1.2);
+      if (!inPoly(t.poly, hx, hz) || polyEdge(t.poly, hx, hz)[0] < 1.5) continue;
+      if (Math.hypot(hx - PALAZZO.x, hz - PALAZZO.z) < 32 || Math.hypot(hx - CASTELLO.x, hz - CASTELLO.z) < 16) continue;
+      if (houses.some(o => Math.hypot(o.x - hx, o.z - hz) < 6.5)) continue;
+      if (roadAt(hx, hz).d < 4.5 || Math.random() < 0.12) continue;
+      addHouse(hx, hz, rand(5.5, 8), rand(5, 7.5), rand(6, 11), (t.name === 'Caprarola' ? vdA : 0.35) + (Math.random() < .3 ? Math.PI / 2 : 0) + rand(-.08, .08));
+    }
+  }
+  addHouse(CASALE.x, CASALE.z, 11, 8, 8, 0.5); addHouse(CASALE.x + 9, CASALE.z + 7, 7, 10, 6, 0.5);
+  const boxGeo = new THREE.BoxGeometry(1, 1, 1); boxGeo.translate(0, .5, 0);
+  const roofGeo = new THREE.ConeGeometry(0.72, 1, 4); roofGeo.rotateY(Math.PI / 4); roofGeo.translate(0, .5, 0);
+  const walls = new THREE.InstancedMesh(boxGeo, new THREE.MeshLambertMaterial({ map:wallTex }), houses.length);
+  const roofs = new THREE.InstancedMesh(roofGeo, new THREE.MeshLambertMaterial({ flatShading:true }), houses.length);
+  houses.forEach((o, i) => {
+    let gy = 1e9; for (const [dx, dz] of [[-o.w/2, -o.d/2], [o.w/2, -o.d/2], [-o.w/2, o.d/2], [o.w/2, o.d/2]]) gy = Math.min(gy, H(o.x + dx, o.z + dz));
+    q.setFromEuler(e.set(0, o.ang, 0));
+    m.compose(p.set(o.x, gy - 0.8, o.z), q, s.set(o.w, o.h + 0.8, o.d)); walls.setMatrixAt(i, m);
+    c.set(WALLS[i % WALLS.length]).multiplyScalar(rand(.9, 1.05)); walls.setColorAt(i, c);
+    m.compose(p.set(o.x, gy + o.h, o.z), q, s.set(o.w * 1.08, o.h * 0.28, o.d * 1.08)); roofs.setMatrixAt(i, m);
+    c.set(['#9a4f33','#8a4a30','#a55a3a','#7f4430'][i % 4]); roofs.setColorAt(i, c);
+  });
+  scene.add(walls, roofs);
+
+  // Palazzo Farnese: il pentagono in cima a Caprarola, con i bastioni e la scalinata verso la Via Dritta
+  const pg = new THREE.Group(), gyP = H(PALAZZO.x, PALAZZO.z);
+  const pm = h => new THREE.MeshLambertMaterial({ color:h });
+  const base = new THREE.Mesh(new THREE.CylinderGeometry(27, 29, 6, 5), pm('#a89878')); base.position.y = gyP + 1; pg.add(base);
+  const body = new THREE.Mesh(new THREE.CylinderGeometry(21, 21, 17, 5), new THREE.MeshLambertMaterial({ color:'#dcb884', map:wallTex })); body.position.y = gyP + 12.5; pg.add(body);
+  const cornice = new THREE.Mesh(new THREE.CylinderGeometry(22, 22, 1, 5), pm('#c9a36f')); cornice.position.y = gyP + 21.5; pg.add(cornice);
+  const roof = new THREE.Mesh(new THREE.CylinderGeometry(15, 22, 4, 5), pm('#8f4b30')); roof.position.y = gyP + 24; pg.add(roof);
+  const court = new THREE.Mesh(new THREE.CylinderGeometry(8, 8, 18.5, 24), pm('#e6d2ae')); court.position.y = gyP + 13; pg.add(court);
+  pg.position.set(PALAZZO.x, 0, PALAZZO.z); pg.rotation.y = vdA + Math.PI / 5; scene.add(pg);
+  for (let k = 0; k < 5; k++){ const st = new THREE.Mesh(new THREE.BoxGeometry(22 - k * 2.5, 1, 3), pm('#b8a684')); st.position.set(PALAZZO.x + vdx * (30 + k * 3), gyP + 3.5 - k * 0.9, PALAZZO.z + vdz * (30 + k * 3)); st.rotation.y = vdA; scene.add(st); }
+
+  // Castello di Carbognano: torre merlata e corpo del castello sul punto più alto del borgo
+  const gyC = H(CASTELLO.x, CASTELLO.z);
+  const tower = new THREE.Mesh(new THREE.BoxGeometry(8, 26, 8), new THREE.MeshLambertMaterial({ color:'#c6a570', map:wallTex })); tower.position.set(CASTELLO.x - 6, gyC + 13, CASTELLO.z - 4); scene.add(tower);
+  for (let k = 0; k < 8; k++){ const mer = new THREE.Mesh(new THREE.BoxGeometry(1.4, 1.6, 1.4), pm('#b89a66')); const a = k / 8 * 6.283; mer.position.set(CASTELLO.x - 6 + Math.round(Math.cos(a)) * 3.4, gyC + 26.8, CASTELLO.z - 4 + Math.round(Math.sin(a)) * 3.4); scene.add(mer); }
+  const cas = new THREE.Mesh(new THREE.BoxGeometry(22, 13, 16), new THREE.MeshLambertMaterial({ color:'#cdb080', map:wallTex })); cas.position.set(CASTELLO.x + 6, gyC + 6.5, CASTELLO.z + 3); cas.rotation.y = 0.35; scene.add(cas);
+  const casRoof = new THREE.Mesh(new THREE.ConeGeometry(15, 4, 4), pm('#8f4b30')); casRoof.rotation.y = Math.PI / 4 + 0.35; casRoof.scale.set(1, 1, 0.75); casRoof.position.set(CASTELLO.x + 6, gyC + 15, CASTELLO.z + 3); scene.add(casRoof);
+}
+
+/* ================= orizzonte: cielo e Monti Cimini ================= */
+{
+  const sky = new THREE.SphereGeometry(700, 24, 12), cols = [], top = new THREE.Color('#9fb6c4'), hor = FOG.clone(), c = new THREE.Color();
+  const ps = sky.attributes.position;
+  for (let i = 0; i < ps.count; i++){ c.copy(hor).lerp(top, sstep(0, 0.5, ps.getY(i) / 700)); cols.push(c.r, c.g, c.b); }
+  sky.setAttribute('color', new THREE.Float32BufferAttribute(cols, 3));
+  SKY = new THREE.Mesh(sky, new THREE.MeshBasicMaterial({ vertexColors:true, side:THREE.BackSide, fog:false, depthWrite:false })); scene.add(SKY);
+  const haze = (hex, k) => new THREE.MeshBasicMaterial({ color:new THREE.Color(hex).lerp(FOG, k), fog:false });
+  const ridge = (x, z, rx, h, rz, hex, k) => { const m = new THREE.Mesh(new THREE.SphereGeometry(1, 20, 10, 0, Math.PI*2, 0, Math.PI/2), haze(hex, k)); m.scale.set(rx, h, rz); m.position.set(x, -2, z); HORIZON.add(m); };
+  ridge(120, -520, 260, 170, 110, '#48603a', 0.7);   // Monte Cimino, a nord
+  ridge(-360, -420, 220, 140, 110, '#4a6038', 0.64); // Monte Venere e Monte Fogliano, sopra il Lago di Vico
+  ridge(-480, 120, 180, 70, 160, '#55663c', 0.7);
+  ridge(460, 260, 220, 30, 140, '#5c6a3e', 0.72);
+}
+
+/* ================= spore sospese ================= */
+const SPN = 260;
+const sporeGeo = new THREE.BufferGeometry();
+const sporePos = new Float32Array(SPN * 3);
+sporeGeo.setAttribute('position', new THREE.BufferAttribute(sporePos, 3));
+const spores = new THREE.Points(sporeGeo, new THREE.PointsMaterial({ color:'#fff6d8', size:0.05, transparent:true, opacity:0.75, depthWrite:false }));
+for (let i = 0; i < SPN; i++){ sporePos[i*3] = rand(-15, 15); sporePos[i*3+1] = rand(0, 6); sporePos[i*3+2] = rand(-15, 15); }
+scene.add(spores);
+
+/* ================= modelli dei funghi ================= */
+const matCache = {};
+const MAT = (c, o) => { const k = c + JSON.stringify(o || {}); return matCache[k] || (matCache[k] = new THREE.MeshLambertMaterial(Object.assign({ color:c }, o || {}))); };
+function capM(r, h, mat){ const m = new THREE.Mesh(new THREE.SphereGeometry(r, 18, 9, 0, Math.PI*2, 0, Math.PI/2), mat); m.scale.y = h / r; return m; }
+function cyl(rt, rb, h, mat, open){ return new THREE.Mesh(new THREE.CylinderGeometry(rt, rb, h, 14, 1, !!open), mat); }
+function ball(r, mat){ return new THREE.Mesh(new THREE.SphereGeometry(r, 10, 8), mat); }
+function cup(r, mat){ return new THREE.Mesh(new THREE.SphereGeometry(r, 12, 6, 0, Math.PI*2, Math.PI/2, Math.PI/2), mat); }
+function at(m, x, y, z){ m.position.set(x, y, z); return m; }
+function spots(g, capY, r, h, n, mat, sz){
+  for (let i = 0; i < n; i++){
+    const th = rand(0.15, 1.2), ph = rand(0, 6.28);
+    g.add(at(ball(sz * rand(.7, 1.3), mat), r*Math.sin(th)*Math.cos(ph), capY + h*Math.cos(th), r*Math.sin(th)*Math.sin(ph)));
+  }
+}
+const BUILD = {
+  porcino(){ const g = new THREE.Group(), st = MAT('#e3d6b6');
+    g.add(at(cyl(.045, .066, .12, st), 0, .06, 0)); const b = ball(.066, st); b.scale.y = .75; g.add(at(b, 0, .045, 0));
+    g.add(at(cyl(.108, .1, .014, MAT('#d7cc86')), 0, .118, 0)); g.add(at(capM(.118, .078, MAT('#6b3f1e')), 0, .122, 0)); g.userData.h = .2; return g; },
+  finferlo(){ const g = new THREE.Group();
+    g.add(at(cyl(.058, .014, .08, MAT('#eaa62a')), 0, .04, 0)); g.add(at(cyl(.047, .047, .006, MAT('#d58c1c')), 0, .081, 0)); g.userData.h = .08; return g; },
+  trombetta(){ const g = new THREE.Group();
+    g.add(at(cyl(.045, .008, .11, MAT('#2a2320', { side:THREE.DoubleSide }), true), 0, .055, 0)); g.add(at(cyl(.01, .01, .004, MAT('#14100e')), 0, .02, 0)); g.userData.h = .11; return g; },
+  mazza(){ const g = new THREE.Group(), st = MAT('#d6c8ac');
+    g.add(at(cyl(.011, .018, .3, st), 0, .15, 0)); g.add(at(ball(.026, st), 0, .02, 0));
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(.02, .006, 6, 14), MAT('#ece4cf')); ring.rotation.x = Math.PI/2; g.add(at(ring, 0, .22, 0));
+    g.add(at(cyl(.125, .125, .006, MAT('#efe8d8')), 0, .3, 0)); g.add(at(capM(.13, .036, MAT('#d0bb98')), 0, .3, 0));
+    const u = ball(.03, MAT('#6a482c')); u.scale.y = .55; g.add(at(u, 0, .334, 0));
+    spots(g, .3, .12, .033, 12, MAT('#7c5a3a'), .01); g.userData.h = .34; return g; },
+  ovolo(){ const g = new THREE.Group();
+    g.add(at(cup(.046, MAT('#f4f1e8', { side:THREE.DoubleSide })), 0, .045, 0)); g.add(at(cyl(.022, .028, .1, MAT('#f1d03a')), 0, .075, 0));
+    g.add(at(cyl(.086, .086, .01, MAT('#efcd38')), 0, .124, 0)); g.add(at(capM(.092, .058, MAT('#e2591a')), 0, .126, 0)); g.userData.h = .19; return g; },
+  muscaria(){ const g = new THREE.Group(), w = MAT('#f3f0e6');
+    g.add(at(cyl(.022, .034, .15, w), 0, .075, 0)); g.add(at(ball(.042, w), 0, .02, 0));
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(.025, .007, 6, 14), w); ring.rotation.x = Math.PI/2; g.add(at(ring, 0, .12, 0));
+    g.add(at(cyl(.1, .1, .008, w), 0, .15, 0)); g.add(at(capM(.104, .062, MAT('#c9241b')), 0, .152, 0));
+    spots(g, .152, .1, .06, 10, w, .01); g.userData.h = .22; return g; },
+  falloide(){ const g = new THREE.Group(), w = MAT('#efeee4');
+    g.add(at(cup(.036, MAT('#f2f1ea', { side:THREE.DoubleSide })), 0, .036, 0)); g.add(at(cyl(.018, .024, .12, w), 0, .065, 0));
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(.02, .006, 6, 14), w); ring.rotation.x = Math.PI/2; g.add(at(ring, 0, .1, 0));
+    g.add(at(cyl(.078, .078, .008, w), 0, .122, 0)); g.add(at(capM(.082, .05, MAT('#9ea26a')), 0, .124, 0)); g.userData.h = .18; return g; },
+  visioni(){ const g = new THREE.Group();
+    g.add(at(cyl(.02, .03, .16, MAT('#f4e9ff', { emissive:'#3a1d52' })), 0, .08, 0));
+    g.add(at(capM(.1, .075, MAT('#8e3fd6', { emissive:'#3b1170' })), 0, .155, 0));
+    for (const c of ['#ffe24a','#4af0ff','#ff5ec4','#7dff6a']) spots(g, .155, .096, .073, 3, MAT(c, { emissive:c }), .012);
+    g.userData.h = .23; return g; },
+  magico(){ const g = new THREE.Group();
+    g.add(at(cyl(.025, .035, .14, MAT('#e8f3ff', { emissive:'#3a6d9c' })), 0, .07, 0));
+    g.add(at(capM(.11, .09, MAT('#4fb3ff', { emissive:'#1f6fc8' })), 0, .14, 0));
+    spots(g, .14, .105, .088, 8, MAT('#ffffff', { emissive:'#88c8ff' }), .012); g.userData.h = .24; return g; },
+};
+const TEMPLATE = {}; for (const k in BUILD) TEMPLATE[k] = BUILD[k]();
+// versioni bacate dei funghi buoni: più scure, afflosciate, con muffa e buchi di larve
+function makeSick(id){
+  const g = TEMPLATE[id].clone(true), h = TEMPLATE[id].userData.h, rot = new THREE.Color('#5a5040');
+  g.traverse(o => { if (o.isMesh){ o.material = o.material.clone(); o.material.color.lerp(rot, 0.45).multiplyScalar(0.8); } });
+  const mold = new THREE.MeshLambertMaterial({ color:'#e4e2d4' }), hole = new THREE.MeshLambertMaterial({ color:'#1a140e' });
+  for (let i = 0; i < 8; i++){ const a = rand(0, 6.28), r = rand(.1, .7) * h * .5; const b = ball(h * rand(.035, .06), i < 4 ? mold : hole); b.scale.y = .45; b.position.set(Math.cos(a) * r, h * rand(.88, 1.0), Math.sin(a) * r); g.add(b); }
+  g.userData.h = h * 0.9; return g;
+}
+for (const s of SPECIES) if (s.kind === 'ok') TEMPLATE[s.id + '_sick'] = makeSick(s.id);
+
+/* miniature per l'erbario */
+const THUMB = {};
+(function makeThumbs(){
+  try {
+    const r = new THREE.WebGLRenderer({ antialias:true, alpha:true, preserveDrawingBuffer:true });
+    r.setSize(144, 144); r.setPixelRatio(1);
+    const sc = new THREE.Scene(); sc.add(new THREE.HemisphereLight('#ffffff', '#6b5a40', 1.1)); const dl = new THREE.DirectionalLight('#fff', .6); dl.position.set(1, 2, 1.5); sc.add(dl);
+    const cam = new THREE.PerspectiveCamera(30, 1, .01, 10);
+    for (const id of Object.keys(TEMPLATE)){
+      const g = TEMPLATE[id].clone(); sc.add(g);
+      const h = TEMPLATE[id].userData.h, d = Math.max(h, .24) * 2.6;
+      cam.position.set(d * .55, h * .5 + d * .38, d * .8); cam.lookAt(0, h * .48, 0);
+      r.render(sc, cam); THUMB[id] = r.domElement.toDataURL('image/png'); sc.remove(g);
+    }
+    r.dispose(); if (r.forceContextLoss) r.forceContextLoss();
+  } catch(e){}
+})();
+
+/* ================= cinghiale ================= */
+function buildBoar(){
+  const g = new THREE.Group(), fur = MAT('#3d2c1f'), dark = MAT('#241a12');
+  const body = new THREE.Mesh(new THREE.BoxGeometry(.62, .56, 1.15), fur); body.position.y = .62; g.add(body);
+  const mane = new THREE.Mesh(new THREE.BoxGeometry(.2, .16, .9), dark); mane.position.set(0, .95, 0); g.add(mane);
+  const head = new THREE.Mesh(new THREE.BoxGeometry(.42, .4, .5), fur); head.position.set(0, .6, .78); head.rotation.x = .25; g.add(head);
+  const snout = new THREE.Mesh(new THREE.BoxGeometry(.22, .18, .18), MAT('#5a4035')); snout.position.set(0, .48, 1.06); g.add(snout);
+  for (const s of [-1, 1]){
+    const tusk = new THREE.Mesh(new THREE.ConeGeometry(.025, .14, 6), MAT('#efe7d2')); tusk.position.set(s * .13, .52, 1.02); tusk.rotation.x = -.6; g.add(tusk);
+    const ear = new THREE.Mesh(new THREE.ConeGeometry(.07, .16, 4), dark); ear.position.set(s * .15, .86, .66); g.add(ear);
+    const eye = ball(.022, MAT('#0d0907')); eye.position.set(s * .16, .7, .98); g.add(eye);
+  }
+  g.userData.legs = [];
+  for (const [x, z] of [[-.2, .38], [.2, .38], [-.2, -.4], [.2, -.4]]){
+    const leg = new THREE.Mesh(new THREE.BoxGeometry(.13, .42, .13), dark); leg.geometry.translate(0, -.21, 0); leg.position.set(x, .42, z); g.add(leg); g.userData.legs.push(leg);
+  }
+  const tail = new THREE.Mesh(new THREE.BoxGeometry(.04, .04, .22), dark); tail.position.set(0, .75, -.66); tail.rotation.x = .7; g.add(tail);
+  return g;
+}
+
+/* ================= audio del bosco ================= */
+const AUD = { ctx:null, on:true, master:null };
+function audioInit(){
+  if (AUD.ctx) { if (AUD.ctx.state === 'suspended') AUD.ctx.resume(); return; }
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)(); AUD.ctx = ctx;
+    AUD.master = ctx.createGain(); AUD.master.gain.value = AUD.on ? 1 : 0; AUD.master.connect(ctx.destination);
+    const len = ctx.sampleRate * 3, buf = ctx.createBuffer(1, len, ctx.sampleRate), d = buf.getChannelData(0);
+    let last = 0; for (let i = 0; i < len; i++){ const w = Math.random() * 2 - 1; last = (last + 0.02 * w) / 1.02; d[i] = last * 3.2; }
+    const src = ctx.createBufferSource(); src.buffer = buf; src.loop = true;
+    const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 520;
+    const g = ctx.createGain(); g.gain.value = 0.16;
+    const lfo = ctx.createOscillator(), lg = ctx.createGain(); lfo.frequency.value = 0.07; lg.gain.value = 0.08; lfo.connect(lg); lg.connect(g.gain); lfo.start();
+    src.connect(lp); lp.connect(g); g.connect(AUD.master); src.start();
+    (function birds(){ setTimeout(() => { if (S.playing && !S.paused) chirp(); birds(); }, rand(2500, 8000)); })();
+  } catch(e){}
+}
+function tone(f0, f1, dur, type, vol, when){
+  const c = AUD.ctx; if (!c) return; const t = c.currentTime + (when || 0);
+  const o = c.createOscillator(), g = c.createGain(); o.type = type || 'sine';
+  o.frequency.setValueAtTime(f0, t); o.frequency.exponentialRampToValueAtTime(f1, t + dur);
+  g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol || 0.1, t + 0.015); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  o.connect(g); g.connect(AUD.master); o.start(t); o.stop(t + dur + 0.05);
+}
+function chirp(){ const b = rand(2400, 3600), n = 2 + (Math.random() * 4 | 0); for (let i = 0; i < n; i++) tone(b, b * rand(1.2, 1.5), 0.08, 'sine', 0.035, i * 0.11); }
+const SFX = {
+  pick(){ tone(520, 880, .09, 'triangle', .12); tone(880, 1320, .08, 'sine', .06, .06); },
+  rare(){ [660, 880, 1100, 1320].forEach((f, i) => tone(f, f * 1.01, .14, 'triangle', .1, i * .07)); },
+  bad(){ tone(260, 120, .35, 'sawtooth', .07); },
+  seen(){ tone(700, 700, .12, 'sine', .06); },
+  grunt(){ tone(140, 70, .3, 'sawtooth', .12); tone(110, 60, .25, 'square', .06, .18); },
+  drum(){ tone(130, 48, .2, 'sine', .28); tone(220, 90, .06, 'triangle', .08); },
+  heart(){ [0, .28, 1, 1.28, 2, 2.28].forEach(w => tone(72, 44, .15, 'sine', .32, w)); },
+  night(){ tone(320, 140, 1.2, 'sine', .05); tone(430, 390, .35, 'sine', .06, .7); tone(410, 360, .55, 'sine', .06, 1.15); },
+  grow(){ tone(90, 45, .7, 'sawtooth', .06); tone(180, 90, .7, 'triangle', .05); },
+  shrink(){ tone(700, 2100, .45, 'sine', .06); tone(900, 2600, .35, 'triangle', .03, .1); },
+  vis(){ [392, 494, 587, 784].forEach((f, i) => tone(f, f * 1.02, .4, 'sine', .05, i * .09)); },
+  chime(f){ tone(f, f * 1.003, .6, 'sine', .035); tone(f * 2, f * 2, .3, 'sine', .012); },
+  magic(){ [520, 780, 1040, 1560, 2080].forEach((f, i) => tone(f, f * 1.5, .18, 'sine', .07, i * .05)); },
+};
+
+/* ================= stato di gioco ================= */
+const S = {
+  mode:null, playing:false, paused:false, score:0, time:0, limit:0,
+  yaw:0, pitch:-0.12, x:0, z:0, vy:0, jump:0, bob:0,
+  basket:[], mush:[], boar:null, buff:0, dizzy:0, target:null, found:{},
+};
+const keys = {};
+const move = { x:0, y:0 };
+const MODES = {
+  passeggiata: { label:'Passeggiata',  limit:0,   scale:1.1, reach:2.6, sick:0.25, fx:false },
+  competizione:{ label:'Competizione', limit:300, scale:1.1, reach:2.6, sick:0.25, fx:false, rivals:true },
+  effetti:     { label:'Effetti',      limit:0,   scale:2.2, reach:4.6, sick:0,    fx:true },
+};
+
+function nearTrunkSpot(){
+  const t = BOSCO[(Math.random() * BOSCO.length) | 0]; const a = rand(0, 6.28), d = t.r + rand(0.35, 1.7);
+  return [t.x + Math.cos(a) * d, t.z + Math.sin(a) * d];
+}
+function freeFrom(x, z, pad){ return !nearTrees(x, z).some(t => Math.hypot(t.x - x, t.z - z) < t.r + pad); }
+function isEdge(x, z){
+  const inB = zone(x, z) === 'bosco';
+  for (const [dx, dz] of [[4, 0], [-4, 0], [0, 4], [0, -4]]) if ((zone(x + dx, z + dz) === 'bosco') !== inB) return true;
+  return false;
+}
+// i "posti buoni": zone dove i funghi nascono a gruppi, come sanno i fungaioli
+let HOT = null;
+function hotspots(){
+  if (HOT) return HOT; HOT = [];
+  for (let n = 0; n < 4000 && HOT.length < 34; n++){
+    const x = rand(-WORLD + 8, WORLD - 8), z = rand(-WORLD + 8, WORLD - 8), zn = zone(x, z);
+    if (zn === 'road' || zn === 'town' || Math.hypot(x - START.x, z - START.z) < 18) continue;
+    const kind = zn === 'bosco' ? 'bosco' : 'open';
+    if (HOT.filter(h => h.kind === kind).length >= (kind === 'bosco' ? 22 : 12)) continue;
+    if (HOT.some(h => Math.hypot(h.x - x, h.z - z) < 22)) continue;
+    const h = { x, z, r: rand(10, 16), kind };
+    if (kind === 'bosco'){ h.trees = BOSCO.filter(t => Math.hypot(t.x - x, t.z - z) < h.r); if (h.trees.length < 3) continue; }
+    HOT.push(h);
+  }
+  return HOT;
+}
+function spotAny(hab){
+  for (let n = 0; n < 80; n++){
+    let x, z;
+    if (hab === 'trunk'){ [x, z] = nearTrunkSpot(); }
+    else if (hab === 'moss'){ x = rand(-WORLD+3, WORLD-3); z = rand(-WORLD+3, WORLD-3); if (MOSS(x, z) < 0.72 || zone(x, z) !== 'bosco') continue; }
+    else if (hab === 'clearing'){
+      if (Math.random() < 0.55){ const c = PRATI[(Math.random() * PRATI.length) | 0], a = rand(0, 6.28), d = Math.sqrt(Math.random()) * (c.r - 1.5); x = c.x + Math.cos(a) * d; z = c.z + Math.sin(a) * d; }
+      else { const r = NOCC[(Math.random() * NOCC.length) | 0]; x = rand(r.x0 + 1, r.x1 - 1); z = rand(r.z0 + 1, r.z1 - 1); }
+    } else {
+      if (Math.random() < 0.6){ const r = NOCC[(Math.random() * NOCC.length) | 0], side = (Math.random() * 4) | 0, off = rand(-1.5, 2.5);
+        if (side === 0){ x = r.x0 - off; z = rand(r.z0, r.z1); } else if (side === 1){ x = r.x1 + off; z = rand(r.z0, r.z1); }
+        else if (side === 2){ z = r.z0 - off; x = rand(r.x0, r.x1); } else { z = r.z1 + off; x = rand(r.x0, r.x1); } }
+      else { const c = PRATI[(Math.random() * PRATI.length) | 0], a = rand(0, 6.28), d = c.r + rand(-1.5, 2); x = c.x + Math.cos(a) * d; z = c.z + Math.sin(a) * d; }
+    }
+    if (Math.abs(x) > WORLD - 2 || Math.abs(z) > WORLD - 2) continue;
+    if (Math.hypot(x - START.x, z - START.z) < 8 || zone(x, z) === 'road' || zone(x, z) === 'town') continue;
+    if (!freeFrom(x, z, 0.12)) continue;
+    return [x, z];
+  }
+  return [rand(-40, 40), rand(-60, -30)];
+}
+function spotHot(hab){
+  const kind = hab === 'trunk' || hab === 'moss' ? 'bosco' : 'open';
+  const hs = hotspots().filter(h => h.kind === kind);
+  for (let n = 0; n < 120; n++){
+    const h = hs[(Math.random() * hs.length) | 0]; let x, z;
+    if (hab === 'trunk'){ const t = h.trees[(Math.random() * h.trees.length) | 0], a = rand(0, 6.28), d = t.r + rand(0.35, 1.7); x = t.x + Math.cos(a) * d; z = t.z + Math.sin(a) * d; }
+    else { const a = rand(0, 6.28), d = Math.sqrt(Math.random()) * h.r; x = h.x + Math.cos(a) * d; z = h.z + Math.sin(a) * d; }
+    const zn = zone(x, z);
+    if (zn === 'road' || zn === 'town' || Math.abs(x) > WORLD - 2 || Math.abs(z) > WORLD - 2) continue;
+    if (hab === 'moss' && (zn !== 'bosco' || MOSS(x, z) < 0.3)) continue;
+    if (hab === 'clearing' && zn === 'bosco') continue;
+    if (hab === 'edge' && !isEdge(x, z)) continue;
+    if (!freeFrom(x, z, 0.12)) continue;
+    return [x, z];
+  }
+  return spotAny(hab);
+}
+function spot(hab){ return Math.random() < 0.8 ? spotHot(hab) : spotAny(hab); }
+
+function addMushroom(id, x, z, scale, sick){
+  const tpl = TEMPLATE[sick ? id + '_sick' : id] || TEMPLATE[id]; const g = tpl.clone(); const sp = SP[id];
+  const hard = !MODES[S.mode].fx;
+  const hidden = hard ? Math.random() < 0.55 : Math.random() < 0.15;
+  const sink = hidden ? tpl.userData.h * scale * rand(0.3, 0.55) : 0;
+  g.scale.setScalar(scale); g.rotation.set(rand(-.14, .14) + (sick ? .3 : 0), rand(0, 6.28), rand(-.14, .14));
+  const y = H(x, z) - sink; g.position.set(x, y, z); scene.add(g);
+  S.mush.push({ id, sp, g, x, z, y, scale, sick:!!sick, h: tpl.userData.h * scale, alive:true, observed:false, flee: MODES[S.mode].fx && sp && sp.flee, hop:rand(0, 6), pop:0 });
+}
+function spawnAll(){
+  for (const m of S.mush) scene.remove(m.g); S.mush = [];
+  const md = MODES[S.mode], MUL = md.fx ? 2.6 : 2.2;
+  for (const sp of SPECIES){
+    const sickable = sp.kind === 'ok' && md.sick > 0;
+    if (sp.clusters){
+      for (let c = 0; c < Math.round(sp.clusters * MUL); c++){
+        const [bx, bz] = spot(sp.hab); const n = sp.cl[0] + ((Math.random() * (sp.cl[1] - sp.cl[0] + 1)) | 0);
+        for (let i = 0; i < n; i++){ const x = bx + rand(-1.1, 1.1), z = bz + rand(-1.1, 1.1); if (freeFrom(x, z, .1)) addMushroom(sp.id, x, z, md.scale * rand(.75, 1.2), sickable && Math.random() < md.sick); }
+      }
+    } else {
+      for (let i = 0; i < Math.round(sp.count * MUL); i++){ const [x, z] = spot(sp.hab); addMushroom(sp.id, x, z, md.scale * rand(.75, 1.2), sickable && Math.random() < md.sick); }
+    }
+  }
+  if (md.fx){
+    for (let i = 0; i < 16; i++){ const [x, z] = spot('trunk'); addMushroom('magico', x, z, md.scale * 1.1); }
+    for (let i = 0; i < 12; i++){ const [x, z] = spot(i % 2 ? 'moss' : 'edge'); addMushroom('visioni', x, z, md.scale * 1.05); }
+  }
+}
+
+/* ================= fungaioli rivali (competizione) ================= */
+const RIVAL_DEF = [ { name:'Sor Checco', coat:'#5e4630', hat:'#2f2a22', speed:2.3, sight:15, dot:'#d9a05b' }, { name:'La Peppa', coat:'#7a2f3a', hat:'#3b2b2b', speed:2.1, sight:13, dot:'#e0605a' }, { name:'Nando', coat:'#34566a', hat:'#27313a', speed:1.9, sight:12, dot:'#6fb4d8' } ];
+function nameSprite(txt){
+  const t = canvasTex(256, 64, (x) => { x.fillStyle = 'rgba(24,22,17,.78)'; x.beginPath(); x.roundRect ? x.roundRect(8, 10, 240, 44, 22) : x.rect(8, 10, 240, 44); x.fill(); x.fillStyle = '#e6e2cf'; x.font = '600 28px Georgia, serif'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText(txt, 128, 33); });
+  const s = new THREE.Sprite(new THREE.SpriteMaterial({ map:t, transparent:true, depthWrite:false })); s.scale.set(1.4, .35, 1); return s;
+}
+function buildRival(d){
+  const g = new THREE.Group(), L = c => new THREE.MeshLambertMaterial({ color:c });
+  const legs = []; for (const s of [-1, 1]){ const l = new THREE.Mesh(new THREE.BoxGeometry(.16, .8, .18), L('#3a3a33')); l.geometry.translate(0, -.4, 0); l.position.set(s * .12, .82, 0); g.add(l); legs.push(l); }
+  const body = new THREE.Mesh(new THREE.CylinderGeometry(.24, .3, .75, 8), L(d.coat)); body.position.y = 1.2; g.add(body);
+  const head = new THREE.Mesh(new THREE.SphereGeometry(.15, 10, 8), L('#d8ae88')); head.position.y = 1.72; g.add(head);
+  const brim = new THREE.Mesh(new THREE.CylinderGeometry(.27, .27, .03, 12), L(d.hat)); brim.position.y = 1.82; g.add(brim);
+  const crown = new THREE.Mesh(new THREE.CylinderGeometry(.14, .16, .16, 10), L(d.hat)); crown.position.y = 1.91; g.add(crown);
+  const basket = new THREE.Mesh(new THREE.CylinderGeometry(.2, .15, .2, 10, 1, true), new THREE.MeshLambertMaterial({ color:'#a8844c', side:THREE.DoubleSide })); basket.position.set(.36, 1.0, .05); g.add(basket);
+  const handle = new THREE.Mesh(new THREE.TorusGeometry(.17, .015, 5, 12, Math.PI), L('#8a6a3a')); handle.position.set(.36, 1.1, .05); g.add(handle);
+  const stick = new THREE.Mesh(new THREE.CylinderGeometry(.02, .025, 1.5, 5), L('#6b4f30')); stick.position.set(-.34, .8, .2); stick.rotation.x = .25; g.add(stick);
+  const tag = nameSprite(d.name); tag.position.y = 2.35; g.add(tag);
+  g.userData.legs = legs; return g;
+}
+function spawnRivals(){
+  clearRivals(); S.rivals = [];
+  RIVAL_DEF.forEach((d, i) => {
+    const g = buildRival(d); const x = START.x + (i - 1) * 3, z = START.z + (i % 2 ? 1.5 : -1.5);
+    g.position.set(x, H(x, z), z); scene.add(g);
+    S.rivals.push({ ...d, g, x, z, score:0, target:null, state:'walk', t:0, tx:x, tz:z, hot:null, talked:false, phase:rand(0, 6) });
+  });
+}
+/* buttata: a metà gara spuntano funghi nuovi in un prato */
+const CARD = ['nord', 'nord-est', 'est', 'sud-est', 'sud', 'sud-ovest', 'ovest', 'nord-ovest'];
+function cardinal(dx, dz){ const a = Math.atan2(dx, -dz); return CARD[((Math.round(a / (Math.PI / 4)) % 8) + 8) % 8]; }
+function doFlush(){
+  S.flushDone = true;
+  const open = hotspots().filter(h => h.kind === 'open');
+  let h = open.find(h => { const d = Math.hypot(h.x - S.x, h.z - S.z); return d > 35 && d < 95; }) || open[(Math.random() * open.length) | 0];
+  S.flush = { x:h.x, z:h.z, t:0 };
+  const ids = ['porcino', 'mazza', 'ovolo', 'porcino', 'mazza', 'finferlo', 'finferlo', 'ovolo'];
+  for (let i = 0; i < 18; i++){
+    const a = rand(0, 6.28), d = Math.sqrt(Math.random()) * 9, x = h.x + Math.cos(a) * d, z = h.z + Math.sin(a) * d;
+    if (!freeFrom(x, z, .15) || zone(x, z) === 'road' || zone(x, z) === 'town') continue;
+    addMushroom(ids[i % ids.length], x, z, MODES[S.mode].scale * rand(0.95, 1.3), i >= 15);
+    const m = S.mush[S.mush.length - 1]; m.y = H(x, z); m.g.position.y = m.y;
+  }
+  const beam = new THREE.Mesh(new THREE.CylinderGeometry(1.4, 3.2, 70, 16, 1, true), new THREE.MeshBasicMaterial({ color:'#ffe9a8', transparent:true, opacity:.2, blending:THREE.AdditiveBlending, depthWrite:false, side:THREE.DoubleSide, fog:false }));
+  beam.position.set(h.x, H(h.x, h.z) + 35, h.z); scene.add(beam); S.flush.beam = beam;
+  const dist = Math.round(Math.hypot(h.x - S.x, h.z - S.z) / 10) * 10;
+  toast(`<b>È uscito il sole dopo la pioggia!</b> Buttata nuova a ${cardinal(h.x - S.x, h.z - S.z)}, a circa ${dist} m. Segui la colonna di luce.`, 'gold');
+  SFX.rare();
+  for (const r of S.rivals) r.flushDelay = rand(8, 25);
+}
+function clearFlush(){ if (S.flush && S.flush.beam) scene.remove(S.flush.beam); S.flush = null; S.flushDone = false; }
+function stepFlush(dt){
+  if (!S.flush) return; S.flush.t += dt;
+  if (S.flush.beam) S.flush.beam.material.opacity = 0.2 * clamp(1 - (S.flush.t - 40) / 12, 0, 1);
+}
+/* radar dei fungaioli */
+function drawRadar(t){
+  const cv = $('#radar'), x = cv.getContext('2d'), RANGE = 75, R = 110;
+  x.clearRect(0, 0, 240, 240); x.save(); x.translate(120, 120);
+  x.strokeStyle = 'rgba(230,226,207,.14)'; x.lineWidth = 2; for (const rr of [37, 74, 110]){ x.beginPath(); x.arc(0, 0, rr, 0, 6.2832); x.stroke(); }
+  const cs = Math.cos(S.yaw), sn = Math.sin(S.yaw);
+  const proj = (wx, wz) => { const dx = wx - S.x, dz = wz - S.z; let px = (dx * cs - dz * sn) / RANGE * R, py = (dx * sn + dz * cs) / RANGE * R; const L = Math.hypot(px, py); const edge = L > R - 8; if (edge){ px *= (R - 8) / L; py *= (R - 8) / L; } return [px, py, edge]; };
+  // nord
+  { const [nx, ny] = proj(S.x, S.z - 1000); x.fillStyle = '#e0503a'; x.font = '600 20px ui-monospace, monospace'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText('N', nx * .92, ny * .92); }
+  if (S.flush && S.flush.t < 60){ const [fx, fy] = proj(S.flush.x, S.flush.z); const pr = 9 + Math.sin(t * 5) * 3; x.fillStyle = 'rgba(255,214,120,.9)'; x.beginPath(); x.arc(fx, fy, pr, 0, 6.2832); x.fill(); }
+  for (const r of S.rivals){
+    const [rx, ry, edge] = proj(r.x, r.z);
+    x.fillStyle = r.dot; x.beginPath(); x.arc(rx, ry, edge ? 7 : 10, 0, 6.2832); x.fill();
+    if (!edge){ x.fillStyle = '#1a1813'; x.font = '700 13px system-ui, sans-serif'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText(r.name.replace('La ', '').replace('Sor ', '')[0], rx, ry + 1); }
+  }
+  x.fillStyle = '#e6e2cf'; x.beginPath(); x.moveTo(0, -12); x.lineTo(9, 10); x.lineTo(0, 5); x.lineTo(-9, 10); x.closePath(); x.fill();
+  x.restore();
+}
+function popPts(pts, gold){ const el = document.createElement('div'); el.className = 'pop' + (pts < 0 ? ' neg' : gold ? ' gold' : ''); el.textContent = (pts > 0 ? '+' : '') + pts; $('#hud').appendChild(el); setTimeout(() => el.remove(), 950); }
+const TITLES = ['Re del porcino', 'Fungaiolo esperto', 'Cercatore della domenica', 'Turista col cestino'];
+function clearRivals(){ if (S.rivals) for (const r of S.rivals) scene.remove(r.g); S.rivals = []; }
+function stepRivals(dt, t){
+  for (const r of S.rivals){
+    if (r.flushDelay !== undefined && S.flush){ r.flushDelay -= dt; if (r.flushDelay <= 0){ delete r.flushDelay; if (r.target){ r.target.claimed = null; r.target = null; } r.hot = S.flush; r.tx = S.flush.x + rand(-4, 4); r.tz = S.flush.z + rand(-4, 4); if (r.state !== 'pick' && Math.hypot(r.x - S.x, r.z - S.z) < 50) toast(`<b>${r.name}</b> ha sentito della buttata e ci si dirige.`, 'bad'); } }
+    if (r.state === 'pick'){
+      r.t -= dt; r.g.rotation.x = 0.25;
+      if (r.t <= 0){
+        r.g.rotation.x = 0; r.state = 'walk';
+        const m = r.target; r.target = null;
+        if (m && m.alive){ removeMush(m); r.score += m.sp.pts; if (m.sp.pts >= 40 && Math.hypot(r.x - S.x, r.z - S.z) < 40) toast(`<b>${r.name}</b> ha trovato un ${m.sp.name.toLowerCase()}!`, 'bad'); }
+      }
+      continue;
+    }
+    if (!r.target || !r.target.alive){
+      r.target = null; let best = null, bd = r.sight;
+      for (const m of S.mush){
+        if (!m.alive || !m.sp || m.sp.kind !== 'ok' || m.sick || m.claimed === r || m.observed) continue;
+        const d = Math.hypot(m.x - r.x, m.z - r.z); if (d >= bd) continue;
+        if (m.missed && m.missed.includes(r.name)) continue;
+        if (m.y < H(m.x, m.z) - 0.02 && Math.random() < 0.4){ (m.missed = m.missed || []).push(r.name); continue; } // non tutti vedono quelli coperti dalle foglie
+        best = m; bd = d;
+      }
+      if (best){ r.target = best; best.claimed = r; r.tx = best.x; r.tz = best.z; }
+      else if (!r.hot || Math.hypot(r.tx - r.x, r.tz - r.z) < 2){ const hs = hotspots(); r.hot = hs[(Math.random() * hs.length) | 0]; r.tx = r.hot.x + rand(-6, 6); r.tz = r.hot.z + rand(-6, 6); }
+    }
+    const dx = r.tx - r.x, dz = r.tz - r.z, d = Math.hypot(dx, dz) || 1;
+    if (r.target && d < 0.9){ r.state = 'pick'; r.t = 2.4; continue; }
+    const sp = r.speed, o = { x: r.x + dx / d * sp * dt, z: r.z + dz / d * sp * dt }; collide(o, 0.35); r.x = o.x; r.z = o.z;
+    // se resta incastrato dietro un tronco, cambia strada
+    r.stuckT = (r.stuckT || 0) + dt;
+    if (r.stuckT > 3){ if (Math.hypot(r.x - (r.sx ?? r.x + 9), r.z - (r.sz ?? 0)) < 0.6){ if (r.target){ r.target.claimed = null; (r.target.missed = r.target.missed || []).push(r.name); r.target = null; } r.hot = { x:r.x + rand(-20, 20), z:r.z + rand(-20, 20) }; r.tx = r.hot.x; r.tz = r.hot.z; } r.stuckT = 0; r.sx = r.x; r.sz = r.z; }
+    r.g.position.set(r.x, H(r.x, r.z), r.z);
+    const want = Math.atan2(dx, dz); let da = want - r.g.rotation.y; da = Math.atan2(Math.sin(da), Math.cos(da)); r.g.rotation.y += da * Math.min(1, dt * 6);
+    const sw = Math.sin(t * 6 + r.phase) * 0.5; r.g.userData.legs[0].rotation.x = sw; r.g.userData.legs[1].rotation.x = -sw;
+    if (!r.talked && Math.hypot(r.x - S.x, r.z - S.z) < 6 && S.time > 20){
+      r.talked = true;
+      const line = { 'Sor Checco':'«Questo posto l\'ho trovato prima io, trent\'anni fa!»', 'La Peppa':'«Ah, sei venuto a rubarmi i porcini?»', 'Nando':'«Guarda bene sotto le foglie, eh. Io non ti dico niente.»' }[r.name];
+      toast(`<b>${r.name}</b> ${line}`, 'gold');
+    }
+  }
+}
+function ranking(){ return [{ name:'Tu', score:S.score, me:true }, ...S.rivals.map(r => ({ name:r.name, score:r.score }))].sort((a, b) => b.score - a.score); }
+function renderRank(){
+  const rk = ranking(), pos = rk.findIndex(p => p.me) + 1;
+  if (S.lastPos && pos !== S.lastPos && S.time > 5){
+    if (pos < S.lastPos) toast(`<b>Hai superato ${rk[pos].name}!</b> Sei ${pos}°.`, 'good');
+    else toast(`<b>${rk[pos - 2].name} ti ha superato.</b> Sei ${pos}°.`, 'bad');
+  }
+  S.lastPos = pos;
+  $('#cRank').innerHTML = ranking().map((p, i) => `<div class="${p.me ? 'me' : ''}"><span>${i + 1}. ${p.name}</span><span>${p.score}</span></div>`).join('');
+}
+
+/* ================= HUD ================= */
+const toasts = $('#toasts');
+function toast(html, cls){
+  const t = document.createElement('div'); t.className = 'toast ' + (cls || ''); t.innerHTML = html; toasts.prepend(t);
+  while (toasts.children.length > 3) toasts.lastChild.remove();
+  setTimeout(() => t.remove(), 2600);
+}
+const fmtT = s => { s = Math.max(0, Math.ceil(s)); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
+function seenCount(){ return SPECIES.filter(s => saved.seen[s.id]).length; }
+function renderBasket(){
+  const counts = {}; for (const b of S.basket) counts[b.id] = (counts[b.id] || 0) + 1;
+  $('#basket').innerHTML = Object.keys(counts).map(id => `<span class="b"><img alt="" src="${THUMB[id] || ''}">${counts[id]}</span>`).join('');
+}
+function updateHud(){
+  if (S.stat) $('#hKnow').textContent = S.stat.right + '/' + S.stat.exam;
+  $('#hFx').textContent = fxCount() + '/9';
+  $('#hScore').textContent = S.score;
+  $('#hHerb').textContent = seenCount() + '/7';
+  if (S.limit){ $('#hTime').textContent = fmtT(S.limit - S.time); $('#hTime').classList.toggle('warn', S.limit - S.time < 30); }
+}
+
+function renderHerb(){
+  $('#herbCount').textContent = seenCount() + ' di 7 specie trovate';
+  $('#herbGrid').innerHTML = SPECIES.map(s => {
+    const seen = !!saved.seen[s.id];
+    return `<div class="card ${seen ? '' : 'unseen'}"><img alt="" src="${THUMB[s.id] || ''}"><div>
+      <h3>${seen ? s.name : '???'}</h3><div class="lat">${seen ? s.latin : 'Specie non ancora trovata'}</div>
+      ${seen ? `<span class="pill ${s.kind}">${KIND_LABEL[s.kind]} · ${s.pts > 0 ? '+' : ''}${s.pts}</span>` : ''}</div>
+      <p class="note">${seen ? s.note : habHint(s.hab)}</p></div>`;
+  }).join('');
+}
+function renderFxDiary(){
+  $('#fxCount').textContent = fxCount() + ' di 9 effetti provati';
+  $('#fxGrid').innerHTML = FX_ORDER.map(id => {
+    const f = FX[id], got = !!saved.fx[id], src = SP[id] ? SP[id].name : SPECIAL[id], srcKnown = SPECIAL[id] || saved.seen[id];
+    const hint = id === 'magico' ? 'Fungo blu luminoso, solo nella modalità Effetti.' : id === 'visioni' ? 'Fungo viola a pois colorati, nel muschio e ai margini dei noccioleti.' : srcKnown ? `Raccogli: ${src}.` : 'Raccogli una specie che non hai ancora trovato.';
+    return `<div class="card ${got ? '' : 'unseen'}"><img alt="" src="${THUMB[id] || ''}"><div>
+      <div class="fxname">${got ? src : 'Effetto nascosto'}</div><h3 style="${got ? 'color:' + f.col : ''}">${got ? f.name : '???'}</h3></div>
+      <p class="note">${got ? f.desc.charAt(0).toUpperCase() + f.desc.slice(1) : hint}</p></div>`;
+  }).join('');
+}
+function habHint(h){ return { trunk:'Indizio: cercalo ai piedi di castagni e cerri.', moss:'Indizio: nasce nelle macchie di muschio del bosco.', clearing:'Indizio: vive nei prati e tra i filari di noccioli.', edge:'Indizio: al margine tra bosco e noccioleto, dove arriva il sole.' }[h]; }
+
+/* ================= overlay ================= */
+const OV = ['#oMenu', '#oHerb', '#oPause', '#oEnd', '#oExam', '#oMap'];
+let herbReturn = '#oMenu';
+function show(id){ OV.forEach(o => $(o).hidden = o !== id); }
+function hideAll(){ OV.forEach(o => $(o).hidden = true); }
+function openHerb(from){ herbReturn = from; renderHerb(); renderFxDiary(); show('#oHerb'); }
+
+/* ================= partita ================= */
+function start(mode){
+  audioInit();
+  S.mode = mode; const md = MODES[mode];
+  S.playing = true; S.paused = false; S.score = 0; S.time = 0; S.limit = md.limit;
+  S.x = START.x; S.z = START.z; S.yaw = START.yaw; S.pitch = -0.05; S.vy = 0; S.jump = 0; S.basket = []; S.found = {}; S.lastStep = 0;
+  S.stat = { exam:0, right:0, good:0, err:0 }; EX.m = null; clearFx();
+  spawnAll();
+  if (S.boar){ scene.remove(S.boar.g); S.boar = null; }
+  if (md.fx){ const g = buildBoar(); g.scale.setScalar(1.15); scene.add(g); S.boar = { g, x:40, z:-40, state:'wander', tx:30, tz:-30, t:0, cool:0 }; }
+  clearRivals(); clearFlush(); S.combo = 0; S.comboT = 0; S.lastPos = 0; S.lastTick = -1; if (md.rivals) spawnRivals();
+  $('#radar').hidden = !md.rivals; $('#cCombo').hidden = true;
+  $('#hMode').textContent = md.label;
+  $('#cTime').hidden = !md.limit; $('#cScore').hidden = mode === 'passeggiata'; $('#cFiuto').hidden = mode !== 'passeggiata';
+  $('#cKnow').hidden = mode !== 'passeggiata'; $('#cFx').hidden = !md.fx; $('#cRank').hidden = !md.rivals;
+  $('#tJump').hidden = !md.fx;
+  $('#hud').hidden = false; $('#stick').hidden = !TOUCH; $('#tbtns').hidden = !TOUCH;
+  S.fogBase = scene.fog.density = md.fx ? 0.013 : 0.015;
+  renderBasket(); updateHud(); if (md.rivals) renderRank(); hideAll();
+  const intro = { passeggiata:'<b>Benvenuto nel bosco.</b> Cerca con calma: quando trovi un fungo, esaminalo e decidi se tenerlo.',
+    competizione:'<b>Via!</b> Cinque minuti contro Sor Checco, la Peppa e Nando. Il radar in alto a destra ti dice dove sono.',
+    effetti:'<b>Benvenuto nel bosco degli effetti.</b> Ogni fungo cambia il modo in cui vedi il bosco: provali tutti. E attento al cinghiale.' }[mode];
+  toast(intro, 'good');
+  if (!TOUCH) tryLock();
+}
+function endGame(){
+  clearFx();
+  S.playing = false; S.paused = false; unlock(); $('#hud').hidden = true;
+  const md = MODES[S.mode]; const best = saved.best[S.mode] || 0;
+  if (S.mode === 'competizione' && S.score > best){ saved.best[S.mode] = S.score; persist(); }
+  $('#eMode').textContent = md.label + (S.limit ? ' · tempo scaduto' : S.mode === 'passeggiata' ? ' · fine della passeggiata' : ' · fine della partita');
+  if (S.mode === 'passeggiata'){
+    const st = S.stat;
+    $('#eScore').textContent = `${st.right}/${st.exam}`;
+    $('#eLine').textContent = st.exam ? `Hai esaminato ${st.exam} funghi e ne hai riconosciuti ${st.right}. Decisioni giuste: ${st.good}. Errori nel cestino: ${st.err}. Erbario: ${seenCount()} specie su 7.` : 'Non hai esaminato nessun fungo. Il bosco ti aspetta.';
+  } else if (S.mode === 'competizione'){
+    const rk = ranking(), pos = rk.findIndex(p => p.me) + 1;
+    $('#eScore').textContent = S.score;
+    $('#eMode').textContent = `Competizione · ${pos}° posto · ${TITLES[pos - 1]}`;
+    const good = S.basket.filter(b => !b.bad).length, bad = S.basket.length - good;
+    $('#eLine').textContent = `${pos === 1 ? 'Hai battuto tutti i fungaioli!' : `Ha vinto ${rk[0].name} con ${rk[0].score} punti.`} Nel cestino ${good} funghi buoni${bad ? ` e ${bad} da buttare` : ''}. ${S.score > best && S.score > 0 ? 'Nuovo record personale!' : `Il tuo record: ${Math.max(best, S.score)}.`}`;
+  } else {
+    $('#eScore').textContent = `${fxCount()}/9`;
+    $('#eLine').textContent = `Effetti provati: ${fxCount()} su 9. Funghi raccolti: ${S.basket.length}.`;
+  }
+  const counts = {}; for (const b of S.basket) counts[b.id] = (counts[b.id] || 0) + 1;
+  $('#eTally').innerHTML = Object.keys(counts).length ? Object.keys(counts).map(id => `<span class="b"><img alt="" src="${THUMB[id] || ''}"><span>${SP[id] ? SP[id].name : SPECIAL[id]}</span><span class="n">×${counts[id]}</span></span>`).join('') : '<span class="keys">Cestino vuoto. Il bosco ti aspetta.</span>';
+  if (S.mode === 'competizione'){ const rk = ranking(); $('#eTally').innerHTML = rk.map((p, i) => `<span class="b" style="padding-left:14px"><span class="n">${i + 1}°</span><span style="${p.me ? 'color:var(--porcino);font-weight:700' : ''}">${p.name}</span><span class="n">${p.score}</span></span>`).join(''); }
+  clearRivals(); clearFlush();
+  show('#oEnd');
+}
+function pause(){ if (!S.playing || S.paused) return; S.paused = true; unlock(); $('#bEndWalk').hidden = !!S.limit; $('#bEndWalk').textContent = S.mode === 'passeggiata' ? 'Termina la passeggiata' : 'Termina la partita'; show('#oPause'); }
+function resume(){ S.paused = false; hideAll(); if (!TOUCH) tryLock(); }
+function quit(){ clearFx(); clearRivals(); clearFlush(); EX.m = null; S.fogBase = scene.fog.density = 0.015; S.playing = false; S.paused = false; unlock(); $('#hud').hidden = true; for (const m of S.mush) scene.remove(m.g); S.mush = []; if (S.boar){ scene.remove(S.boar.g); S.boar = null; } show('#oMenu'); }
+
+/* ================= raccolta ================= */
+function tryPick(m){
+  if (!m || !m.alive || !S.playing || S.paused) return;
+  if (MODES[S.mode].fx) return pickEffects(m);
+  if (S.mode === 'passeggiata') return openExam(m);
+  // competizione: punti per peso, serie rapide, penalità per bacati e velenosi
+  removeMush(m); const sp = m.sp, first = !saved.seen[sp.id]; if (first){ saved.seen[sp.id] = true; persist(); }
+  if (m.sick || sp.kind !== 'ok'){
+    const pts = m.sick ? -20 : sp.pts; S.score += pts; S.basket.push({ id:sp.id, pts, bad:true });
+    const lost = S.combo >= 2; S.combo = 0; S.comboT = 0; SFX.bad(); popPts(pts);
+    toast(m.sick ? `<b>${sp.name} bacato!</b> ${pts}. Era molle e pieno di larve.${lost ? ' Serie persa.' : ''}` : `<b>${sp.name}</b> ${pts}. ${sp.kind === 'deadly' ? 'Mortale' : 'Velenoso'}: nel cestino non ci doveva finire.${lost ? ' Serie persa.' : ''}`, 'bad');
+  } else {
+    const f = m.scale / MODES[S.mode].scale, grams = Math.max(5, Math.round(sp.grams * f * f / 5) * 5);
+    S.combo = S.comboT > 0 ? S.combo + 1 : 1; S.comboT = 9;
+    const mult = [1, 1, 1.2, 1.5, 2][Math.min(S.combo, 4)];
+    const pts = Math.max(1, Math.round(sp.pts * f * mult));
+    S.score += pts; S.basket.push({ id:sp.id, pts });
+    (sp.pts >= 40 ? SFX.rare : SFX.pick)(); popPts(pts, mult > 1 || sp.pts >= 40);
+    toast(`<b>${sp.name}</b> · ${grams} g · +${pts}${mult > 1 ? ` · serie ×${mult}` : ''}`, sp.pts >= 40 ? 'gold' : 'good');
+  }
+  if (first) setTimeout(() => toast(`<b>Nuova specie nell'erbario</b> · ${seenCount()}/7`, 'gold'), 250);
+  renderBasket(); updateHud(); renderRank();
+}
+function pickEffects(m){
+  if (!m || !m.alive || !S.playing || S.paused) return;
+  if (m.ghost){ removeMush(m); SFX.seen(); toast('<b>Era un\'allucinazione!</b> Quel fungo non c\'era.', 'vis'); return; }
+  removeMush(m);
+  const f = FX[m.id], known = !!saved.fx[m.id];
+  const fxTxt = `<b style="color:${f.col}">${f.name}</b>${known ? '' : ': ' + f.desc}`;
+  if (SPECIAL[m.id]){
+    if (S.mode !== 'passeggiata') S.score += m.id === 'visioni' ? 15 : 5;
+    (m.id === 'magico' ? SFX.magic : SFX.vis)();
+    toast(`<b>${SPECIAL[m.id]}</b> · ${fxTxt}`, m.id === 'visioni' ? 'vis' : 'blue');
+    applyFx(m.id); return;
+  }
+  const sp = m.sp, first = !saved.seen[sp.id];
+  if (first){ saved.seen[sp.id] = true; persist(); }
+  let pts = sp.pts; if (pts > 0 && fxOn('ovolo')) pts *= 2;
+  S.basket.push({ id:sp.id, pts });
+  const scored = S.mode !== 'passeggiata';
+  if (scored) S.score += pts;
+  if (sp.kind === 'ok') (sp.pts >= 40 ? SFX.rare : SFX.pick)(); else SFX.bad();
+  const ptsTxt = scored ? ` ${pts > 0 ? '+' : ''}${pts}` : '';
+  toast(`<b>${sp.name}</b>${ptsTxt} · ${fxTxt}`, sp.kind === 'ok' ? (sp.pts >= 40 ? 'gold' : 'good') : 'bad');
+  if (first) setTimeout(() => toast(`<b>Nuova specie nell'erbario</b> · ${seenCount()}/7`, 'gold'), 250);
+  applyFx(sp.id);
+  renderBasket(); updateHud(); checkWalkDone();
+}
+function checkWalkDone(){
+  if (S.mode === 'passeggiata' && seenCount() === 7 && !S.found.all){ S.found.all = true; setTimeout(() => toast('<b>Erbario completo!</b> Hai trovato tutte e 7 le specie tra Caprarola e Carbognano.', 'gold'), 600); }
+}
+function removeMush(m){ m.alive = false; m.pop = 0.001; }
+
+/* ================= effetti dei funghi ================= */
+const SPECIAL = { magico:'Fungo magico', visioni:'Fungo delle visioni' };
+const FX = {
+  porcino:  { name:'Gigante',       dur:12, col:'#cf8f48', desc:'diventi alto come un castagno e il bosco sembra un plastico in miniatura.' },
+  finferlo: { name:"Occhio d'oro",  dur:15, col:'#f1c24a', desc:'la vista si stringe in un alone dorato e vedi i funghi attraverso le foglie: oro i buoni, rosso i velenosi.' },
+  trombetta:{ name:'Notte',         dur:15, col:'#8fa0c8', desc:'cala il buio di colpo. Resta la tua lanterna, tra le lucciole.' },
+  mazza:    { name:'Tamburo',       dur:15, col:'#d9c9a8', desc:'il bosco pulsa a tempo di tamburo: a ogni colpo tutto sobbalza e lampeggia. E salti altissimi.' },
+  ovolo:    { name:"Tocco d'oro",   dur:20, col:'#f0a23a', desc:"il bosco si fa dorato e scintilla dappertutto." },
+  muscaria: { name:'Effetto Alice', dur:20, col:'#e0503a', desc:"rimpicciolisci fino all'altezza di un fungo e il mondo si curva come in una lente. Nella realtà l'ovolaccio è velenoso." },
+  falloide: { name:'Svenimento',    dur:6,  col:'#b9c27a', desc:'vedi doppio, la vista si annebbia e perdi i sensi. Nella realtà è mortale.' },
+  visioni:  { name:'Visioni',       dur:30, col:'#d49bff', desc:'colori impazziti, scie, forme che respirano e funghi che non esistono.' },
+  magico:   { name:'Capriolo',      dur:10, col:'#7fc4ff', desc:'corri così veloce che il bosco si allunga in strisce di luce.' },
+};
+const FX_ORDER = Object.keys(FX);
+const FX_SOURCE = { porcino:'porcino', finferlo:'finferlo', trombetta:'trombetta', mazza:'mazza', ovolo:'ovolo', muscaria:'muscaria', falloide:'falloide', visioni:'visioni', magico:'magico' };
+S.fx = {}; S.fxT = {}; S.eye = 1.65; S.lastStep = 0; S.chimeT = 0; S.fxbarT = 0; S.lastFilter = ''; S.fogBase = 0.02;
+const fxOn = id => S.fx[id] > 0;
+function fxK(id){ if (!(S.fx[id] > 0)) return 0; return Math.max(0, Math.min(1, S.fxT[id] / 1.2, S.fx[id] / 1.5)); }
+function fxCount(){ return FX_ORDER.filter(k => saved.fx[k]).length; }
+function reachNow(){ return MODES[S.mode].reach + 4 * fxK('porcino'); }
+
+const NIGHT = new THREE.Color('#070a10'), fogCol = new THREE.Color(), tmpC = new THREE.Color(), lookV = new THREE.Vector3();
+const sporeMat = spores.material, sporeCol = sporeMat.color.clone();
+const lantern = new THREE.SpotLight('#ffd9a0', 0, 32, 0.6, 0.55, 1); scene.add(lantern, lantern.target);
+
+// segnalini dell'occhio d'oro
+const MARK_N = 180, markPos = new Float32Array(MARK_N * 3), markCol = new Float32Array(MARK_N * 3), markGeo = new THREE.BufferGeometry();
+markGeo.setAttribute('position', new THREE.BufferAttribute(markPos, 3)); markGeo.setAttribute('color', new THREE.BufferAttribute(markCol, 3));
+const markTex = canvasTex(64, 64, (x) => { const g = x.createRadialGradient(32, 32, 0, 32, 32, 32); g.addColorStop(0, 'rgba(255,255,255,1)'); g.addColorStop(.3, 'rgba(255,255,255,.7)'); g.addColorStop(1, 'rgba(255,255,255,0)'); x.fillStyle = g; x.fillRect(0, 0, 64, 64); });
+const markMat = new THREE.PointsMaterial({ size:1, map:markTex, vertexColors:true, transparent:true, depthTest:false, depthWrite:false, blending:THREE.AdditiveBlending, fog:false });
+const marks = new THREE.Points(markGeo, markMat); marks.visible = false; marks.frustumCulled = false; marks.renderOrder = 5; scene.add(marks);
+
+function applyFx(id){
+  const f = FX[id], was = S.fx[id] > 0;
+  S.fx[id] = f.dur; if (!was) S.fxT[id] = 0;
+  const first = !saved.fx[id]; if (first){ saved.fx[id] = true; persist(); }
+  if (id === 'visioni') startVisions();
+  if (id === 'falloide'){ S.faintDone = false; SFX.heart(); }
+  if (id === 'trombetta') SFX.night();
+  if (id === 'porcino') SFX.grow();
+  if (id === 'muscaria') SFX.shrink();
+  if (first) setTimeout(() => toast(`<b>Nuovo effetto nel diario</b> · ${fxCount()}/9`, 'gold'), 500);
+  if (first && fxCount() === 9) setTimeout(() => toast('<b>Diario completo!</b> Hai provato tutti gli effetti del bosco.', 'gold'), 1400);
+  renderFxBar(); updateHud();
+  return first;
+}
+function endFx(id){
+  if (id === 'visioni'){ endVisions(); toast('<b>Le visioni svaniscono.</b> Il bosco torna normale.', 'vis'); }
+  renderFxBar();
+}
+function clearFx(){
+  S.fx = {}; S.fxT = {}; S.eye = 1.65; endVisions();
+  canvas.style.filter = ''; S.lastFilter = '';
+  scene.fog.color.copy(FOG); scene.background.copy(FOG); scene.fog.density = S.fogBase || 0.02;
+  hemi.intensity = 0.95; sun.intensity = 0.75; SKY.visible = HORIZON.visible = RAYS.visible = true; lantern.intensity = 0;
+  sporeMat.size = 0.05; sporeMat.color.copy(sporeCol); marks.visible = false;
+  if (S.boar) S.boar.g.scale.setScalar(1.15);
+  renderFxBar();
+}
+function renderFxBar(){
+  const act = FX_ORDER.filter(fxOn);
+  $('#fxbar').innerHTML = act.map(id => `<div class="fxc"><b style="color:${FX[id].col}">${FX[id].name}</b><span>${Math.ceil(S.fx[id])}</span></div>`).join('');
+  if (TOUCH) $('#tJump').hidden = !(MODES[S.mode].fx || fxOn('mazza') || fxOn('magico'));
+}
+function faintE(){ return fxOn('falloide') ? FX.falloide.dur - S.fx.falloide : -1; }
+
+function stepFx(dt, t){
+  const K = {};
+  for (const id of FX_ORDER){
+    if (S.fx[id] > 0){ S.fx[id] -= dt; S.fxT[id] += dt; if (S.fx[id] <= 0){ S.fx[id] = 0; endFx(id); } }
+    K[id] = fxK(id);
+  }
+  const kv = K.visioni, kn = K.trombetta, kf = K.finferlo, ko = K.ovolo;
+  S.fxbarT -= dt; if (S.fxbarT <= 0){ S.fxbarT = 0.25; renderFxBar(); }
+
+  // filtro sullo schermo: visioni, oro, svenimento
+  const parts = [];
+  if (kv > 0) parts.push(`hue-rotate(${Math.round((S.fxT.visioni * 70) % 360 * kv)}deg) saturate(${(1 + 1.8 * kv).toFixed(2)}) contrast(${(1 + 0.12 * kv).toFixed(2)})`);
+  if (ko > 0) parts.push(`sepia(${(0.5 * ko).toFixed(2)}) saturate(${(1 + 0.45 * ko).toFixed(2)}) brightness(${(1 + 0.05 * ko).toFixed(2)})`);
+  const e = faintE();
+  if (e >= 0){
+    const b = e < 2.6 ? 1 - e / 2.6 * 0.97 : e < 3.2 ? 0.03 : Math.min(1, 0.03 + (e - 3.2) / 2.8 * 0.97);
+    parts.push(`brightness(${b.toFixed(2)}) blur(${((1 - b) * 5).toFixed(1)}px)`);
+    if (e >= 2.6 && !S.faintDone){
+      S.faintDone = true; S.x = START.x; S.z = START.z; S.yaw = START.yaw; S.pitch = -0.05;
+      toast('<b>Ti risvegli sulla strada bianca</b>, accanto al cartello. Non ricordi come ci sei arrivato.', 'bad');
+    }
+  }
+  const f = parts.join(' '); if (f !== S.lastFilter){ canvas.style.filter = f; S.lastFilter = f; }
+
+  // notte e colori della nebbia
+  fogCol.copy(FOG);
+  if (kv > 0) fogCol.lerp(tmpC.setHSL((t * 0.05) % 1, 0.45, 0.72), 0.6 * kv);
+  if (kn > 0) fogCol.lerp(NIGHT, kn);
+  scene.fog.color.copy(fogCol); scene.background.copy(fogCol);
+  scene.fog.density = S.fogBase * (1 + 1.3 * kn);
+  hemi.intensity = 0.95 * (1 - 0.9 * kn); sun.intensity = 0.75 * (1 - kn);
+  SKY.visible = HORIZON.visible = kn < 0.4; RAYS.visible = kn < 0.2;
+  lantern.intensity = 2.4 * kn;
+  if (kn > 0){ camera.getWorldDirection(lookV); lantern.position.copy(camera.position); lantern.target.position.copy(camera.position).addScaledVector(lookV, 10); lantern.target.updateMatrixWorld(); }
+
+  // spore: arcobaleno nelle visioni, lucciole di notte
+  if (kv > 0){ sporeMat.size = 0.05 + 0.16 * kv; sporeMat.color.setHSL((t * 0.15) % 1, 0.9, 0.7); }
+  else if (kn > 0){ sporeMat.size = 0.05 + 0.1 * kn; sporeMat.color.set('#d6ff72'); }
+  else { sporeMat.size = 0.05; sporeMat.color.copy(sporeCol); }
+
+  // occhio d'oro
+  marks.visible = kf > 0;
+  if (kf > 0){
+    let n = 0;
+    for (const m of S.mush){
+      if (n >= MARK_N) break;
+      if (!m.alive || !m.sp || m.ghost) continue;
+      const dx = m.x - S.x, dz = m.z - S.z; if (dx*dx + dz*dz > 36*36) continue;
+      markPos[n*3] = m.g.position.x; markPos[n*3+1] = m.g.position.y + m.h + 0.35 + Math.sin(t * 3 + m.hop) * 0.08; markPos[n*3+2] = m.g.position.z;
+      const ok = m.sp.kind === 'ok'; markCol[n*3] = 1; markCol[n*3+1] = ok ? 0.78 : 0.22; markCol[n*3+2] = ok ? 0.2 : 0.18; n++;
+    }
+    markGeo.setDrawRange(0, n); markGeo.attributes.position.needsUpdate = true; markGeo.attributes.color.needsUpdate = true;
+    markMat.opacity = kf; markMat.size = 0.9 + Math.sin(t * 4) * 0.15;
+  }
+
+  // visioni: cinghiale che cresce, suoni che hanno un colore
+  if (K.mazza > 0){ const bi = Math.floor(t * 2); if (bi !== S.beatI){ S.beatI = bi; SFX.drum(); } S.beat = Math.exp(-((t * 2) % 1) * 6); } else S.beat = 0;
+  if (S.boar) S.boar.g.scale.setScalar(1.15 * (1 + 1.4 * kv * (0.5 + 0.5 * Math.sin(t * 0.8))));
+  if (kv > 0.3){ S.chimeT -= dt; if (S.chimeT <= 0){ S.chimeT = rand(0.35, 0.8); const hue = ((S.fxT.visioni * 70) % 360) / 360; SFX.chime([392, 440, 523, 587, 659, 784, 880][Math.floor(hue * 7)]); } }
+  if (AUD.tripG) AUD.tripG.gain.setTargetAtTime(0.05 * kv, AUD.ctx.currentTime, 0.2);
+  return K;
+}
+
+/* visioni: funghi illusori e ronzio */
+function startVisions(){
+  const ids = ['porcino', 'ovolo', 'finferlo', 'mazza', 'porcino', 'ovolo'];
+  for (let i = 0; i < 14; i++){
+    const a = rand(0, 6.28), d = rand(4, 22); let x = S.x + Math.cos(a) * d, z = S.z + Math.sin(a) * d;
+    x = clamp(x, -WORLD + 2, WORLD - 2); z = clamp(z, -WORLD + 2, WORLD - 2);
+    if (!freeFrom(x, z, .2) || townAt(x, z)) continue;
+    addMushroom(ids[i % ids.length], x, z, MODES[S.mode].scale * rand(1, 1.4)); S.mush[S.mush.length - 1].ghost = true;
+  }
+  tripAudio(true);
+}
+function endVisions(){
+  for (const m of S.mush){ if (m.ghost && m.alive){ m.alive = false; m.pop = 0.001; } }
+  tripAudio(false);
+}
+function tripAudio(on){
+  const c = AUD.ctx; if (!c) return;
+  if (on && !AUD.tripG){
+    const g = c.createGain(); g.gain.value = 0; g.connect(AUD.master); AUD.tripG = g; AUD.tripO = [];
+    for (const f of [110, 164.8, 220.5]){
+      const o = c.createOscillator(); o.type = 'sine'; o.frequency.value = f;
+      const l = c.createOscillator(), lg = c.createGain(); l.frequency.value = rand(0.2, 0.6); lg.gain.value = f * 0.03; l.connect(lg); lg.connect(o.frequency);
+      o.connect(g); o.start(); l.start(); AUD.tripO.push(o, l);
+    }
+  } else if (!on && AUD.tripG){
+    const g = AUD.tripG, os = AUD.tripO; AUD.tripG = null; AUD.tripO = null;
+    g.gain.setTargetAtTime(0, c.currentTime, 0.3); setTimeout(() => { os.forEach(o => { try { o.stop(); } catch(e){} }); g.disconnect(); }, 1500);
+  }
+}
+
+/* post-processing delle visioni: scie e mandala che deforma lo schermo */
+const POST = { rtS:null, rtA:null, fresh:true };
+const postScene = new THREE.Scene(), postCam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+const postQuad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2)); postQuad.frustumCulled = false; postScene.add(postQuad);
+const blendMat = new THREE.MeshBasicMaterial({ transparent:true, depthTest:false, depthWrite:false });
+const warpMat = new THREE.ShaderMaterial({
+  uniforms:{ tex:{ value:null }, t:{ value:0 }, asp:{ value:1 }, kv:{ value:0 }, kp:{ value:0 }, km:{ value:0 }, kg:{ value:0 }, ko:{ value:0 }, ka:{ value:0 }, kf:{ value:0 }, kx:{ value:0 }, kn:{ value:0 }, beat:{ value:0 } },
+  depthTest:false, depthWrite:false,
+  vertexShader:'varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }',
+  fragmentShader:`
+    uniform sampler2D tex; uniform float t, asp, kv, kp, km, kg, ko, ka, kf, kx, kn, beat; varying vec2 vUv;
+    float hash(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+    vec3 T(vec2 u){ return texture2D(tex, clamp(u, 0.001, 0.999)).rgb; }
+    void main(){
+      vec2 uv = vUv; vec2 c0 = uv - 0.5; vec2 q0 = c0; q0.x *= asp; float r0 = length(q0);
+      // Alice: il mondo si curva come in una lente
+      if (ka > 0.001){ uv = 0.5 + c0 * (1.0 - 0.3 * ka + 0.7 * ka * r0 * r0); }
+      // Tamburo: colpo di zoom a ogni battito
+      if (km > 0.001){ uv = 0.5 + (uv - 0.5) * (1.0 - 0.08 * km * beat); }
+      // Visioni: onde e respiro
+      if (kv > 0.001){ uv += kv * 0.010 * vec2(sin(uv.y * 22.0 + t * 1.9), cos(uv.x * 18.0 + t * 1.4)); uv = 0.5 + (uv - 0.5) * (1.0 - 0.035 * kv * sin(t * 0.9)); }
+      vec3 c = T(uv);
+      // Tamburo: i colori si separano sul colpo
+      if (km > 0.001){ float o = 0.008 * km * beat; c.r = T(uv + vec2(o, 0.0)).r; c.b = T(uv - vec2(o, 0.0)).b; c *= 1.0 + 0.35 * km * beat; }
+      // Svenimento: vista doppia
+      if (kx > 0.001){ vec3 c2 = T(uv + vec2(0.03 * sin(t * 1.3), 0.014 * cos(t * 0.9)) * kx); c = mix(c, c2, 0.45 * kx); }
+      // Gigante: effetto plastico, sfocato sopra e sotto
+      if (kp > 0.001){
+        float b = smoothstep(0.1, 0.45, abs(uv.y - 0.52)) * kp * 0.011; vec3 acc = c;
+        for (int i = 1; i <= 4; i++){ float o = float(i) * b; acc += T(uv + vec2(0.0, o)) + T(uv - vec2(0.0, o)); }
+        c = acc / 9.0; float l = dot(c, vec3(0.299, 0.587, 0.114)); c = mix(vec3(l), c, 1.0 + 0.6 * kp) * (1.0 + 0.06 * kp);
+      }
+      // Capriolo: il bosco si allunga in strisce verso il centro
+      if (kg > 0.001){ vec2 d = (vec2(0.5) - uv) * 0.02 * kg; vec3 acc = c; for (int i = 1; i <= 6; i++) acc += T(uv + d * float(i)); c = acc / 7.0; c = mix(c, c * vec3(0.8, 0.95, 1.35), kg * smoothstep(0.3, 0.75, r0)); }
+      // Visioni: mandala ai bordi
+      if (kv > 0.001){
+        float a = atan(q0.y, q0.x);
+        float pat = 0.5 + 0.5 * sin(a * 6.0 + r0 * 34.0 - t * 2.2) * sin(r0 * 22.0 - t * 3.0);
+        vec3 rb = 0.5 + 0.5 * cos(6.2831 * (vec3(0.0, 0.33, 0.67) + r0 * 1.6 - t * 0.15 + a / 6.2831));
+        c = mix(c, c * rb * 1.7, kv * 0.38 * smoothstep(0.12, 0.75, r0) * pat);
+      }
+      // Occhio d'oro: alone dorato che stringe la vista
+      if (kf > 0.001){ c = mix(c, c * vec3(1.3, 1.0, 0.4) * 0.55, kf * smoothstep(0.22, 0.8, r0)); }
+      // Tocco d'oro: scintille
+      if (ko > 0.001){ vec2 g = floor(vUv * vec2(90.0 * asp, 90.0)); float h = hash(g + floor(t * 6.0)); if (h > 0.995) c += vec3(1.0, 0.85, 0.4) * ko * (h - 0.995) * 200.0; }
+      // Notte: bordi più scuri
+      if (kn > 0.001){ c *= 1.0 - kn * 0.6 * smoothstep(0.3, 0.9, r0); }
+      gl_FragColor = vec4(c, 1.0);
+    }`
+});
+function postSize(){
+  const v = new THREE.Vector2(); renderer.getDrawingBufferSize(v);
+  if (!POST.rtS){ POST.rtS = new THREE.WebGLRenderTarget(v.x, v.y); POST.rtA = new THREE.WebGLRenderTarget(v.x, v.y); blendMat.map = POST.rtS.texture; blendMat.needsUpdate = true; }
+  else { POST.rtS.setSize(v.x, v.y); POST.rtA.setSize(v.x, v.y); }
+  POST.fresh = true;
+}
+addEventListener('resize', () => { if (POST.rtS) postSize(); });
+const POST_KEYS = { visioni:'kv', porcino:'kp', mazza:'km', magico:'kg', ovolo:'ko', muscaria:'ka', finferlo:'kf', falloide:'kx', trombetta:'kn' };
+function renderView(K, t){
+  const on = K && Object.keys(POST_KEYS).some(id => K[id] > 0.001);
+  if (!on){ POST.fresh = true; renderer.render(scene, camera); return; }
+  if (!POST.rtS) postSize();
+  const kv = K.visioni || 0;
+  renderer.setRenderTarget(POST.rtS); renderer.render(scene, camera);
+  renderer.setRenderTarget(POST.rtA); renderer.autoClear = false;
+  postQuad.material = blendMat; blendMat.opacity = POST.fresh ? 1 : 1 - 0.8 * kv; renderer.render(postScene, postCam);
+  renderer.autoClear = true; POST.fresh = false;
+  renderer.setRenderTarget(null);
+  const u = warpMat.uniforms; postQuad.material = warpMat;
+  u.tex.value = POST.rtA.texture; u.t.value = t; u.asp.value = camera.aspect; u.beat.value = S.beat || 0;
+  for (const id in POST_KEYS) u[POST_KEYS[id]].value = K[id] || 0;
+  renderer.render(postScene, postCam);
+}
+
+/* ================= esame del fungo (passeggiata) ================= */
+const EX = { m:null, answered:false };
+function openExam(m){
+  EX.m = m; EX.answered = false; S.paused = true; unlock();
+  const sp = m.sp, zn = placeName(m.x, m.z);
+  S.stat.exam++;
+  $('#xImg').src = THUMB[m.sick ? sp.id + '_sick' : sp.id] || '';
+  $('#xTitle').textContent = 'Che fungo è?';
+  const clues = [['Cappello', sp.cap], ['Sotto il cappello', sp.under], ['Gambo', sp.stem], ['Dove', `${zn}${m.sick ? '' : ''}`]];
+  if (m.sick) clues.push(['Stato', 'Molle e scurito, con buchi di larve e macchie di muffa bianca.']);
+  $('#xClues').innerHTML = clues.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('');
+  // tre risposte: quella giusta, il sosia se c'è, e una a caso
+  const opts = [sp.id]; if (sp.conf && !opts.includes(sp.conf)) opts.push(sp.conf);
+  while (opts.length < 3){ const o = SPECIES[(Math.random() * SPECIES.length) | 0].id; if (!opts.includes(o)) opts.push(o); }
+  opts.sort(() => Math.random() - 0.5);
+  $('#xOpts').innerHTML = opts.map(id => `<button class="btn opt" data-id="${id}">${SP[id].name}</button>`).join('');
+  $('#xOpts').querySelectorAll('.opt').forEach(b => b.onclick = () => answerExam(b.dataset.id));
+  $('#xAsk').hidden = false; $('#xReveal').hidden = true;
+  show('#oExam');
+}
+function answerExam(id){
+  if (EX.answered) return; EX.answered = true;
+  const m = EX.m, sp = m.sp, right = id === sp.id;
+  if (right){ S.stat.right++; SFX.pick(); } else SFX.bad();
+  $('#xOpts').querySelectorAll('.opt').forEach(b => { b.disabled = true; if (b.dataset.id === sp.id) b.classList.add('right'); else if (b.dataset.id === id) b.classList.add('wrong'); });
+  const first = !saved.seen[sp.id]; if (first){ saved.seen[sp.id] = true; persist(); }
+  $('#xTitle').innerHTML = `${sp.name} <span class="lat" style="font-size:.45em">${sp.latin}</span>`;
+  $('#xVerdict').innerHTML = (right ? `<b class="okc">Riconosciuto.</b> ` : `<b class="badc">Non era un ${SP[id].name.toLowerCase()}.</b> `) +
+    `<span class="pill ${sp.kind}">${KIND_LABEL[sp.kind]}</span> ${m.sick ? '<span class="pill tox">Bacato</span>' : ''}`;
+  $('#xLook').innerHTML = `<b>Si confonde con:</b> ${sp.look}`;
+  $('#xAsk').hidden = true; $('#xReveal').hidden = false;
+  if (first) toast(`<b>Nuova specie nell'erbario</b> · ${seenCount()}/7`, 'gold');
+  updateHud();
+}
+function decideExam(keep){
+  const m = EX.m, sp = m.sp, good = sp.kind === 'ok' && !m.sick;
+  if (keep){
+    removeMush(m); S.basket.push({ id:sp.id, pts:sp.pts, bad:!good });
+    if (good){ S.stat.good++; toast(`<b>${sp.name}</b> nel cestino. Scelta giusta.`, 'good'); }
+    else { S.stat.err++; SFX.bad(); toast(m.sick ? `<b>Errore:</b> un ${sp.name.toLowerCase()} bacato nel cestino. Va lasciato a marcire nel bosco.` : `<b>Errore:</b> ${sp.name.toLowerCase()} nel cestino. ${sp.kind === 'deadly' ? 'È mortale.' : 'È velenoso.'}`, 'bad'); }
+  } else {
+    m.observed = true;
+    if (good){ toast(`<b>Peccato:</b> era un ${sp.name.toLowerCase()} buono.`, 'gold'); }
+    else { S.stat.good++; toast(`<b>Scelta giusta.</b> ${m.sick ? 'Bacato' : sp.kind === 'deadly' ? 'Mortale' : 'Velenoso'}, resta nel bosco.`, 'good'); }
+  }
+  renderBasket(); updateHud(); checkWalkDone();
+  EX.m = null; S.paused = false; hideAll(); if (!TOUCH) tryLock();
+}
+
+/* ================= mappa della zona (tasto M) ================= */
+let MAPBASE = null, mapFrom = null;
+const MS = 1000 / (WORLD * 2), mx = x => (x + WORLD) * MS, mz = z => (z + WORLD) * MS;
+function buildMapBase(){
+  const cv = document.createElement('canvas'); cv.width = cv.height = 1000; const x = cv.getContext('2d');
+  // bosco con il rilievo ombreggiato da nord-ovest
+  const N = 125, cell = 1000 / N;
+  for (let i = 0; i < N; i++) for (let j = 0; j < N; j++){
+    const wx = -WORLD + (i + .5) * cell / MS, wz = -WORLD + (j + .5) * cell / MS;
+    const sh = clamp((H(wx - 2, wz - 2) - H(wx + 2, wz + 2)) * 0.45, -1, 1), h = H(wx, wz);
+    const l = 24 + h * 0.55 + sh * 9;
+    x.fillStyle = `hsl(92 22% ${l.toFixed(1)}%)`; x.fillRect(i * cell, j * cell, cell + 1, cell + 1);
+  }
+  // fossi
+  for (const g of GULLIES){ x.strokeStyle = 'rgba(20,28,18,.55)'; x.lineWidth = 16; x.lineCap = 'round'; x.beginPath(); g.forEach(([a, b], k) => k ? x.lineTo(mx(a), mz(b)) : x.moveTo(mx(a), mz(b))); x.stroke();
+    x.strokeStyle = 'rgba(120,160,175,.7)'; x.lineWidth = 2.5; x.setLineDash([8, 6]); x.stroke(); x.setLineDash([]); }
+  // prati e noccioleti
+  for (const p of PRATI){ x.fillStyle = 'rgba(170,190,100,.85)'; x.beginPath(); x.arc(mx(p.x), mz(p.z), p.r * MS, 0, 6.2832); x.fill(); }
+  for (const r of NOCC){
+    x.fillStyle = 'rgba(150,140,80,.75)'; x.fillRect(mx(r.x0), mz(r.z0), (r.x1 - r.x0) * MS, (r.z1 - r.z0) * MS);
+    x.fillStyle = 'rgba(70,90,35,.9)'; for (let a = r.x0 + 2.5; a < r.x1; a += 5.5) for (let b = r.z0 + 2.5; b < r.z1; b += 5.5){ x.beginPath(); x.arc(mx(a), mz(b), 3.2, 0, 6.2832); x.fill(); }
+  }
+  // paesi
+  for (const t of TOWNS){
+    x.fillStyle = '#cfc3aa'; x.strokeStyle = '#8f8570'; x.lineWidth = 3; x.beginPath(); t.poly.forEach(([a, b], k) => k ? x.lineTo(mx(a), mz(b)) : x.moveTo(mx(a), mz(b))); x.closePath(); x.fill(); x.stroke();
+  }
+  // strade
+  for (const kind of ['bianca', 'asfalto']) for (const r of ROADS.filter(r => r.kind === kind)){
+    x.lineCap = 'round'; x.lineJoin = 'round';
+    x.beginPath(); r.samples.forEach((s, k) => k ? x.lineTo(mx(s.x), mz(s.z)) : x.moveTo(mx(s.x), mz(s.z)));
+    if (kind === 'asfalto'){ x.strokeStyle = '#6d675a'; x.lineWidth = 13; x.stroke(); x.strokeStyle = '#f2ecdd'; x.lineWidth = 8; x.stroke(); }
+    else { x.strokeStyle = '#e2cf9f'; x.lineWidth = 6; x.setLineDash([14, 8]); x.stroke(); x.setLineDash([]); }
+  }
+  // etichette
+  const label = (txt, px, pz, size, col, bg) => { x.font = `${size}px Georgia, serif`; x.textAlign = 'center'; x.textBaseline = 'middle'; const w = x.measureText(txt).width;
+    if (bg){ x.fillStyle = bg; x.fillRect(px - w / 2 - 6, pz - size / 2 - 4, w + 12, size + 8); } x.fillStyle = col; x.fillText(txt, px, pz); };
+  const roadTag = (txt, s) => { x.font = 'bold 20px ui-monospace, monospace'; const w = x.measureText(txt).width; x.fillStyle = '#3f6fb3'; x.fillRect(mx(s.x) - w / 2 - 6, mz(s.z) - 14, w + 12, 28); x.fillStyle = '#fff'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText(txt, mx(s.x), mz(s.z) + 1); };
+  roadTag('SP35', ROADS[0].samples[Math.round(ROADS[0].samples.length * .55)]); roadTag('SP35', ROADS[1].samples[Math.round(ROADS[1].samples.length * .5)]);
+  roadTag('SP67', ROADS[2].samples[Math.round(ROADS[2].samples.length * .5)]); roadTag('SP68', ROADS[3].samples[Math.round(ROADS[3].samples.length * .6)]);
+  // palazzo, castello, casale, cartello
+  x.fillStyle = '#d4a960'; x.strokeStyle = '#5a4630'; x.lineWidth = 2; x.beginPath(); for (let k = 0; k < 5; k++){ const a = k / 5 * 6.2832 - 1.2; const px = mx(PALAZZO.x) + Math.cos(a) * 26, pz = mz(PALAZZO.z) + Math.sin(a) * 26; k ? x.lineTo(px, pz) : x.moveTo(px, pz); } x.closePath(); x.fill(); x.stroke();
+  x.fillStyle = '#b8955f'; x.fillRect(mx(CASTELLO.x) - 14, mz(CASTELLO.z) - 14, 28, 28); x.strokeRect(mx(CASTELLO.x) - 14, mz(CASTELLO.z) - 14, 28, 28);
+  x.fillStyle = '#c9a878'; x.fillRect(mx(CASALE.x) - 10, mz(CASALE.z) - 8, 20, 16);
+  label('Caprarola', mx(-140), mz(95), 46, '#3b3326');
+  label('Carbognano', mx(125), mz(-40), 46, '#3b3326');
+  label('Palazzo Farnese', mx(PALAZZO.x) + 10, mz(PALAZZO.z) + 44, 22, '#3b3326', 'rgba(230,222,200,.85)');
+  label('Castello', mx(CASTELLO.x), mz(CASTELLO.z) + 30, 22, '#3b3326', 'rgba(230,222,200,.85)');
+  label('Casale', mx(CASALE.x), mz(CASALE.z) + 24, 20, '#f1ead8');
+  label('Forra', mx(GULLIES[0][1][0]) + 44, mz(GULLIES[0][1][1]), 20, '#e6e2cf');
+  label('Forra', mx(GULLIES[1][1][0]) - 44, mz(GULLIES[1][1][1]), 20, '#e6e2cf');
+  label('verso il Lago di Vico e i 600 m ↖', 200, 30, 20, '#e6e2cf');
+  label('Fabrica di Roma →', 900, mz(-60), 20, '#e6e2cf');
+  return cv;
+}
+function drawMap(){
+  if (!MAPBASE) MAPBASE = buildMapBase();
+  const cv = $('#mapCv'), x = cv.getContext('2d');
+  x.drawImage(MAPBASE, 0, 0);
+  const js = SB1[0]; x.fillStyle = '#7a5a36'; x.fillRect(mx(js.x) - 5, mz(js.z) - 5, 10, 10);
+  if (S.flush){ x.fillStyle = 'rgba(255,214,120,.9)'; x.beginPath(); x.arc(mx(S.flush.x), mz(S.flush.z), 16, 0, 6.2832); x.fill(); }
+  if (S.rivals) for (const r of S.rivals){ x.fillStyle = r.dot; x.strokeStyle = '#1a1813'; x.lineWidth = 2; x.beginPath(); x.arc(mx(r.x), mz(r.z), 11, 0, 6.2832); x.fill(); x.stroke(); }
+  if (S.playing){
+    x.save(); x.translate(mx(S.x), mz(S.z)); x.rotate(-S.yaw);
+    x.fillStyle = '#e0503a'; x.strokeStyle = '#fff'; x.lineWidth = 3; x.beginPath(); x.moveTo(0, -20); x.lineTo(13, 14); x.lineTo(0, 7); x.lineTo(-13, 14); x.closePath(); x.fill(); x.stroke(); x.restore();
+  }
+  x.fillStyle = '#e0503a'; x.font = 'bold 26px ui-monospace, monospace'; x.textAlign = 'center'; x.fillText('N ↑', 960, 40);
+}
+function openMap(from){
+  mapFrom = from;
+  if (S.playing && !S.paused){ S.paused = true; unlock(); }
+  show('#oMap'); drawMap();
+}
+function closeMap(){
+  if (mapFrom === 'game'){ S.paused = false; hideAll(); if (!TOUCH) tryLock(); }
+  else show(mapFrom || '#oMenu');
+}
+
+/* ================= mira ================= */
+const tmpV = new THREE.Vector3(), fwd = new THREE.Vector3(), ray = new THREE.Raycaster();
+function findTarget(){
+  const reach = reachNow(); camera.getWorldDirection(fwd);
+  let best = null, bestA = 1e9;
+  for (const m of S.mush){
+    if (!m.alive || m.observed) continue;
+    const dx = m.x - S.x, dz = m.z - S.z; if (dx*dx + dz*dz > (reach + 1) * (reach + 1)) continue;
+    tmpV.set(m.g.position.x, m.g.position.y + m.h * 0.6, m.g.position.z).sub(camera.position);
+    const d = tmpV.length(); if (d > reach + 1.2) continue;
+    const ang = tmpV.normalize().angleTo(fwd), tol = Math.atan((m.h * 0.75 + 0.07) / d) + 0.035;
+    if (ang < tol && ang < bestA){ best = m; bestA = ang; }
+  }
+  return best;
+}
+function pickAtScreen(px, py){
+  const nd = new THREE.Vector2((px / innerWidth) * 2 - 1, -(py / innerHeight) * 2 + 1);
+  ray.setFromCamera(nd, camera); const reach = reachNow();
+  let best = null, bd = 1e9;
+  for (const m of S.mush){
+    if (!m.alive || m.observed) continue;
+    tmpV.set(m.g.position.x, m.g.position.y + m.h * 0.5, m.g.position.z);
+    if (tmpV.distanceTo(camera.position) > reach + 1.2) continue;
+    const dd = ray.ray.distanceToPoint(tmpV);
+    if (dd < m.h * 0.8 + 0.12 && dd < bd){ best = m; bd = dd; }
+  }
+  if (best) tryPick(best); else if (S.target) tryPick(S.target);
+}
+function showTarget(m){
+  const el = $('#target'), ret = $('#reticle');
+  if (!m){ el.hidden = true; ret.className = ''; $('#tPick').classList.remove('ready'); return; }
+  const known = !!SPECIAL[m.id] || saved.seen[m.id];
+  const reveal = MODES[S.mode].fx;
+  const name = SPECIAL[m.id] || (reveal && known ? m.sp.name : 'Un fungo…');
+  const bad = reveal && known && m.sp && m.sp.kind !== 'ok';
+  const act = TOUCH ? 'tocca Raccogli' : 'clic o E';
+  const verb = S.mode === 'passeggiata' ? 'esamina' : 'raccogli';
+  el.innerHTML = `${name}<small>${verb} · ${act}</small>`; el.hidden = false;
+  ret.className = bad ? 'on bad' : 'on'; $('#tPick').classList.add('ready');
+  $('#tPick').textContent = S.mode === 'passeggiata' ? 'Esamina' : 'Raccogli';
+}
+
+/* ================= input ================= */
+let locked = false;
+function tryLock(){ try { const p = canvas.requestPointerLock && canvas.requestPointerLock(); if (p && p.catch) p.catch(() => {}); } catch(e){} }
+function unlock(){ try { if (document.pointerLockElement) document.exitPointerLock(); } catch(e){} }
+document.addEventListener('pointerlockchange', () => {
+  const was = locked; locked = document.pointerLockElement === canvas;
+  if (was && !locked && S.playing && !S.paused) pause();
+});
+addEventListener('keydown', e => {
+  keys[e.code] = true;
+  if (!S.playing) return;
+  if (e.code === 'Escape'){ if (EX.m) return; if (!$('#oMap').hidden){ closeMap(); return; } S.paused ? resume() : pause(); }
+  if (e.code === 'KeyE' && !S.paused) tryPick(S.target);
+  if (e.code === 'KeyM' && !EX.m){ if (!$('#oMap').hidden) closeMap(); else if (!S.paused) openMap('game'); }
+  if (e.code === 'Space'){ e.preventDefault(); doJump(); }
+});
+addEventListener('keyup', e => { keys[e.code] = false; });
+addEventListener('blur', () => { for (const k in keys) keys[k] = false; });
+addEventListener('mousemove', e => { if (locked && S.playing && !S.paused) look(e.movementX, e.movementY, 0.0022); });
+function look(dx, dy, k){ S.yaw -= dx * k; S.pitch = clamp(S.pitch - dy * k, -1.35, 1.2); }
+function doJump(){ if (S.jump <= 0.001 && S.vy === 0) S.vy = fxOn('magico') ? 8.5 : fxOn('mazza') ? 8 : 4.2; }
+
+// trascinamento per guardare (touch e mouse senza pointer lock)
+const drags = new Map();
+canvas.addEventListener('pointerdown', e => {
+  if (!S.playing || S.paused) return;
+  if (!TOUCH && locked){ tryPick(S.target); return; }
+  if (!TOUCH && !locked && e.button === 0){ tryLock(); }
+  drags.set(e.pointerId, { x:e.clientX, y:e.clientY, sx:e.clientX, sy:e.clientY, t:performance.now(), moved:0 });
+  try { canvas.setPointerCapture(e.pointerId); } catch(err){}
+});
+canvas.addEventListener('pointermove', e => {
+  const d = drags.get(e.pointerId); if (!d || locked) return;
+  const dx = e.clientX - d.x, dy = e.clientY - d.y; d.x = e.clientX; d.y = e.clientY; d.moved += Math.abs(dx) + Math.abs(dy);
+  look(dx, dy, TOUCH ? 0.0055 : 0.004);
+});
+function endDrag(e){
+  const d = drags.get(e.pointerId); if (!d) return; drags.delete(e.pointerId);
+  if (!locked && d.moved < 10 && performance.now() - d.t < 350 && S.playing && !S.paused) pickAtScreen(e.clientX, e.clientY);
+}
+canvas.addEventListener('pointerup', endDrag); canvas.addEventListener('pointercancel', e => drags.delete(e.pointerId));
+
+// joystick
+(function stick(){
+  const base = $('#stick'), knob = $('#knob'); let id = null, cx = 0, cy = 0;
+  base.addEventListener('pointerdown', e => { id = e.pointerId; const r = base.getBoundingClientRect(); cx = r.left + r.width / 2; cy = r.top + r.height / 2; base.setPointerCapture(id); upd(e); e.preventDefault(); });
+  base.addEventListener('pointermove', e => { if (e.pointerId === id) upd(e); });
+  const end = e => { if (e.pointerId !== id) return; id = null; move.x = move.y = 0; knob.style.transform = ''; };
+  base.addEventListener('pointerup', end); base.addEventListener('pointercancel', end);
+  function upd(e){
+    let dx = e.clientX - cx, dy = e.clientY - cy; const L = Math.hypot(dx, dy), M = 48;
+    if (L > M){ dx *= M / L; dy *= M / L; }
+    knob.style.transform = `translate(${dx}px,${dy}px)`; move.x = dx / M; move.y = -dy / M;
+  }
+})();
+$('#tPick').addEventListener('pointerdown', e => { e.preventDefault(); tryPick(S.target); });
+$('#tJump').addEventListener('pointerdown', e => { e.preventDefault(); doJump(); });
+
+/* bottoni */
+document.querySelectorAll('.mode').forEach(b => b.addEventListener('click', () => start(b.dataset.mode)));
+$('#bHerbMenu').onclick = () => openHerb('#oMenu');
+$('#bHerbPause').onclick = () => openHerb('#oPause');
+$('#bHerbEnd').onclick = () => openHerb('#oEnd');
+$('#bHerbClose').onclick = () => show(herbReturn);
+$('#bResume').onclick = resume;
+$('#bQuit').onclick = quit;
+$('#bEndWalk').onclick = () => { S.paused = false; endGame(); };
+$('#bAgain').onclick = () => start(S.mode);
+$('#bMenu').onclick = quit;
+$('#bPause').onclick = pause;
+$('#bMap').onclick = () => openMap('game');
+$('#bMapMenu').onclick = () => openMap('#oMenu');
+$('#bMapClose').onclick = closeMap;
+$('#xKeep').onclick = () => decideExam(true);
+$('#xLeave').onclick = () => decideExam(false);
+$('#bSound').onclick = () => { AUD.on = !AUD.on; if (AUD.master) AUD.master.gain.value = AUD.on ? 1 : 0; $('#bSound').style.opacity = AUD.on ? 1 : .45; $('#bSoundPause').textContent = AUD.on ? 'Audio sì' : 'Audio no'; };
+$('#bSoundPause').onclick = () => $('#bSound').click();
+if (TOUCH) $('#keysHelp').textContent = 'Joystick a sinistra per camminare · trascina per guardare · tocca un fungo o premi Raccogli';
+
+/* ================= collisioni ================= */
+function collide(o, rad){
+  for (const t of nearTrees(o.x, o.z)){
+    const dx = o.x - t.x, dz = o.z - t.z, d = Math.hypot(dx, dz), min = t.r + rad;
+    if (d < min && d > 1e-4){ o.x = t.x + dx / d * min; o.z = t.z + dz / d * min; }
+  }
+  o.x = clamp(o.x, -WORLD, WORLD); o.z = clamp(o.z, -WORLD, WORLD);
+  pushOutTown(o);
+}
+
+/* ================= loop ================= */
+let last = performance.now(), attract = 0;
+function frame(now){
+  const dt = Math.max(0, Math.min(0.05, (now - last) / 1000)); last = now;
+  if (S.playing && !S.paused) step(dt, now / 1000);
+  else if (!S.playing){
+    attract += dt; const AS = ROADS[0].samples, ai = (10 + Math.floor(attract * 1.1)) % (AS.length - 12), sa = AS[ai], sb = AS[Math.min(AS.length - 1, ai + 1)], fr = (attract * 1.1) % 1;
+    const ax = sa.x + (sb.x - sa.x) * fr, az = sa.z + (sb.z - sa.z) * fr;
+    camera.position.set(ax, H(ax, az) + 1.8, az);
+    camera.rotation.set(0.02, Math.atan2(-sa.tx, -sa.tz) + Math.sin(attract * 0.12) * 0.35, 0);
+  }
+  // spore attorno alla camera
+  for (let i = 0; i < SPN; i++){
+    let x = sporePos[i*3], y = sporePos[i*3+1], z = sporePos[i*3+2];
+    y += Math.sin(now * 0.0004 + i) * 0.002 + 0.001; x += Math.sin(now * 0.0003 + i * 2) * 0.003;
+    const cx = camera.position.x, cz = camera.position.z;
+    if (x - cx > 15) x -= 30; if (x - cx < -15) x += 30; if (z - cz > 15) z -= 30; if (z - cz < -15) z += 30;
+    const gy = H(x, z); if (y > gy + 7) y = gy + 0.2; if (y < gy) y = gy + 0.3;
+    sporePos[i*3] = x; sporePos[i*3+1] = y; sporePos[i*3+2] = z;
+  }
+  sporeGeo.attributes.position.needsUpdate = true;
+  renderView(S.playing ? S.K : null, now / 1000);
+  requestAnimationFrame(frame);
+}
+
+function step(dt, t){
+  // tempo
+  S.time += dt;
+  if (S.limit && S.time >= S.limit){ updateHud(); endGame(); return; }
+  const K = stepFx(dt, t), kv = K.visioni, kp = K.porcino, ka = K.muscaria, km = K.mazza; S.kv = kv; S.K = K;
+  const fe = faintE();
+
+  // movimento
+  let ix = (keys.KeyD || keys.ArrowRight ? 1 : 0) - (keys.KeyA || keys.ArrowLeft ? 1 : 0) + move.x;
+  let iy = (keys.KeyW || keys.ArrowUp ? 1 : 0) - (keys.KeyS || keys.ArrowDown ? 1 : 0) + move.y;
+  const il = Math.hypot(ix, iy); if (il > 1){ ix /= il; iy /= il; }
+  const run = keys.ShiftLeft || keys.ShiftRight || (TOUCH && Math.hypot(move.x, move.y) > 0.92);
+  let sp = run ? 7 : 4.2;
+  if (fxOn('magico')) sp *= 1.8;
+  sp *= (1 + 0.5 * kp) * (1 - 0.45 * ka);
+  if (fe >= 0 && fe < 2.6) sp *= 0.25;
+  if (kv > 0){ ix += Math.sin(t * 0.8) * 0.3 * kv; }
+  const sy = Math.sin(S.yaw), cy = Math.cos(S.yaw);
+  const o = { x: S.x + (-sy * iy + cy * ix) * sp * dt, z: S.z + (-cy * iy - sy * ix) * sp * dt };
+  collide(o, 0.4); S.x = o.x; S.z = o.z;
+  const moving = il > 0.1; if (moving) S.bob += dt * (run ? 11 : 7.5);
+  if (moving && S.jump === 0){ const si = Math.floor(S.bob / Math.PI); if (si !== S.lastStep){ S.lastStep = si; } }
+  // salto: più leggero col tamburo
+  const grav = km > 0 ? 7 : 14;
+  if (S.vy !== 0 || S.jump > 0){ S.vy -= grav * dt; S.jump += S.vy * dt; if (S.jump <= 0){ S.jump = 0; S.vy = 0; } }
+  // altezza degli occhi: gigante col porcino, piccolo come Alice con l'ovolaccio
+  const eyeT = 1.65 * (1 + 3.3 * kp) * (1 - 0.8 * ka);
+  S.eye += (eyeT - S.eye) * Math.min(1, dt * 3);
+  const gy = H(S.x, S.z), bobA = (km > 0 ? 0.1 : 0.04) * Math.min(1.5, S.eye / 1.65);
+  camera.position.set(S.x, gy + S.eye + S.jump + (moving ? Math.sin(S.bob) * bobA : 0) + 0.18 * km * (S.beat || 0), S.z);
+  camera.rotation.set(S.pitch + Math.sin(t * 0.7) * 0.05 * kv, S.yaw, Math.sin(t * 0.9) * 0.14 * kv + (fe >= 0 && fe < 2.6 ? Math.sin(t * 1.5) * 0.12 * (fe / 2.6) : 0));
+  const wantFov = (fxOn('magico') ? 82 : 70) + 20 * ka + Math.sin(t * 1.3) * 12 * kv;
+  if (Math.abs(camera.fov - wantFov) > 0.1){ camera.fov += (wantFov - camera.fov) * Math.min(1, dt * 4); camera.updateProjectionMatrix(); }
+  $('#needle').style.transform = `rotate(${S.yaw}rad)`;
+
+  // funghi
+  let nearest = 1e9;
+  for (let i = S.mush.length - 1; i >= 0; i--){
+    const m = S.mush[i];
+    if (m.pop){
+      m.pop += dt; const k = m.pop < 0.12 ? 1 + m.pop * 3 : Math.max(0, 1.36 - (m.pop - 0.12) * 6);
+      m.g.scale.setScalar(m.scale * k); m.g.position.y = m.y + m.pop * 1.2;
+      if (k <= 0){ scene.remove(m.g); S.mush.splice(i, 1); }
+      continue;
+    }
+    const dx = m.x - S.x, dz = m.z - S.z, d = Math.hypot(dx, dz);
+    m.g.visible = d < 45;
+    if (m.alive && !m.observed && m.sp && !m.ghost && d < nearest) nearest = d;
+    if (m.alive && (kv > 0 || m.breath)){ m.breath = kv > 0; m.g.scale.setScalar(m.scale * (1 + 0.35 * kv * Math.sin(t * 4 + m.hop))); m.g.rotation.y += dt * 1.2 * kv * (m.hop > 3 ? 1 : -1); }
+    if (m.id === 'visioni'){ m.g.position.y = m.y + Math.abs(Math.sin(t * 2 + m.hop)) * 0.04 * m.scale; }
+    if (m.id === 'magico'){ m.g.rotation.y += dt * 1.5; m.g.position.y = m.y + 0.15 + Math.sin(t * 3 + m.hop) * 0.12; }
+    if (m.flee && m.alive && d < 7.5){
+      const k = 3.1 * dt / Math.max(d, 0.01); const oo = { x: m.x + dx * k, z: m.z + dz * k }; collide(oo, 0.3);
+      m.x = oo.x; m.z = oo.z; m.hop += dt * 12; m.y = H(m.x, m.z);
+      m.g.position.set(m.x, m.y + Math.abs(Math.sin(m.hop)) * 0.35, m.z); m.g.rotation.y = Math.atan2(dx, dz);
+    }
+  }
+  if (S.mode === 'passeggiata') $('#hFiuto').style.width = Math.round(clamp(1 - nearest / 14, 0, 1) * 100) + '%';
+  if (MODES[S.mode].fx && !S.mush.some(m => m.alive && m.id === 'magico') && Math.random() < dt * 0.1){ const [x, z] = spot('trunk'); addMushroom('magico', x, z, MODES.effetti.scale * 1.1); }
+
+  // cinghiale
+  if (S.boar) stepBoar(S.boar, dt, t);
+  if (S.mode === 'competizione'){
+    if (!S.flushDone && S.time >= S.limit / 2) doFlush();
+    stepFlush(dt);
+    if (S.comboT > 0){ S.comboT -= dt; if (S.comboT <= 0){ S.comboT = 0; if (S.combo >= 2) toast('<b>Serie finita.</b> Trova un altro fungo entro 9 secondi per ripartire.', ''); S.combo = 0; } }
+    const mult = [1, 1, 1.2, 1.5, 2][Math.min(S.combo, 4)];
+    $('#cCombo').hidden = S.combo < 2; $('#hCombo').textContent = '×' + mult; $('#hComboBar').style.width = Math.round(S.comboT / 9 * 100) + '%';
+    S.radarT = (S.radarT || 0) - dt; if (S.radarT <= 0){ S.radarT = 0.1; drawRadar(t); }
+    const left = S.limit - S.time; if (left < 30){ const sec = Math.ceil(left); if (sec !== S.lastTick){ S.lastTick = sec; tone(sec <= 10 ? 1320 : 990, sec <= 10 ? 1320 : 990, .04, 'square', sec <= 10 ? .05 : .03); if (sec === 30) toast('<b>Ultimi 30 secondi!</b>', 'bad'); } }
+  }
+  if (S.rivals && S.rivals.length){ stepRivals(dt, t); S.rankT = (S.rankT || 0) - dt; if (S.rankT <= 0){ S.rankT = 0.5; renderRank(); } }
+
+  S.zt = (S.zt || 0) - dt; if (S.zt <= 0){ S.zt = 0.3; const zl = placeName(S.x, S.z); if (S.zl !== zl){ S.zl = zl; $('#hZone').textContent = '· ' + zl; } }
+  S.target = findTarget(); showTarget(S.target);
+  updateHud();
+}
+
+function stepBoar(b, dt, t){
+  const dx = S.x - b.x, dz = S.z - b.z, d = Math.hypot(dx, dz);
+  b.cool -= dt;
+  let tx, tz, speed;
+  if (b.state === 'flee'){ tx = b.x - dx; tz = b.z - dz; speed = 6; if (b.cool <= 0) b.state = 'wander'; }
+  else if (b.state === 'chase'){ tx = S.x; tz = S.z; speed = 5.4; if (d > 34) b.state = 'wander'; }
+  else {
+    if (Math.hypot(b.tx - b.x, b.tz - b.z) < 2 || Math.random() < dt * 0.1){ b.tx = clamp(b.x + rand(-20, 20), -WORLD, WORLD); b.tz = clamp(b.z + rand(-20, 20), -WORLD, WORLD); }
+    tx = b.tx; tz = b.tz; speed = 2.2;
+    if (d < 24 && b.cool <= 0){ b.state = 'chase'; SFX.grunt(); toast('<b>Il cinghiale ti ha fiutato!</b> Corri!', 'bad'); }
+  }
+  const vx = tx - b.x, vz = tz - b.z, vl = Math.hypot(vx, vz) || 1;
+  const o = { x: b.x + vx / vl * speed * dt, z: b.z + vz / vl * speed * dt }; collide(o, 0.6); b.x = o.x; b.z = o.z;
+  b.g.position.set(b.x, H(b.x, b.z), b.z);
+  const want = Math.atan2(vx, vz); let da = want - b.g.rotation.y; da = Math.atan2(Math.sin(da), Math.cos(da)); b.g.rotation.y += da * Math.min(1, dt * 8);
+  const sw = Math.sin(t * speed * 3.2) * 0.6 * Math.min(1, speed / 3);
+  b.g.userData.legs.forEach((l, i) => l.rotation.x = (i % 3 === 0 ? sw : -sw));
+  if (b.state === 'chase' && d < 1.5){
+    const stolen = S.basket.splice(-3, 3);
+    const lost = stolen.reduce((a, s) => a + s.pts, 0); S.score -= lost;
+    SFX.grunt();
+    toast(stolen.length ? `<b>Il cinghiale ti ha rubato ${stolen.length} funghi!</b> −${Math.max(0, lost)} punti` : '<b>Il cinghiale ti ha travolto!</b> Per fortuna il cestino era vuoto.', 'bad');
+    const push = { x: S.x + dx / (d || 1) * 3, z: S.z + dz / (d || 1) * 3 }; collide(push, 0.4); S.x = push.x; S.z = push.z; S.vy = 5;
+    b.state = 'flee'; b.cool = 8; renderBasket(); updateHud();
+  }
+}
+
+requestAnimationFrame(frame);
+window.__funghi = { S, start, SP, tryPick, stepRivals };
+
+/* ============ GRAND TUSCIA ADVENTURE: la presa (engine/tg-ponte.js) ============
+   Aperto dal mondo: "Torna al trattore" nel menu, uscite in pausa e nei risultati.
+   Con ?missione=1: 2 minuti contro i fungaioli, poi punti e medaglia (dal piazzamento) tornano al trattore. */
+(function () {
+  const PONTE = window.TGPonte ? TGPonte.init('funghi') : null;
+  if (!PONTE || !PONTE.attivo) return;
+  // 1. menu
+  const row = $('#bMapMenu').parentNode; row.insertBefore(PONTE.bottone({ classe: 'btn', id: 'bBackWorldMenu' }), row.firstChild);
+  // 2. pausa e risultati
+  PONTE.rinomina($('#bQuit')); $('#bQuit').parentNode.appendChild(PONTE.bottone({ classe: 'btn', testo: 'Esci dal gioco', id: 'bBackWorldPause' }));
+  PONTE.rinomina($('#bMenu')); $('#bMenu').parentNode.appendChild(PONTE.bottone({ classe: 'btn', id: 'bBackWorld' }));
+  // 3. missione
+  if (!PONTE.missione) return;
+  const MED = ['oro', 'argento', 'bronzo'];
+  let misAgain = true;
+  $('#bAgain').addEventListener('click', e => { if (!misAgain || PONTE.finita) return; e.stopImmediatePropagation(); startMis(); }, true);
+  const startMis = () => {
+    start('competizione'); S.limit = 120; updateHud();
+    $('#toasts').innerHTML = '';
+    toast('<b>Missione: sfida ai fungaioli!</b> Due minuti contro Sor Checco, la Peppa e Nando. Primo posto oro, secondo argento, terzo bronzo.', 'gold');
+  };
+  $('#oMenu').hidden = true;
+  setTimeout(startMis, 0);
+  const endOrig = endGame;
+  endGame = function () {
+    const live = !PONTE.finita && S.mode === 'competizione', pos = live ? ranking().findIndex(p => p.me) + 1 : 0, med = MED[pos - 1] || '';
+    const best0 = saved.best.competizione;
+    endOrig();
+    const back = $('#bBackWorld');
+    if (!live) { back.className = 'btn'; back.onclick = () => PONTE.torna(null); $('#bAgain').textContent = 'Gioca ancora'; return; }
+    // la missione da 2 minuti non tocca il record della gara da 5
+    if (best0 === undefined) delete saved.best.competizione; else saved.best.competizione = best0; persist();
+    $('#eLine').textContent = $('#eLine').textContent.replace(/ (Nuovo record personale!|Il tuo record: \d+\.)$/, '') + ' Il punteggio torna al trattore e vale per i punti Tuscia.';
+    const res = S.score > 0 ? { ok: true, t: S.score, med } : { ok: false, msg: 'Due minuti e il cestino è rimasto vuoto: i fungaioli del Cimino ti hanno fregato.' };
+    $('#eMode').textContent = `Missione · ${pos}° posto` + (med ? ` · medaglia d'${med}` : '');
+    back.className = 'btn primary'; back.innerHTML = PONTE.icona + 'Torna al trattore'; back.onclick = () => PONTE.torna(res);
+    back.parentNode.insertBefore(back, back.parentNode.firstChild);
+    $('#bAgain').className = 'btn'; $('#bAgain').textContent = 'Riprova la missione';
+    $('#bMenu').textContent = 'Gioco completo';
+  };
+  const chiudi = () => { PONTE.chiudiMissione(); misAgain = false; $('#bAgain').textContent = 'Gioca ancora'; $('#bAgain').className = 'btn primary'; };
+  $('#bMenu').addEventListener('click', chiudi); $('#bQuit').addEventListener('click', chiudi);
+  window.__funghiMis = { S, end: () => endGame(), MIS: PONTE }; // per i test
+})();
+})();
+</script>
+
+</body></html>

@@ -1,0 +1,52 @@
+/* ==========================================================================
+   TUSCIA GAMES · design system comune
+   Colori presi dal territorio: peperino (grigio vulcanico), tufo giallo,
+   acqua del lago, rosso trattore, verde faggeta, nocciola.
+   Tipografia: Archivo espanso per i titoli (targhe e cartelli stradali),
+   Figtree per i testi, Martian Mono per i numeri degli strumenti.
+   Ogni gioco usa questi token e può cambiare solo --tg-accent.
+   ========================================================================== */
+:root{
+  color-scheme: dark;
+  --tg-peperino:#17201f;      /* fondo pannelli: pietra vulcanica */
+  --tg-peperino-2:#232d2b;
+  --tg-glass:rgba(20,28,27,.72);
+  --tg-glass-strong:rgba(20,28,27,.9);
+  --tg-line:rgba(240,228,203,.16);
+  --tg-line-strong:rgba(240,228,203,.34);
+  --tg-carta:#f3e7cb;         /* testo chiaro, carta al sole */
+  --tg-muted:#b8b19e;
+  --tg-tufo:#e2b765;          /* tufo giallo: evidenza, scoperte */
+  --tg-lago:#3f8f98;
+  --tg-rosso:#d8432a;         /* rosso trattore: azione principale */
+  --tg-rosso-scuro:#8f2616;
+  --tg-faggio:#8cbf52;        /* verde faggeta: stato buono */
+  --tg-nocciola:#9a6433;
+  --tg-bad:#ff6a55;
+  --tg-accent:var(--tg-rosso);
+
+  /* categorie del Codex */
+  --tg-cat-luoghi:#e2b765;
+  --tg-cat-natura:#8cbf52;
+  --tg-cat-storia:#d98c5f;
+  --tg-cat-tradizioni:#e06f9a;
+  --tg-cat-attivita:#5fb7c4;
+
+  --tg-display:"Archivo","Arial Narrow","Helvetica Neue",Arial,sans-serif;
+  --tg-body:"Figtree","Segoe UI",system-ui,-apple-system,sans-serif;
+  --tg-mono:"Martian Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+
+  --tg-r:14px;
+  --tg-r-sm:9px;
+}
+.tg-display{font-family:var(--tg-display);font-stretch:125%;font-weight:800;letter-spacing:-.01em;text-transform:uppercase;line-height:.92}
+.tg-eyebrow{font-family:var(--tg-body);font-weight:800;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--tg-tufo)}
+.tg-label{font-family:var(--tg-body);font-weight:700;font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--tg-muted)}
+.tg-num{font-family:var(--tg-mono);font-variant-numeric:tabular-nums}
+.tg-glass{background:var(--tg-glass);border:1px solid var(--tg-line);border-radius:var(--tg-r);backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px)}
+.tg-btn{font-family:var(--tg-display);font-stretch:112%;font-weight:800;text-transform:uppercase;letter-spacing:.03em;border:0;border-radius:12px;cursor:pointer;color:#fff;background:var(--tg-accent);box-shadow:0 5px 0 var(--tg-rosso-scuro);padding:13px 20px}
+.tg-btn:active{transform:translateY(3px);box-shadow:0 2px 0 var(--tg-rosso-scuro)}
+.tg-btn.ghost{background:transparent;color:var(--tg-carta);box-shadow:none;border:1px solid var(--tg-line-strong)}
+.tg-chip{display:inline-flex;align-items:center;gap:6px;font-family:var(--tg-body);font-weight:800;font-size:11px;letter-spacing:.08em;text-transform:uppercase;padding:3px 9px;border-radius:99px;border:1px solid currentColor}
+button:focus-visible,a:focus-visible{outline:3px solid var(--tg-tufo);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
