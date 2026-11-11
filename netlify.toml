@@ -1,0 +1,4 @@
+# Deploy automatico da GitHub: nessun build, si pubblica la cartella così com'è.
+[build]
+  publish = "."
+  command = ""
