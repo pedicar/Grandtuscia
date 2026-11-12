@@ -29,3 +29,25 @@ function patch(){
 }
 patch();
 })();
+
+/* CALMA ALLA RADIO — all'inizio la voce diceva tutto di fila (benvenuto, prima nocchia, l'Ape, due ruote, la curva,
+   il podere, la sfida dei comuni, la notizia del Trono…): sei annunci in due minuti. Qui gli annunci «al volo»
+   passano da un filtro: almeno 25 s di silenzio tra uno e l'altro, nei primi tre minuti di gioco massimo tre,
+   e se ne arrivano tanti insieme resta solo l'ultimo (quelli vecchi parlano di cose già passate). */
+(function(){
+  const R = window.RadioNocchia; if (!R || !R.annuncia || R.annuncia._calma) return;
+  const orig = R.annuncia.bind(R);
+  const GAP = 25000, PRIMI_MIN = 180000, MAX_PRIMI = 3;
+  let ultimo = 0, detti = 0, t0 = 0, inAttesa = null, timer = null;
+  const inizio = () => { if (!t0 && document.body.classList.contains('playing')) t0 = Date.now(); return t0; };
+  function prova(){
+    timer = null; if (!inAttesa) return;
+    const now = Date.now(), dall = now - ultimo;
+    if (dall < GAP) { timer = setTimeout(prova, GAP - dall); return; }
+    if (inizio() && now - t0 < PRIMI_MIN && detti >= MAX_PRIMI) { timer = setTimeout(prova, PRIMI_MIN - (now - t0)); return; }
+    const a = inAttesa; inAttesa = null; ultimo = now; detti++; orig(a);
+  }
+  const calma = function(a){ if (!a) return; inizio(); inAttesa = a; if (!timer) prova(); };
+  calma._calma = 1; R.annuncia = calma;
+  new MutationObserver(inizio).observe(document.body, { attributes: true, attributeFilter: ['class'] });
+})();
