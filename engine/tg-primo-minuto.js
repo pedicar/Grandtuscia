@@ -82,7 +82,7 @@ async function chiediPaese(){
   const ord = comuni.slice().sort((a, b) => rank(a) - rank(b) || a.nome.localeCompare(b.nome, 'it'));
   const primi = ord.slice(0, 6), fuori = ord.find(c => c.id === 'fuori');
   o.innerHTML = `<div class="pmBox"><div class="pmEye">TRONO DE NOCCHIE · SFIDA DEI COMUNI</div><h2>De 'ndo sei?</h2>
-  <p>Ogni nocchia che raccoi è 'n punto pe' o paese tuo. Scegli o comune: a classifica è pubblica.</p>
+  <p>${(CAMP && FRASI_ARRIVO[CAMP]) || "Ogni nocchia che raccoi è 'n punto pe' o paese tuo. Scegli o comune: a classifica è pubblica."}</p>
   <div class="pmGrid">${primi.map(c => `<button data-p="${c.id}">${c.nome}</button>`).join('')}</div>
   <input class="pmCerca" id="pmCerca" type="search" autocomplete="off" autocorrect="off" spellcheck="false" placeholder="Scrivi o paese tuo (so' ${comuni.length - (fuori ? 1 : 0)} comuni de a Tuscia)…" aria-label="Cerca il tuo comune">
   <div class="pmTrovati" id="pmTrovati" hidden></div>
@@ -114,6 +114,8 @@ async function impostaPaese(p){
 /* ---------- il post da cui si arriva parla nel menu ---------- */
 const CAMP = (() => { try { return new URLSearchParams(window.__tgQ != null ? window.__tgQ : location.search).get('utm_campaign') || ''; } catch(e){ return ''; } })();
 const FRASI_ARRIVO = {
+  classifica: "Hai visto a classifica de stasera. O paese tuo sale solo si giochi: scegli o comune e raccoi.",
+  nocchia: "A nocchia d'oro de oggi sta nascosta ne o mondo: vale 10 pe' o paese tuo. Scegli o comune e vai a cercalla.",
   derby: "O paese tuo sta sotto in classifica. Rimedia: scegli o comune, raccoi, e i punti so' suoi.",
   calendario: "'Na frase a o giorno, 'na nocchia a o giorno. Oggi tocca a te: raccoi pe' o paese tuo.",
   abbecedario: "Qui Radio Nocchia parla caprolatto davero. Entra, accendila, e intanto raccoi pe' Caprarola.",
@@ -122,8 +124,15 @@ const FRASI_ARRIVO = {
   primo_minuto: "Qualcuno de o paese tuo ha raccolto 10 nocchie in 'n minuto. Battilo.",
   condivisione: "T'hanno mandato qui pe' 'n motivo: o paese vostro c'ha bisogno de punti. 'N minuto e sei in classifica."
 };
+function autoPlay(){
+  // chi arriva da un post non deve premere niente: il menu si salta (il 10/11: 44 dispositivi, 29 arrivati a «Gioca subito»)
+  const menu = $('menu'), b = $('bPlay'); if (!menu || !b) return;
+  if (PM.paese) return;  // chi ha già il paese vede il menu: il tocco su «Gioca subito» serve al browser per far partire l'audio
+  const via = () => { if (menu.hidden || b.dataset.auto) return; b.dataset.auto = '1'; ev('auto_play', CAMP); setTimeout(() => b.click(), 500); };
+  if (!menu.hidden) via(); else new MutationObserver((m, o) => { if (!menu.hidden) { via(); o.disconnect(); } }).observe(menu, { attributes: true, attributeFilter: ['hidden'] });
+}
 function benvenuto(){
-  if (!CAMP) return; ev('arrivo', CAMP);
+  if (!CAMP) return; ev('arrivo', CAMP); autoPlay();
   const f = FRASI_ARRIVO[CAMP]; if (!f) return;
   const el = document.querySelector('#menu .intro'); if (el) { el.textContent = f; el.classList.add('pmBenv'); }
 }
@@ -154,11 +163,12 @@ function rientro(){
   let u = null; try { u = JSON.parse(localStorage.getItem(K_ULTIMO) || 'null'); } catch(e){}
   if (!u || !PM.paese || u.paese !== PM.paese || u.g === oggiStr()) return;
   PM.rientro = u;
-  if (CAMP) return;  // chi arriva da un post ha già la sua frase
-  const el = document.querySelector('#menu .intro'); if (!el) return;
   const nome = nomeComune(PM.paese);
-  el.textContent = !u.pos ? `${nome} nun è ancora in classifica: oggi ce lo metti tu.` : u.pos === 1 ? `Ieri sera ${nome} ha chiuso 1ª co' ${u.punti} nocchie. Oggi se difende.` : `Ieri sera ${nome} ha chiuso ${u.pos}ª, a ${u.gap} nocchie da ${u.sopra}. Oggi se recupera.`;
-  el.classList.add('pmBenv'); ev('rientro', PM.paese, u.pos);
+  const frase = !u.pos ? `${nome} nun è ancora in classifica: oggi ce lo metti tu.` : u.pos === 1 ? `Ieri sera ${nome} ha chiuso 1ª co' ${u.punti} nocchie. Oggi se difende.` : `Ieri sera ${nome} ha chiuso ${u.pos}ª, a ${u.gap} nocchie da ${u.sopra}. Oggi se recupera.`;
+  ev('rientro', PM.paese, u.pos);
+  const el = document.querySelector('#menu .intro');
+  if (CAMP || !el) { PM.fraseRientro = frase; return; }  // il menu si salta: la frase arriva in gioco
+  el.textContent = frase; el.classList.add('pmBenv');
 }
 
 /* ---------- pulsante Gioca: prima il paese ---------- */
@@ -254,6 +264,7 @@ async function fine(n){
 /* ---------- quando parte la partita ---------- */
 function avvioPartita(){
   if (!ls.get(K_APE)) regalaApe();
+  if (PM.fraseRientro) setTimeout(() => { try { TG.msg(PM.fraseRientro, '', 6); } catch(e){} }, 6000);
   ultimoCarico = carico(); setInterval(tickPunti, 2000);
   aggiornaRiga(); setInterval(aggiornaRiga, 120000);
   setTimeout(avvia, 1500);
