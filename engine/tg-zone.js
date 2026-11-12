@@ -59,7 +59,7 @@ async function rpc(nome, body){
   const r = await fetch(cfg.url.replace(/\/$/, '') + '/rest/v1/rpc/' + nome, { method: 'POST', headers: { 'Content-Type': 'application/json', apikey: cfg.key, Authorization: 'Bearer ' + cfg.key }, body: JSON.stringify(body || {}) });
   if (!r.ok) throw new Error('HTTP ' + r.status); return r.json();
 }
-let padroni = {}, locali = {}, cella = null, daMandare = {}, secondi = 0, ultimoInvio = 0, versione = 0;
+let padroni = {}, locali = {}, caricato = false, cella = null, daMandare = {}, secondi = 0, ultimoInvio = 0, versione = 0;
 // punti di un paese in una cella: quelli del server + quelli miei accettati da allora (così il colore cambia subito)
 function punti(id, p){ const l = padroni[id] || []; const r = l.find(x => x.paese === p); return (r ? r.punti : 0) + ((locali[id] || {})[p] || 0); }
 function padrone(id){
@@ -68,7 +68,7 @@ function padrone(id){
   return best ? best.paese : null;
 }
 const padronePunti = id => { const p = padrone(id); return p ? punti(id, p) : 0; };
-async function aggiornaPadroni(){ try { const n = await rpc('tg_zone'); if (n && typeof n === 'object') { padroni = n; locali = {}; versione++; } } catch(e){} }
+async function aggiornaPadroni(){ try { const n = await rpc('tg_zone'); if (n && typeof n === 'object') { padroni = n; locali = {}; versione++; } } catch(e){} caricato = true; }
 function accumula(c, n){ if (!c || !conPaese() || !n) return; daMandare[c.id] = (daMandare[c.id] || 0) + n; }
 async function invia(forza){
   const p = conPaese(), d = dev(); if (!p || !d) return;
@@ -120,11 +120,12 @@ function ui(){
 #znBar{position:fixed;z-index:30;right:10px;top:calc(264px + env(safe-area-inset-top,0px));width:min(178px,48vw);padding:5px 8px 6px;border-radius:12px;border:1px solid rgba(255,255,255,.25);background:rgba(16,22,21,.82);color:#f3e7cb;font:700 10.5px Figtree,"Segoe UI",system-ui,sans-serif;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
 #znBar .t{display:flex;justify-content:space-between;gap:6px;white-space:nowrap;overflow:hidden}#znBar .t b{color:#f2c74e}
 #znBar .b{height:5px;border-radius:3px;background:rgba(255,255,255,.14);margin:4px 0 3px;overflow:hidden}#znBar .b i{display:block;height:100%;background:#f2c74e;width:0;transition:width .4s}
-#znBar .m{color:#c9bfa8;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#znBar button{all:unset;cursor:pointer;display:block;width:100%;text-align:center;padding:4px 0;margin-top:4px;border-radius:8px;background:#d8432a;color:#fff;font:800 10.5px Figtree,system-ui,sans-serif}
+#znBar .m{color:#c9bfa8;font-weight:600;line-height:1.3}#znBar .m b{color:#f3e7cb}#znBar button{all:unset;cursor:pointer;display:block;width:100%;text-align:center;padding:4px 0;margin-top:4px;border-radius:8px;background:#d8432a;color:#fff;font:800 10.5px Figtree,system-ui,sans-serif}
 body:has(#mapOv:not([hidden])) #znChip,body:has(#pmOv:not([hidden])) #znChip,body:has(#lvOv:not([hidden])) #znChip,body:has(#rtOv:not([hidden])) #znChip,body:has(#znOv:not([hidden])) #znChip,body:not(.playing) #znChip{display:none!important}
 body:has(#mapOv:not([hidden])) #znBar,body:has(#pmOv:not([hidden])) #znBar,body:has(#lvOv:not([hidden])) #znBar,body:has(#rtOv:not([hidden])) #znBar,body:has(#znOv:not([hidden])) #znBar,body:not(.playing) #znBar{display:none!important}
 body:not(.touch) #znChip{top:calc(170px + env(safe-area-inset-top,0px))}body:not(.touch) #znBar{top:calc(202px + env(safe-area-inset-top,0px))}
-#znMini{position:fixed;pointer-events:none;border-radius:50%;z-index:11}`;
+#znMini{position:fixed;pointer-events:none;border-radius:50%;z-index:11}
+body:not(.playing) #znHow,body:has(#mapOv:not([hidden])) #znHow,body:has(#lvOv:not([hidden])) #znHow,body:has(#rtOv:not([hidden])) #znHow{display:none!important}`;
   document.head.appendChild(st);
   chip = document.createElement('button'); chip.type = 'button'; chip.id = 'znChip'; chip.onclick = () => aggiornaPadroni().then(pannello); document.body.appendChild(chip);
   barra = document.createElement('div'); barra.id = 'znBar'; barra.style.display = 'none';
@@ -149,7 +150,19 @@ function aggiornaBarra(){
   barra.style.display = 'block';
   $('znMio').innerHTML = `<b>${corto(p)}</b> ${mio}`; $('znLoro').textContent = pad ? `${corto(pad)} ${loro}` : 'nessuno 0';
   $('znFill').style.width = (loro ? Math.min(100, mio / (loro + 1) * 100) : Math.min(100, mio * 100)) + '%';
-  $('znManca').textContent = pad ? `Ne mancano ${manca} · qui vale doppio` : 'Terra de nessuno: è de chi arriva';
+  $('znManca').innerHTML = pad ? `Ne mancano <b>${manca}</b><br>Gira qui: +1 fra ${20 - secondi} s · nocchie ×2` : `Terra de nessuno<br>Gira qui: +1 fra ${20 - secondi} s · o raccogli`;
+  if (pad !== p) spiega(pad);
+}
+// la prima volta in terra altrui (o libera): come si ruba, in tre righe
+let how = null;
+function spiega(pad){
+  if (!caricato || ls.get('tg-zone-spiegato') || !conPaese()) return; ls.set('tg-zone-spiegato', '1');
+  how = document.createElement('div'); how.id = 'znHow';
+  how.setAttribute('style', 'position:fixed;left:50%;bottom:calc(140px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:31;width:min(340px,92vw);padding:12px 14px;border-radius:16px;background:rgba(16,22,21,.92);border:1px solid #f2c74e;color:#f3e7cb;font:600 13px/1.35 Figtree,"Segoe UI",system-ui,sans-serif;backdrop-filter:blur(4px)');
+  how.innerHTML = `<b style="color:#f2c74e;font-size:15px">⚔ Come se ruba 'na terra</b><br>1. <b>Gira qui dentro</b>: ogni 20 secondi +1 pe' ${nomeP(conPaese())}.<br>2. <b>Raccogli nocchie qui</b>: in casa d'altri valgono doppio.<br>3. Quando superi i punti de ${pad ? nomeP(pad) : 'chi ce sta'}, a terra cambia colore: è vostra.<br><span style="color:#c9bfa8">A barra qui sopra te dice quanto manca. Da solo è lunga: 📣 chiama 'n amico.</span><div style="text-align:right;margin-top:6px"><button type="button" style="all:unset;cursor:pointer;padding:6px 14px;border-radius:9px;background:#f2c74e;color:#17201f;font-weight:800">Ho capito</button></div>`;
+  how.querySelector('button').onclick = () => { how.remove(); how = null; };
+  document.body.appendChild(how); setTimeout(() => { if (how) { how.remove(); how = null; } }, 25000);
+  ev('zone_spiegate', pad || 'nessuno');
 }
 async function chiamaAmico(){
   const p = conPaese(); if (!p || !cella) return;
@@ -207,7 +220,7 @@ function pannello(){
     const det = Object.entries(conta).sort((a, b) => b[1] - a[1]).map(([q, n]) => `${nomeP(q)} ${n}`).join(' · ') || 'terra de nessuno';
     return { k, pad, d, det }; }).sort((a, b) => a.d - b.d);
   pan.innerHTML = `<div class="znCard"><div class="znHead"><h2>⚔ A guerra de e nocchie</h2><button class="znX" aria-label="Chiudi">×</button></div>
-  <p class="znSub">Ogni cella è de o comune che c'ha fatto più punti negli ultimi 7 giorni. Vacce, resta, raccoi: in casa d'altri vale doppio. Una cella so' ${ETTARI} ettari.</p>
+  <p class="znSub"><b>Come se ruba:</b> vai in una cella, <b>gira</b> (+1 ogni 20 s) e <b>raccogli nocchie</b> lì (in casa d'altri valgono doppio). Chi ha più punti negli ultimi 7 giorni la tiene. Una cella so' ${ETTARI} ettari.</p>
   ${svg}<div class="znLeg">${leg}</div>
   <div class="znList">${righe.map(r => `<div class="znRow" data-z="${r.k.id}"><i style="background:${colore(r.pad)}"></i><div><b>${r.k.nome}</b><small>${r.det}</small></div><em>${r.d < 950 ? Math.round(r.d / 10) * 10 + ' m' : (r.d / 1000).toFixed(1).replace('.', ',') + ' km'}</em></div>`).join('')}</div></div>`;
   pan.querySelector('.znX').onclick = () => { pan.hidden = true; };
