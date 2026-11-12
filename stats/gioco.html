@@ -64,6 +64,7 @@ td small{display:block;color:var(--tg-muted);font-family:var(--tg-body);font-siz
   <p class="sub"><a href="./" style="color:var(--tg-tufo)">← Torna al pannello pubblicità</a></p>
   <section class="kpis" id="kpis"></section>
   <section class="card"><h2>Giocatori al giorno</h2><div id="chart"></div></section>
+  <section class="card"><h2>Trono de e Nocchie</h2><p class="help">I numeri del Trono nel periodo: il primo minuto, i paesi, la nocchia d'oro, il lavoro del giorno, i ritorni, le sfide, i record, da quali post si arriva. Persone = dispositivi diversi.</p><div class="tw" id="trono"></div></section>
   <section class="card"><h2>Dentro i giochi</h2><p class="help">Partite: ogni volta che un gioco viene aperto. Dal mondo / diretti: arrivati dal trattore (o dalla missione) oppure dal link del gioco. Minuti: tempo con il gioco davanti agli occhi. Tornati: usciti verso il mondo. Modalità: quelle scelte, con i minuti passati in ciascuna.</p><div class="tw" id="dentro"></div></section>
   <section class="card"><h2>Luoghi</h2><p class="help">Visto: era sullo schermo entro 800 m. Raggiunto: ci è passato vicino. Scheda: ha aperto "Scopri di più". Dal vero: ha cliccato "Come arrivarci". Radio: il conduttore ne ha parlato mentre era lì vicino. I numeri sono persone diverse.</p><div class="tw" id="luoghi"></div></section>
   <section class="card"><h2>Annunci della radio</h2><p class="help">Inviato: il mondo ha passato la frase alla radio. Detto: il conduttore l'ha detta. Fino in fondo: la radio era ancora accesa alla fine. Interrotto: radio spenta mentre parlava.</p><div class="tw" id="annunci"></div></section>
@@ -141,6 +142,33 @@ function mostra(D) {
     ['Da telefono', pct(D.telefono, D.giocatori)], ['Luoghi scoperti', fmt(Object.values(I.luogo_scoperto || {}).reduce((t, e) => t + +e.n, 0))],
     ['Clic "dal vero"', fmt(Object.values(I.come_arrivarci || {}).reduce((t, e) => t + +e.n, 0))],
   ].map(([l, v]) => `<div><b>${v}</b><span>${l}</span></div>`).join('');
+
+  // Trono de e Nocchie
+  (function(){
+    const n = (t, c) => { const e = I[t] && I[t][c]; return e ? +e.n : 0; }, pers = (t, c) => { const e = I[t] && I[t][c]; return e ? +e.persone : 0; };
+    const somma = (t, f) => Object.entries(I[t] || {}).filter(([k]) => !f || f(k)).reduce((a, [, e]) => a + +e.n, 0);
+    const persTot = (t, f) => Object.entries(I[t] || {}).filter(([k]) => !f || f(k)).reduce((a, [, e]) => a + +e.persone, 0);
+    const lista = (t, f) => Object.entries(I[t] || {}).filter(([k]) => !f || f(k)).sort((x, y) => y[1].persone - x[1].persone).map(([k, e]) => `${k || '·'} ${e.persone}`).join(' · ') || '·';
+    const righe = [
+      ['Primo minuto iniziato', pers('primo_minuto', 'inizio'), 'riusciti ' + n('primo_minuto', 'riuscito') + ' · a tempo scaduto ' + n('primo_minuto', 'tempo')],
+      ['Paese scelto', persTot('paese'), lista('paese')],
+      ['«Altro comune…» premuto', n('clic', 'mondo|Altro comune…'), 'deve andare a zero con il selettore nuovo'],
+      ['Comune cercato (scrivendo)', n('paese_cercato', ''), lista('paese_cercato')],
+      ['Nocchia d\'oro: indizio aperto', pers('nocchia_giorno', 'indizio'), 'freccia ' + n('nocchia_giorno', 'mappa')],
+      ['Nocchia d\'oro trovata', somma('nocchia_giorno', k => k !== 'indizio' && k !== 'mappa'), lista('nocchia_giorno', k => k !== 'indizio' && k !== 'mappa')],
+      ['Lavoro del giorno', n('lavoro', 'proposto'), 'accettato ' + n('lavoro', 'accettato') + ' · portato al gioco ' + n('lavoro', 'portato') + ' · fatto ' + n('lavoro', 'fatto') + ' · rimandato ' + n('lavoro', 'rimandato')],
+      ['Serie di giorni (aperture)', pers('serie', 'giorno'), 'Vespa a 3 giorni: ' + n('serie', 'vespa') + ' · trattore a 7: ' + n('serie', 'trattore')],
+      ['Card «Torna domani»', n('torna_domani', 'vista'), 'Ricordamelo ' + somma('ricordamelo') + ' · sfide mandate ' + n('condividi', 'sfida') + ' · sfide vinte ' + n('sfida', 'vinta')],
+      ['Record del primo minuto', somma('record'), '«Salva co\' a mail» da record ' + n('iscrizione_da', 'record')],
+      ['Rientro (frase «ieri sera…»)', somma('rientro'), lista('rientro')],
+      ['Ribaltamenti', somma('cappotta'), lista('cappotta')],
+      ['Zoom raddrizzati (telefono)', somma('zoom_raddrizzato'), ''],
+      ['Mappa: scorciatoie', somma('mappa_rapida'), lista('mappa_rapida') + ' · lista Luoghi aperta ' + n('mappa_luoghi', '')],
+      ['Arrivi dai post', persTot('arrivo'), lista('arrivo')],
+      ['Menu saltato (da un post)', somma('auto_play'), lista('auto_play')],
+    ];
+    tabella($('trono'), ['Cosa', 'Persone / volte', 'Dettaglio'], righe.map((r, i) => [c(String(99 - i).padStart(2, '0') + ' ' + r[0], esc(r[0])), num(r[1]), c(r[2])]), 0);
+  })();
 
   // grafico giornaliero
   const G = D.giorni || [];
