@@ -113,33 +113,36 @@ function annuncia(z, prima){
   ev('zona_entrata', z.id, null, { padrone: pad });
 }
 
-/* ---------- chip + barra di conquista ---------- */
+/* ---------- chip + barra di conquista: un blocco solo, agganciato sotto la minimappa (non in mezzo alla visuale) ---------- */
 let chip = null, barra = null;
 function ui(){
   if (chip) return;
   const st = document.createElement('style'); st.textContent = `
-#znChip{position:fixed;z-index:30;right:10px;top:calc(232px + env(safe-area-inset-top,0px));max-width:46vw;padding:5px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.35);background:rgba(16,22,21,.82);color:#f3e7cb;font:800 12px Figtree,"Segoe UI",system-ui,sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
-#znBar{position:fixed;z-index:30;right:10px;top:calc(264px + env(safe-area-inset-top,0px));width:min(178px,48vw);padding:5px 8px 6px;border-radius:12px;border:1px solid rgba(255,255,255,.25);background:rgba(16,22,21,.82);color:#f3e7cb;font:700 10.5px Figtree,"Segoe UI",system-ui,sans-serif;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
-#znBar .t{display:flex;justify-content:space-between;gap:6px;white-space:nowrap;overflow:hidden}#znBar .t b{color:#f2c74e}
-#znBar .b{height:5px;border-radius:3px;background:rgba(255,255,255,.14);margin:4px 0 3px;overflow:hidden}#znBar .b i{display:block;height:100%;background:#f2c74e;width:0;transition:width .4s}
-#znBar .m{color:#c9bfa8;font-weight:600;line-height:1.3}#znBar .m b{color:#f3e7cb}#znBar button{all:unset;cursor:pointer;display:block;width:100%;text-align:center;padding:4px 0;margin-top:4px;border-radius:8px;background:#d8432a;color:#fff;font:800 10.5px Figtree,system-ui,sans-serif}
+#znChip{position:fixed;z-index:30;right:10px;width:min(172px,46vw);padding:4px 8px;border-radius:12px;border:1px solid rgba(255,255,255,.3);background:rgba(16,22,21,.8);color:#f3e7cb;font:800 11px/1.25 Figtree,"Segoe UI",system-ui,sans-serif;cursor:pointer;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);text-align:left}
+#znChip .c{display:flex;align-items:center;gap:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#znChip .c i{flex:none;width:8px;height:8px;border-radius:50%}
+#znBar{display:none;margin-top:3px;font-weight:600;color:#c9bfa8}#znBar .t{display:flex;justify-content:space-between;gap:6px;white-space:nowrap;overflow:hidden;color:#f3e7cb}#znBar .t b{color:#f2c74e}
+#znBar .b{height:4px;border-radius:2px;background:rgba(255,255,255,.14);margin:3px 0;overflow:hidden}#znBar .b i{display:block;height:100%;background:#f2c74e;width:0;transition:width .4s}
+#znBar .m{display:flex;justify-content:space-between;align-items:center;gap:4px;white-space:nowrap;overflow:hidden}#znBar .m b{color:#f3e7cb}
+#znBar button{all:unset;cursor:pointer;flex:none;padding:2px 7px;border-radius:7px;background:#d8432a;color:#fff;font:800 11px Figtree,system-ui,sans-serif}
 body:has(#mapOv:not([hidden])) #znChip,body:has(#pmOv:not([hidden])) #znChip,body:has(#lvOv:not([hidden])) #znChip,body:has(#rtOv:not([hidden])) #znChip,body:has(#znOv:not([hidden])) #znChip,body:not(.playing) #znChip{display:none!important}
-body:has(#mapOv:not([hidden])) #znBar,body:has(#pmOv:not([hidden])) #znBar,body:has(#lvOv:not([hidden])) #znBar,body:has(#rtOv:not([hidden])) #znBar,body:has(#znOv:not([hidden])) #znBar,body:not(.playing) #znBar{display:none!important}
-body:not(.touch) #znChip{top:calc(170px + env(safe-area-inset-top,0px))}body:not(.touch) #znBar{top:calc(202px + env(safe-area-inset-top,0px))}
 #znMini{position:fixed;pointer-events:none;border-radius:50%;z-index:11}
 body:not(.playing) #znHow,body:has(#mapOv:not([hidden])) #znHow,body:has(#lvOv:not([hidden])) #znHow,body:has(#rtOv:not([hidden])) #znHow{display:none!important}`;
   document.head.appendChild(st);
-  chip = document.createElement('button'); chip.type = 'button'; chip.id = 'znChip'; chip.onclick = () => aggiornaPadroni().then(pannello); document.body.appendChild(chip);
-  barra = document.createElement('div'); barra.id = 'znBar'; barra.style.display = 'none';
-  barra.innerHTML = '<div class="t"><span id="znMio"></span><span id="znLoro"></span></div><div class="b"><i id="znFill"></i></div><div id="znManca" class="m"></div><button type="button" id="znAmico">📣 Chiama \'n amico</button>';
-  document.body.appendChild(barra);
-  barra.querySelector('#znAmico').onclick = chiamaAmico;
+  chip = document.createElement('div'); chip.id = 'znChip';
+  chip.innerHTML = '<div class="c" id="znTesta"></div><div id="znBar"><div class="t"><span id="znMio"></span><span id="znLoro"></span></div><div class="b"><i id="znFill"></i></div><div class="m"><span id="znManca"></span><button type="button" id="znAmico" title="Chiama \'n amico">📣</button></div></div>';
+  document.body.appendChild(chip); barra = $('znBar');
+  chip.onclick = e => { if (e.target.id === 'znAmico') return; aggiornaPadroni().then(pannello); };
+  $('znAmico').onclick = e => { e.stopPropagation(); chiamaAmico(); };
+}
+function posiziona(){
+  const m = $('mini'); if (!m) { chip.style.top = 'calc(232px + env(safe-area-inset-top,0px))'; return; }
+  const r = m.getBoundingClientRect(); chip.style.top = (r.bottom + 6) + 'px'; chip.style.right = Math.max(10, innerWidth - r.right) + 'px';
 }
 function aggiornaChip(){
-  ui(); if (!document.body.classList.contains('playing') || !cella) { chip.style.display = 'none'; barra.style.display = 'none'; return; }
+  ui(); if (!document.body.classList.contains('playing') || !cella) { chip.style.display = 'none'; return; }
   const pad = padrone(cella.id), p = conPaese(), mia = pad && pad === p;
-  chip.style.display = 'block'; chip.style.borderColor = mia ? '#f2c74e' : pad ? colore(pad) : 'rgba(255,255,255,.35)';
-  chip.innerHTML = `<i style="display:inline-block;width:9px;height:9px;border-radius:50%;background:${colore(pad)};margin-right:6px;vertical-align:middle"></i>⚔ ${pad ? corto(pad) : 'terra de nessuno'}`;
+  chip.style.display = 'block'; posiziona(); chip.style.borderColor = mia ? '#f2c74e' : pad ? colore(pad) : 'rgba(255,255,255,.3)';
+  $('znTesta').innerHTML = `<i style="background:${colore(pad)}"></i><span>⚔ ${pad ? corto(pad) : 'terra de nessuno'}</span>`;
   chip.title = nomeCella(cella);
   aggiornaBarra();
 }
@@ -152,7 +155,8 @@ function aggiornaBarra(){
   barra.style.display = 'block';
   $('znMio').innerHTML = `<b>${corto(p)}</b> ${mio}`; $('znLoro').textContent = pad ? `${corto(pad)} ${loro}` : 'nessuno 0';
   $('znFill').style.width = (loro ? Math.min(100, mio / (loro + 1) * 100) : Math.min(100, mio * 100)) + '%';
-  $('znManca').innerHTML = pad ? `Ne mancano <b>${manca}</b><br>${TG.Zone.squadra ? '👥 In squadra! ' : 'Gira qui: '}+1 fra ${(TG.Zone.squadra ? 3 : PASSO) - secondi} s · nocchie ×2` : `Terra de nessuno<br>${TG.Zone.squadra ? '👥 In squadra! ' : 'Gira qui: '}+1 fra ${(TG.Zone.squadra ? 3 : PASSO) - secondi} s · o raccogli`;
+  const fra = (TG.Zone.squadra ? 3 : PASSO) - secondi;
+  $('znManca').innerHTML = (pad ? `Mancano <b>${manca}</b> · ` : '') + (TG.Zone.squadra ? '👥 ' : '') + `+1 fra ${fra} s`;
   if (pad !== p) spiega(pad);
 }
 // la prima volta in terra altrui (o libera): come si ruba, in tre righe
