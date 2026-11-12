@@ -139,6 +139,51 @@ function bottone(){
   const luoghi = q.querySelector('[data-q="luoghi"]'); luoghi ? q.insertBefore(b, luoghi) : q.appendChild(b);
 }
 
+/* ---------- la terra si vede sempre: chip vicino alla minimappa + zone colorate sulla mappa grande ---------- */
+let chip = null;
+function aggiornaChip(){
+  if (!document.body.classList.contains('playing')) { if (chip) chip.style.display = 'none'; return; }
+  if (!chip) {
+    chip = document.createElement('button'); chip.type = 'button'; chip.id = 'znChip';
+    chip.setAttribute('style', 'position:fixed;z-index:30;right:10px;top:calc(232px + env(safe-area-inset-top,0px));max-width:46vw;padding:5px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.35);background:rgba(16,22,21,.82);color:#f3e7cb;font:800 12px Figtree,"Segoe UI",system-ui,sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)');
+    chip.onclick = () => aggiornaPadroni().then(pannello);
+    document.body.appendChild(chip);
+    const st = document.createElement('style'); st.textContent = 'body:has(#mapOv:not([hidden])) #znChip,body:has(#pmOv:not([hidden])) #znChip,body:has(#lvOv:not([hidden])) #znChip,body:has(#rtOv:not([hidden])) #znChip{display:none!important}body:not(.playing) #znChip{display:none!important}body:not(.touch) #znChip{top:calc(170px + env(safe-area-inset-top,0px))}'; document.head.appendChild(st);
+  }
+  const z = zonaCorrente; if (!z) { chip.style.display = 'none'; return; }
+  const pad = padrone(z.id), p = conPaese(), mia = pad && pad === p;
+  chip.style.display = 'block';
+  chip.style.borderColor = mia ? '#f2c74e' : pad ? colore(pad) : 'rgba(255,255,255,.35)';
+  chip.innerHTML = `<i style="display:inline-block;width:9px;height:9px;border-radius:50%;background:${colore(pad)};margin-right:6px;vertical-align:middle"></i>⚔ ${pad ? nomeP(pad) : 'terra de nessuno'}`;
+  chip.title = z.nome;
+}
+let ov = null;
+function overlayMappa(){
+  const wrap = $('bigMapWrap'), big = $('bigMap'), ovl = $('mapOv'); if (!wrap || !big || !ovl || ovl.hidden) return;
+  if (!ov) { ov = document.createElement('canvas'); ov.id = 'znMap'; ov.setAttribute('style', 'position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:1'); big.insertAdjacentElement('afterend', ov); }
+  let hits = []; try { hits = TG.debug.mapHits() || []; } catch(e){}
+  const pts = hits.filter(h => h.kind === 'place' && h.o && h.o.x != null && Math.abs(h.o.z) < 50000);
+  const r = big.getBoundingClientRect(), dpr = Math.min(2, devicePixelRatio || 1);
+  if (ov.width !== Math.round(r.width * dpr) || ov.height !== Math.round(r.height * dpr)) { ov.width = Math.round(r.width * dpr); ov.height = Math.round(r.height * dpr); }
+  const c = ov.getContext('2d'); c.clearRect(0, 0, ov.width, ov.height);
+  // la scala della mappa la ricavo da due luoghi lontani tra loro (posizione in pixel ↔ coordinate del mondo)
+  let a = null, b = null, bd = 0; for (const h of pts) for (const k of pts) { const d = Math.abs(h.o.x - k.o.x) + Math.abs(h.o.z - k.o.z); if (d > bd) { bd = d; a = h; b = k; } }
+  if (!a || !b || Math.abs(a.o.x - b.o.x) < 1) return;
+  const s = (a.x - b.x) / (a.o.x - b.o.x); if (!isFinite(s) || s === 0) return;
+  const px = wx => (a.x + (wx - a.o.x) * s) * dpr, pz = wz => (a.y + (wz - a.o.z) * s) * dpr;
+  const p = conPaese();
+  for (const z of ZONE) {
+    const pad = padrone(z.id); if (!pad) continue;
+    const mia = pad === p;
+    c.beginPath(); c.arc(px(z.x), pz(z.z), Math.abs(z.r * s) * dpr, 0, Math.PI * 2);
+    c.fillStyle = colore(pad); c.globalAlpha = .28; c.fill(); c.globalAlpha = 1;
+    c.lineWidth = (mia ? 3 : 1.5) * dpr; c.strokeStyle = mia ? '#f2c74e' : colore(pad); c.stroke();
+    const f = Math.max(10, Math.min(16, Math.abs(z.r * s) / 4)) * dpr; c.font = `800 ${f}px Figtree, system-ui, sans-serif`; c.textAlign = 'center'; c.textBaseline = 'middle';
+    c.lineWidth = 3 * dpr; c.strokeStyle = 'rgba(0,0,0,.8)'; c.strokeText(nomeP(pad), px(z.x), pz(z.z) + Math.abs(z.r * s) * dpr * .55); c.fillStyle = '#fff'; c.fillText(nomeP(pad), px(z.x), pz(z.z) + Math.abs(z.r * s) * dpr * .55);
+  }
+}
+function giroMappa(){ try { overlayMappa(); } catch(e){} requestAnimationFrame(giroMappa); }
+
 /* ---------- aggancio ai punti del paese ---------- */
 function aggancia(){
   const PM = TG.PrimoMinuto; if (!PM || !PM.mandaPunti || PM.mandaPunti._zone) return;
@@ -150,6 +195,7 @@ function avvia(){
   if (!TG.debug || !TG.PrimoMinuto) return setTimeout(avvia, 1000);
   aggancia(); aggiornaPadroni(); setInterval(aggiornaPadroni, 120000);
   setInterval(tick, 1000); bottone(); setInterval(bottone, 5000);
+  setInterval(aggiornaChip, 1000); giroMappa();
   addEventListener('pagehide', () => invia(true));
 }
 TG.Zone = { ZONE, zonaDi, padroni: () => padroni, pannello, colore, _dbg: () => ({ zonaCorrente, daMandare, secondi }) };
