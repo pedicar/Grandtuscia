@@ -10,6 +10,15 @@ TG.msg = function(titolo, sotto, sec){
   n.innerHTML = String(titolo) + (sotto ? '<small>' + sotto + '</small>' : ''); n.classList.add('on');
   clearTimeout(t); t = setTimeout(() => n.classList.remove('on'), (sec || 2.6) * 1000);
 };
+// Mai una card mentre guidi: aspetta che il mezzo sia fermo (velocità < 3 per un secondo), al massimo `max` ms
+TG.fermo = function(f, max){
+  const t0 = Date.now(); let fermoDa = 0;
+  const id = setInterval(() => {
+    let v = 99; try { v = Math.abs(TG.debug.car.speed || 0); } catch(e){}
+    if (v < 3) { if (!fermoDa) fermoDa = Date.now(); } else fermoDa = 0;
+    if ((fermoDa && Date.now() - fermoDa > 1000) || Date.now() - t0 > (max || 90000)) { clearInterval(id); f(); }
+  }, 250);
+};
 function patch(){
   const D = TG.debug; if (!D || !D.showToast || D.showToast._tg) return setTimeout(patch, 500);
   const o = D.showToast;

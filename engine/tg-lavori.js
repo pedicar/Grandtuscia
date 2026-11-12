@@ -54,6 +54,20 @@ document.head.appendChild(css);
 let ov;
 function overlay(){ if (!ov) { ov = document.createElement('div'); ov.id = 'lvOv'; ov.hidden = true; document.body.appendChild(ov); } return ov; }
 
+/* ---------- portare il giocatore al gioco ----------
+   Il 10/11: 13 lavori accettati, 0 fatti. La freccia non bastava (il gioco può stare a chilometri). Ora, se non sei a piedi,
+   il mezzo ti porta davanti all'ingresso (stesso teletrasporto di «Vai subito» della mappa); a piedi resta la freccia. */
+function portaAl(gioco, frase){
+  const a = trovaAtto(gioco);
+  try {
+    if (!a) { const g = (TG.GIOCHI || []).find(x => x.id === gioco); if (g) location.href = g.cartella + '/?via=missione'; return; }
+    const aPiedi = TG.debug.VEH && TG.debug.VEH.cur && TG.debug.VEH.cur.id === 'piedi';
+    TG.debug.setDest(a);
+    if (aPiedi) { TG.msg && TG.msg(frase, 'Segui a freccia (co\' a Vespa ce arrivi prima)', 4); return; }
+    TG.debug.goTo(a); setTimeout(() => TG.msg && TG.msg(frase, 'Sei arrivato: entra e fai o lavoro', 4), 1400); ev('lavoro', 'portato', null, { gioco });
+  } catch(e){}
+}
+
 /* ---------- la proposta ---------- */
 function proponi(){
   const L = lavoroDiOggi(); const k = oggi();
@@ -69,11 +83,7 @@ function proponi(){
   $('lvDopo').addEventListener('click', () => { o.hidden = true; ev('lavoro', 'rimandato', null, { gioco: L.gioco }); });
   $('lvVai').addEventListener('click', () => {
     o.hidden = true; ls.set('tg-lavoro-accettato', k + '|' + L.gioco); ev('lavoro', 'accettato', null, { gioco: L.gioco });
-    const a = trovaAtto(L.gioco);
-    try {
-      if (a) { TG.debug.setDest(a); TG.debug.showToast && TG.debug.showToast(`${L.chi} t'aspetta ${L.dove}: segui a freccia.`); }
-      else { const g = (TG.GIOCHI || []).find(x => x.id === L.gioco); if (g) location.href = g.cartella + '/?via=missione'; }
-    } catch(e){}
+    portaAl(L.gioco, `${L.chi} t'aspetta ${L.dove}`);
   });
 }
 
@@ -91,7 +101,7 @@ function alRitorno(){
     ev('lavoro', 'mancato', null, { gioco: da });
     o.innerHTML = `<div class="lvCard"><div class="lvEye">O LAVORO DE OGGI</div><div class="lvChi">${L.chi}</div><div class="lvDice">«Vabbè, nun è giornata. Riprova, che o lavoro sta sempre lì.»</div><div class="lvRow"><button id="lvRi">Riprovo</button><button class="sec" id="lvNo">Doppo</button></div></div>`;
     o.hidden = false; $('lvNo').addEventListener('click', () => { o.hidden = true; });
-    $('lvRi').addEventListener('click', () => { o.hidden = true; ls.set('tg-lavoro-accettato', oggi() + '|' + da); const a = trovaAtto(da); try { a && TG.debug.setDest(a); } catch(e){} });
+    $('lvRi').addEventListener('click', () => { o.hidden = true; ls.set('tg-lavoro-accettato', oggi() + '|' + da); portaAl(da, `${L.chi} t'aspetta ${L.dove}`); });
     return true;
   }
   const molt = MED[med] || 1, lire = Math.round(L.lire * molt), punti = Math.round(L.punti * molt);
@@ -115,7 +125,7 @@ new MutationObserver(() => {
   // al ritorno da un gioco il mondo mostra il suo pannello (#missOv): il premio arriva quando quello si chiude
   const aperto = () => { const m = $('missOv'); return m && !m.hidden && getComputedStyle(m).display !== 'none'; };
   const attendi = (f, n) => { if (aperto() && n < 120) setTimeout(() => attendi(f, n + 1), 500); else f(); };
-  setTimeout(() => attendi(() => { if (!alRitorno()) { const pm = TG.PrimoMinuto; const attesa = pm && pm.attivo ? 75000 : 25000; setTimeout(proponi, attesa); } }, 0), 2500);
+  setTimeout(() => attendi(() => { if (!alRitorno()) { const pm = TG.PrimoMinuto; const attesa = pm && pm.attivo ? 75000 : 25000; setTimeout(() => (TG.fermo ? TG.fermo(proponi, 90000) : proponi()), attesa); } }, 0), 2500);
 }).observe(document.body, { attributes: true, attributeFilter: ['class'] });
 const nomeP = p => { try { return (TG.PrimoMinuto && TG.PrimoMinuto.nomeComune && TG.PrimoMinuto.nomeComune(p)) || p; } catch(e){ return p; } };
 TG.Lavori = { LAVORI, lavoroDiOggi, proponi, alRitorno, trovaAtto };

@@ -18,6 +18,7 @@ const toast = t => { try { TG.debug.showToast(t); } catch(e){} };
 const carico = () => { try { return TG.debug.caricoTot(); } catch(e){ return 0; } };
 const Q = (() => { try { return new URLSearchParams(window.__tgQ != null ? window.__tgQ : location.search); } catch(e){ return new URLSearchParams(); } })();
 const MINUTI_CARD = window.__tgRitornoMinuti || 4;
+let cardAttesa = false;
 const LINK = 'https://grandtuscia.netlify.app/';
 
 /* ---------- stile ---------- */
@@ -71,6 +72,7 @@ async function cardTornaDomani(){
   if (cardMostrata || ls.get('tg-torna-visto') === oggi()) return;
   // una card alla volta: se c'è già qualcosa sopra il gioco, riprovo tra 20 s
   if (['pmOv', 'lvOv', 'missOv', 'rtOv', 'ngOv'].some(id => { const e = $(id); return e && !e.hidden && e.offsetParent !== null; })) { setTimeout(cardTornaDomani, 20000); return; }
+  if (!window.__tgCardSubito) { let v = 99; try { v = Math.abs(TG.debug.car.speed || 0); } catch(e){} if (v >= 3 && !cardAttesa) { cardAttesa = true; TG.fermo(() => { cardAttesa = false; cardTornaDomani(); }, 90000); return; } }  // mai mentre guidi
   cardMostrata = true; ls.set('tg-torna-visto', oggi());
   const s = serie(), p = paese(), np = p ? nomeP(p) : 'o paese tuo';
   let distanza = '';
