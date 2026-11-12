@@ -71,7 +71,17 @@ function aggiorna(){
     L.appendChild(row);
   }
 }
-function avvia(){ if (!D() || !document.getElementById('mapQuick')) return setTimeout(avvia, 1500); scorciatoie(); const m = document.getElementById('bMap'); if (m) m.addEventListener('click', () => { if (pan && !pan.hidden) aggiorna(); }); }
+// La mappa disegnata: l'immagine pronta (tuscia-games/mappa.jpg, 2260 px) al posto di quella generata a bassa risoluzione dal mondo
+function mappaBella(){
+  try {
+    const E = TG.debug.world; const d = Object.getOwnPropertyDescriptor(E, 'mapCanvas'); if (!d || !d.set) return;
+    const img = new Image(); img.decoding = 'async';
+    img.onload = () => { try { E.mapCanvas = img; } catch(e){} };
+    img.src = (document.querySelector('script[src*="tg-mappa-plus.js"]') || { src: '' }).src.replace(/engine\/tg-mappa-plus\.js.*$/, '') + 'tuscia-games/mappa.jpg';
+  } catch(e){}
+}
+function avvia(){
+  mappaBella(); if (!D() || !document.getElementById('mapQuick')) return setTimeout(avvia, 1500); scorciatoie(); const m = document.getElementById('bMap'); if (m) m.addEventListener('click', () => { if (pan && !pan.hidden) aggiorna(); }); }
 TG.MappaPlus = { toggle, aggiorna, vai };
 if (document.readyState === 'complete') setTimeout(avvia, 1500); else addEventListener('load', () => setTimeout(avvia, 1500));
 })();
