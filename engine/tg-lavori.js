@@ -87,6 +87,33 @@ function proponi(){
   });
 }
 
+/* ---------- ogni gara finita vale per il paese (e per la zona del gioco) ----------
+   Prima i giochi contavano per il Trono solo come lavoro del giorno: 4 giocatori su 29 ci entravano. Ora: oro +15, argento +10,
+   bronzo +5, finita senza medaglia +2; sempre, con il tetto giornaliero del server. Il lavoro del giorno resta il bonus. */
+const PREMIO = { oro: 15, argento: 10, bronzo: 5 };
+function premioGara(){
+  let q; try { q = new URLSearchParams(window.__tgQ != null ? window.__tgQ : location.search); } catch(e){ return; }
+  const da = q.get('da'); if (!da || q.get('esito') !== 'ok') return;
+  const med = q.get('med') || '', t = q.get('t') || '', chiave = oggi() + '|' + da + '|' + t + '|' + med;
+  if (ls.get('tg-gara-premiata') === chiave) return; ls.set('tg-gara-premiata', chiave);
+  const p = paese(); if (!p || p === 'nessuno' || !TG.PrimoMinuto || !TG.PrimoMinuto.mandaPunti) return;
+  const punti = PREMIO[med] || 2;
+  // la zona del gioco (il mezzo viene rimesso all'ingresso del gioco): i punti vanno anche lì, per la guerra delle zone
+  const a = trovaAtto(da); let zona = null; try { zona = a && TG.Zone ? TG.Zone.zonaDi(a.x, a.z) : null; } catch(e){}
+  setTimeout(() => { try { if (zona && TG.Zone.accredita) { TG.Zone.salta = 1; TG.Zone.accredita(zona.id, punti); } TG.PrimoMinuto.mandaPunti(punti); } catch(e){} }, 2500);
+  ev('gara_punti', da, punti, { med: med || null });
+  // una riga in più nel pannello di ritorno del mondo
+  const scrivi = () => {
+    const b = $('bkBody'); if (!b || b.querySelector('.lvGara')) return false;
+    try { if (zona && TG.Zone && !Object.keys(TG.Zone.padroni() || {}).length && n < 24) return false; } catch(e){}  // aspetto i padroni (max 6 s)
+    let terra = ''; try { const pad = zona && TG.Zone.padroni()[zona.id]; const padrone = pad && pad[0] ? pad[0] : null; terra = zona ? (padrone ? (padrone.paese === p ? ` · ${zona.nome}: terra vostra` : ` · ${zona.nome} è de ${padrone.nome}: rubatela`) : ` · ${zona.nome}: terra de nessuno`) : ''; } catch(e){}
+    const d = document.createElement('p'); d.className = 'lvGara'; d.setAttribute('style', 'margin:10px 0 0;padding:10px 12px;border-radius:12px;background:rgba(242,199,78,.12);border:1px solid rgba(242,199,78,.45);color:#f3e7cb;font-size:14px');
+    d.innerHTML = `<b style="color:#f2c74e">+${punti} nocchie pe' ${nomeP(p)}</b>${med ? ` (medaglia d'${med})` : ''}${terra}`;
+    b.appendChild(d); return true;
+  };
+  let n = 0; const t2 = setInterval(() => { if (scrivi() || ++n > 40) clearInterval(t2); }, 250);
+}
+
 /* ---------- il ritorno: premio ---------- */
 function alRitorno(){
   let q; try { q = new URLSearchParams(window.__tgQ != null ? window.__tgQ : location.search); } catch(e){ return false; }
@@ -125,8 +152,9 @@ new MutationObserver(() => {
   // al ritorno da un gioco il mondo mostra il suo pannello (#missOv): il premio arriva quando quello si chiude
   const aperto = () => { const m = $('missOv'); return m && !m.hidden && getComputedStyle(m).display !== 'none'; };
   const attendi = (f, n) => { if (aperto() && n < 120) setTimeout(() => attendi(f, n + 1), 500); else f(); };
+  try { premioGara(); } catch(e){}
   setTimeout(() => attendi(() => { if (!alRitorno()) { const pm = TG.PrimoMinuto; const attesa = pm && pm.attivo ? 75000 : 25000; setTimeout(() => (TG.fermo ? TG.fermo(proponi, 90000) : proponi()), attesa); } }, 0), 2500);
 }).observe(document.body, { attributes: true, attributeFilter: ['class'] });
 const nomeP = p => { try { return (TG.PrimoMinuto && TG.PrimoMinuto.nomeComune && TG.PrimoMinuto.nomeComune(p)) || p; } catch(e){ return p; } };
-TG.Lavori = { LAVORI, lavoroDiOggi, proponi, alRitorno, trovaAtto };
+TG.Lavori = { LAVORI, lavoroDiOggi, proponi, alRitorno, trovaAtto, premioGara, PREMIO };
 })();

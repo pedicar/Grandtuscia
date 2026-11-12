@@ -188,7 +188,7 @@ function giroMappa(){ try { overlayMappa(); } catch(e){} requestAnimationFrame(g
 function aggancia(){
   const PM = TG.PrimoMinuto; if (!PM || !PM.mandaPunti || PM.mandaPunti._zone) return;
   const o = PM.mandaPunti;
-  const n = function(k){ try { if (zonaCorrente && k > 0) { accumula(zonaCorrente, Math.min(30, Math.round(k))); invia(true); } } catch(e){} return o.apply(this, arguments); };
+  const n = function(k){ try { if (TG.Zone.salta) TG.Zone.salta = 0; else if (zonaCorrente && k > 0) { accumula(zonaCorrente, Math.min(30, Math.round(k))); invia(true); } } catch(e){} return o.apply(this, arguments); };
   n._zone = 1; PM.mandaPunti = n;
 }
 function avvia(){
@@ -198,6 +198,6 @@ function avvia(){
   setInterval(aggiornaChip, 1000); giroMappa();
   addEventListener('pagehide', () => invia(true));
 }
-TG.Zone = { ZONE, zonaDi, padroni: () => padroni, pannello, colore, _dbg: () => ({ zonaCorrente, daMandare, secondi }) };
+TG.Zone = { ZONE, zonaDi, padroni: () => padroni, pannello, colore, salta: 0, accredita: (id, n) => { const z = ZONE.find(x => x.id === id); if (z) { accumula(z, Math.min(30, Math.round(n))); invia(true); } }, aggiorna: aggiornaPadroni, _dbg: () => ({ zonaCorrente, daMandare, secondi }) };
 if (document.readyState === 'complete') setTimeout(avvia, 2000); else addEventListener('load', () => setTimeout(avvia, 2000));
 })();
