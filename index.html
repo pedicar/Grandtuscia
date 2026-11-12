@@ -1142,4 +1142,5 @@ addEventListener('hashchange',vista);vista();
 })();
 </script>
 
+<script>/* i link ai giochi aprono nella stessa scheda: nei browser dentro Facebook/Instagram le nuove schede spesso non si aprono */document.addEventListener('click',function(e){var a=e.target&&e.target.closest&&e.target.closest('a[target=_blank]');if(a&&(a.host===location.host||/grandtuscia\.netlify\.app$/.test(a.host))&&!/^#/.test(a.getAttribute('href')||'')){e.preventDefault();location.href=a.href}},true);</script>
 </body></html>
