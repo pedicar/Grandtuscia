@@ -48,9 +48,9 @@ function chiediNome(){
 TG.Fantasmi = {
   paese, dev,
   attivo(){ return !!paese(); },
-  async salva(gioco, tempo, traccia, nome){
+  async salva(gioco, tempo, traccia, nome, senzaDomanda){
     const p = paese(); if (!p || !tempo || !traccia) return null;
-    nome = nome || soprannome() || await chiediNome();
+    nome = nome || soprannome() || (senzaDomanda ? '' : await chiediNome());
     try { const r = await rpc('tg_fantasma_salva', { p_gioco: gioco, p_dev: dev(), p_paese: p, p_nome: nome || null, p_tempo: +tempo, p_traccia: String(traccia) }); if (r && r.salvato) delete cache[gioco]; return r; } catch(e){ return null; }
   },
   soprannome, chiediNome,

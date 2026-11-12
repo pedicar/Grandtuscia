@@ -99,8 +99,9 @@ async function cardTornaDomani(){
 async function sfidaAmico(n){
   const p = paese(), np = p ? nomeP(p) : 'a Tuscia';
   n = Math.max(1, Math.round(n || 0));
-  const url = `${LINK}?utm_source=sfida&utm_campaign=sfida&n=${n}&da=${encodeURIComponent(p || '')}`;
-  const testo = `Oggi ho raccolto ${n} nocchi${n === 1 ? 'a' : 'e'} pe' ${np} su Tuscia Games. Fai de mejo pe' o paese tuo, si ce riesci: ${url}`;
+  const rec = parseFloat(ls.get('tg-pm-record') || '0');
+  const url = `${LINK}?utm_source=sfida&utm_campaign=sfida&n=${n}&da=${encodeURIComponent(p || '')}${rec ? '&t=' + rec : ''}`;
+  const testo = rec ? `Ho fatto 10 nocchie in ${rec.toFixed(1).replace('.', ',')} secondi pe' ${np} su Tuscia Games (e oggi ${n} in tutto). Battimi, si ce riesci: ${url}` : `Oggi ho raccolto ${n} nocchi${n === 1 ? 'a' : 'e'} pe' ${np} su Tuscia Games. Fai de mejo pe' o paese tuo, si ce riesci: ${url}`;
   ev('condividi', 'sfida', n);
   try { if (navigator.share) { await navigator.share({ title: "Sfida 'n amico", text: testo }); return; } } catch(e){}
   try { await navigator.clipboard.writeText(testo); toast('Copiato: incollalo su WhatsApp'); } catch(e){}
@@ -110,7 +111,8 @@ function arrivoSfida(){
   const n = parseInt(Q.get('n') || '0', 10) || 0, da = Q.get('da') || '';
   ev('arrivo', 'sfida', n, { da });
   const el = document.querySelector('#menu .intro');
-  if (el) { el.textContent = `Uno de ${da ? nomeP(da) : "n'altro paese"} ha raccolto ${n} nocchi${n === 1 ? 'a' : 'e'} oggi e te sfida. Scegli o paese tuo e fanne ${n + 1}.`; el.classList.add('pmBenv'); }
+  const t = parseFloat(Q.get('t') || '0');
+  if (el) { el.textContent = t ? `Uno de ${da ? nomeP(da) : "n'altro paese"} ha fatto 10 nocchie in ${t.toFixed(1).replace('.', ',')} secondi e te sfida. Scegli o paese tuo e fai de mejo.` : `Uno de ${da ? nomeP(da) : "n'altro paese"} ha raccolto ${n} nocchi${n === 1 ? 'a' : 'e'} oggi e te sfida. Scegli o paese tuo e fanne ${n + 1}.`; el.classList.add('pmBenv'); }
   // contatore in partita
   let hud = null, battuta = false;
   const tick = () => {

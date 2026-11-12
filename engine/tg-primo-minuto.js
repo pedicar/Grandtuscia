@@ -53,7 +53,7 @@ body.touch:has(#prompt:not([hidden])) #pmRiga{display:none}  /* quando c'è il p
 document.head.appendChild(css);
 
 /* ---------- stato ---------- */
-const PM = { paese: ls.get(K_PAESE) || null, attivo: false, base: 0, t0: 0, timer: null, inviati: 0, oggi: 0, rientro: null };
+const PM = { paese: ls.get(K_PAESE) || null, attivo: false, base: 0, t0: 0, timer: null, inviati: 0, oggi: 0, rientro: null, record: 0 };
 TG.PrimoMinuto = PM;
 
 function nomeComune(id){
@@ -121,7 +121,7 @@ const FRASI_ARRIVO = {
   abbecedario: "Qui Radio Nocchia parla caprolatto davero. Entra, accendila, e intanto raccoi pe' Caprarola.",
   tozzetto: "O tozzetto l'hai letto. Mo' raccoi: dieci nocchie in 'n minuto e o paese tuo sale.",
   oroscopo: "E stelle hanno detto a loro. Mo' tocca a te: 'n minuto de raccolta e o paese tuo sale in classifica.",
-  primo_minuto: "Qualcuno de o paese tuo ha raccolto 10 nocchie in 'n minuto. Battilo.",
+  primo_minuto: (() => { try { const q = new URLSearchParams(window.__tgQ != null ? window.__tgQ : location.search), t = parseFloat(q.get('t') || '0'); if (t) return `Uno de ${q.get('da') || 'n\'altro paese'} ha fatto 10 nocchie in ${t.toFixed(1).replace('.', ',')} secondi e te sfida. Scegli o paese tuo e fai de mejo.`; } catch(e){} return "Qualcuno de o paese tuo ha raccolto 10 nocchie in 'n minuto. Battilo."; })(),
   condivisione: "T'hanno mandato qui pe' 'n motivo: o paese vostro c'ha bisogno de punti. 'N minuto e sei in classifica."
 };
 function autoPlay(){
@@ -150,7 +150,7 @@ async function aggiornaRiga(){
   try { trono = await TG.Account.comuniTrono('sempre'); } catch(e){ return; }
   const r = (trono.righe || []); const mio = r.find(x => x.paese === PM.paese);
   if (!riga) { riga = document.createElement('button'); riga.id = 'pmRiga'; riga.type = 'button'; setTimeout(() => riga.classList.add('pmQuieta'), 8000); riga.addEventListener('click', () => { try { TG.debug.openTrono('comuni', PM.paese); } catch(e){} }); document.body.appendChild(riga); }
-  const nome = nomeComune(PM.paese), tu = PM.oggi > 0 ? ` · tu +${PM.oggi} oggi` : '';
+  const nome = nomeComune(PM.paese), rec = PM.record || parseFloat(ls.get('tg-pm-record') || '0'), tu = (PM.oggi > 0 ? ` · tu +${PM.oggi} oggi` : '') + (rec ? ` · record ${rec.toFixed(1).replace('.', ',')} s` : '');
   const sopra = mio ? r.find(x => x.pos === mio.pos - 1) : null;
   ricorda(mio, sopra);
   if (!mio) { riga.innerHTML = `<b>${nome}</b> nun è ancora in classifica · a prima nocchia è tua`; return; }
@@ -238,27 +238,38 @@ function avvia(){
 }
 async function fine(n){
   clearInterval(PM.timer); PM.attivo = false; ls.set(K_FATTO, '1'); hud && hud.remove(); hud = null;
-  ev('primo_minuto', n >= OBIETTIVO ? 'riuscito' : 'tempo', n);
+  const secondi = Math.min(SECONDI, Math.round((Date.now() - PM.t0) / 10) / 100), riuscito = n >= OBIETTIVO;
+  ev('primo_minuto', riuscito ? 'riuscito' : 'tempo', riuscito ? secondi : n);
   const paese = nomeComune(PM.paese);
   const r = await mandaPunti(Math.max(1, n)); daMandare = 0; ultimoCarico = carico();
   let pos = '';
   try { const t = await TG.Account.comuniTrono('sempre'); const riga = (t.righe || []).find(x => x.paese === PM.paese); if (riga) pos = `${paese} è ${riga.pos}ª co' ${riga.punti} punti`; } catch(e){}
+  // il record: il tempo per 10 nocchie è il primo tempo di chiunque, quindi un record personale; va in tg_fantasmi (gioco «primo-minuto»)
+  let mejo = null;
+  if (riuscito) { PM.record = secondi; ls.set('tg-pm-record', String(secondi)); try { const l = await TG.Fantasmi.carica('primo-minuto'); mejo = (l || []).find(f => f.paese === PM.paese) || null; } catch(e){} }
+  const batte = riuscito && (!mejo || secondi < mejo.tempo);
   const reg = TG.Account && TG.Account.stato === 'registrato';
+  const nomeSalvato = (TG.Fantasmi && TG.Fantasmi.soprannome && TG.Fantasmi.soprannome()) || '';
   const o = overlay();
-  o.innerHTML = `<div class="pmBox"><div class="pmCard"><div class="pmEye">${n >= OBIETTIVO ? 'CE L\'HAI CACCIATA!' : 'O MINUTO È FINITO'}</div>
-  <div class="pmNum">${n}</div><h2 style="font-size:26px">nocchie pe' ${paese}</h2>
-  <p>${pos ? pos + '. ' : ''}${r && r.oggi != null ? `Oggi hai portato ${r.oggi} punti a o paese (massimo ${r.tetto} al giorno senza account).` : ''}</p>
-  ${reg ? '' : `<p style="color:#f3e7cb">Vòi che i punti contano senza limite e restano pure si cambi telefono? Salva a partita co' a mail: ce vòle 'n minuto.</p>`}
-  <div class="pmRow"><button class="pmBtn" id="pmShare">Condividi</button>${reg ? '' : '<button class="pmBtn sec" id="pmSalva">Salva co\' a mail</button>'}<button class="pmBtn sec" id="pmVia">Continua a giocà</button></div></div></div>`;
+  o.innerHTML = `<div class="pmBox"><div class="pmCard"><div class="pmEye">${riuscito ? (batte ? 'RECORD DE ' + paese.toUpperCase() : 'O RECORD TUO') : 'O MINUTO È FINITO'}</div>
+  <div class="pmNum">${riuscito ? secondi.toFixed(1).replace('.', ',') + '<span style="font-size:.4em"> s</span>' : n}</div>
+  <h2 style="font-size:24px">${riuscito ? `pe' ${OBIETTIVO} nocchie, pe' ${paese}` : `nocchie pe' ${paese}`}</h2>
+  <p>${riuscito ? (batte ? (mejo ? `Hai battuto o mejo de ${paese} (${mejo.tempo.toFixed(1).replace('.', ',')} s${mejo.nome ? ', ' + mejo.nome : ''}). ` : `Sei o primo de ${paese} a fallo. `) : `O mejo de ${paese} sta a ${mejo.tempo.toFixed(1).replace('.', ',')} s${mejo.nome ? ' (' + mejo.nome + ')' : ''}. `) : ''}${pos ? pos + '. ' : ''}${r && r.oggi != null ? `Oggi hai portato ${r.oggi} punti a o paese.` : ''}</p>
+  ${riuscito ? `<input id="pmNome" maxlength="24" autocomplete="nickname" placeholder="Come te chiami? (pe' a classifica de o paese)" value="${nomeSalvato.replace(/"/g, '&quot;')}" style="width:100%;box-sizing:border-box;margin-top:4px;padding:12px 14px;border-radius:12px;border:2px solid #4a5a55;background:#0f1514;color:#f3e7cb;font:600 16px inherit">` : ''}
+  ${reg ? '' : `<p style="color:#f3e7cb;margin-top:12px">${riuscito ? 'Senza mail o record resta solo su questo telefono e i punti so\' tagliati a ' + TETTO + ' al giorno.' : 'Vòi che i punti contano senza limite e restano pure si cambi telefono?'} Salva co\' a mail: ce vòle \'n minuto.</p>`}
+  <div class="pmRow">${reg ? '' : `<button class="pmBtn" id="pmSalva" style="flex-basis:100%">${riuscito ? 'Salva o record co\' a mail' : 'Salva co\' a mail'}</button>`}<button class="pmBtn sec" id="pmShare">Condividi</button><button class="pmBtn sec" id="pmVia">Continua a giocà</button></div></div></div>`;
   o.hidden = false;
-  $('pmVia').addEventListener('click', () => { o.hidden = true; });
+  const nome = () => { const i = $('pmNome'); const v = i ? String(i.value || '').trim().slice(0, 24) : ''; if (v) ls.set('tg-soprannome', v); return v || nomeSalvato; };
+  const salvaRecord = () => { if (!riuscito || !TG.Fantasmi) return; try { TG.Fantasmi.salva('primo-minuto', secondi, String(n), nome() || '', true); ev('record', 'primo_minuto', secondi, { nome: !!nome() }); } catch(e){} };
+  $('pmVia').addEventListener('click', () => { salvaRecord(); o.hidden = true; });
   $('pmShare').addEventListener('click', async () => {
-    const testo = `Ho raccolto ${n} nocchie pe' ${paese} in 'n minuto su Grand Tuscia Adventure. ${pos ? pos + '. ' : ''}Gioca pe' o paese tuo: https://grandtuscia.netlify.app/?utm_source=condivisione&utm_campaign=primo_minuto`;
-    ev('condividi', 'primo_minuto');
+    salvaRecord();
+    const testo = riuscito ? `Ho fatto ${OBIETTIVO} nocchie in ${secondi.toFixed(1).replace('.', ',')} secondi pe' ${paese} su Grand Tuscia Adventure. Battimi, si ce riesci: https://grandtuscia.netlify.app/?utm_source=condivisione&utm_campaign=primo_minuto&t=${secondi}&da=${encodeURIComponent(PM.paese)}` : `Ho raccolto ${n} nocchie pe' ${paese} in 'n minuto su Grand Tuscia Adventure. ${pos ? pos + '. ' : ''}Gioca pe' o paese tuo: https://grandtuscia.netlify.app/?utm_source=condivisione&utm_campaign=primo_minuto`;
+    ev('condividi', 'primo_minuto', riuscito ? secondi : null);
     try { if (navigator.share) { await navigator.share({ title: 'Trono de Nocchie', text: testo }); return; } } catch(e){}
-    try { await navigator.clipboard.writeText(testo); TG.debug.showToast && TG.debug.showToast('Copiato: incollalo su WhatsApp'); } catch(e){}
+    try { await navigator.clipboard.writeText(testo); TG.msg('Copiato: incollalo su WhatsApp'); } catch(e){}
   });
-  const s = $('pmSalva'); s && s.addEventListener('click', () => { o.hidden = true; try { TG.debug.openTrono('comuni', PM.paese); } catch(e){} });
+  const sv = $('pmSalva'); sv && sv.addEventListener('click', () => { salvaRecord(); o.hidden = true; ev('iscrizione_da', riuscito ? 'record' : 'primo_minuto'); try { const b = $('bAccount'); b ? b.click() : TG.debug.openTrono('comuni', PM.paese); } catch(e){} });
 }
 
 /* ---------- quando parte la partita ---------- */
