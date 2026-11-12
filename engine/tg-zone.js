@@ -60,7 +60,7 @@ async function rpc(nome, body){
   const r = await fetch(cfg.url.replace(/\/$/, '') + '/rest/v1/rpc/' + nome, { method: 'POST', headers: { 'Content-Type': 'application/json', apikey: cfg.key, Authorization: 'Bearer ' + cfg.key }, body: JSON.stringify(body || {}) });
   if (!r.ok) throw new Error('HTTP ' + r.status); return r.json();
 }
-let padroni = {}, locali = {}, caricato = false, cella = null, daMandare = {}, secondi = 0, ultimoInvio = 0, versione = 0;
+let padroni = {}, locali = {}, caricato = false, tPlay = 0, cella = null, daMandare = {}, secondi = 0, ultimoInvio = 0, versione = 0;
 // punti di un paese in una cella: quelli del server + quelli miei accettati da allora (così il colore cambia subito)
 function punti(id, p){ const l = padroni[id] || []; const r = l.find(x => x.paese === p); return (r ? r.punti : 0) + ((locali[id] || {})[p] || 0); }
 function padrone(id){
@@ -93,6 +93,7 @@ async function invia(forza){
 /* ---------- il giro: presenza + cambio cella ---------- */
 function tick(){
   if (!document.body.classList.contains('playing')) return;
+  if (!tPlay) tPlay = Date.now();
   let c; try { c = TG.debug.car; } catch(e){ return; } if (!c) return;
   const z = cellaDi(c.x, c.z);
   if (!cella || z.id !== cella.id) { const prima = cella; cella = z; secondi = 0; annuncia(z, prima); }
@@ -157,10 +158,10 @@ function aggiornaBarra(){
 // la prima volta in terra altrui (o libera): come si ruba, in tre righe
 let how = null;
 function spiega(pad){
-  if (!caricato || ls.get('tg-zone-spiegato') || !conPaese()) return; ls.set('tg-zone-spiegato', '1');
+  if (!caricato || !tPlay || Date.now() - tPlay < 40000 || ls.get('tg-zone-spiegato') || !conPaese()) return;  // non nel primo mezzo minuto: prima si guida ls.set('tg-zone-spiegato', '1');
   how = document.createElement('div'); how.id = 'znHow';
-  how.setAttribute('style', 'position:fixed;left:50%;bottom:calc(140px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:31;width:min(340px,92vw);padding:12px 14px;border-radius:16px;background:rgba(16,22,21,.92);border:1px solid #f2c74e;color:#f3e7cb;font:600 13px/1.35 Figtree,"Segoe UI",system-ui,sans-serif;backdrop-filter:blur(4px)');
-  how.innerHTML = `<b style="color:#f2c74e;font-size:15px">⚔ Come se ruba 'na terra</b><br>1. <b>Gira qui dentro</b>: ogni 5 secondi +1 pe' ${nomeP(conPaese())}.<br>2. <b>Raccogli nocchie qui</b>: in casa d'altri valgono doppio.<br>3. Quando superi i punti de ${pad ? nomeP(pad) : 'chi ce sta'}, a terra cambia colore: è vostra.<br><span style="color:#c9bfa8">A barra qui sopra te dice quanto manca. Da solo è lunga: 📣 chiama 'n amico.</span><div style="text-align:right;margin-top:6px"><button type="button" style="all:unset;cursor:pointer;padding:6px 14px;border-radius:9px;background:#f2c74e;color:#17201f;font-weight:800">Ho capito</button></div>`;
+  how.setAttribute('style', 'position:fixed;left:50%;bottom:calc(140px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:31;width:min(300px,86vw);padding:10px 12px;border-radius:14px;background:rgba(16,22,21,.92);border:1px solid #f2c74e;color:#f3e7cb;font:600 12.5px/1.3 Figtree,"Segoe UI",system-ui,sans-serif;backdrop-filter:blur(4px)');
+  how.innerHTML = `<b style="color:#f2c74e;font-size:14px">⚔ Come se ruba 'na terra</b><br>1. <b>Gira qui</b>: +1 ogni 5 s pe' ${corto(conPaese())}.<br>2. <b>Raccogli nocchie qui</b>: valgono doppio.<br>3. Superi i punti ${pad ? 'de ' + corto(pad) : 'de chi ce sta'} → è vostra.<div style="text-align:right;margin-top:4px"><button type="button" style="all:unset;cursor:pointer;padding:5px 12px;border-radius:9px;background:#f2c74e;color:#17201f;font-weight:800">Ho capito</button></div>`;
   how.querySelector('button').onclick = () => { how.remove(); how = null; };
   document.body.appendChild(how); setTimeout(() => { if (how) { how.remove(); how = null; } }, 25000);
   ev('zone_spiegate', pad || 'nessuno');

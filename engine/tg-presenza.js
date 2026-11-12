@@ -36,7 +36,7 @@ async function collega(){
     const entrati = Object.keys(nuovi).filter(k => !altri[k]);
     for (const k in altri) if (!nuovi[k]) togli(altri[k]);
     altri = nuovi; aggiornaConteggio();
-    if (entrati.length && pronto && Date.now() - ultimoAvviso > 20000) { ultimoAvviso = Date.now(); const p = nuovi[entrati[0]].dati; try { TG.msg(`${p.nome ? p.nome : 'Uno de ' + corto(p.paese)} è entrato`, p.paese === paese() ? 'Uno de i vostri: cercatelo' : 'Occhio a e terre vostre', 3); } catch(e){} }
+    if (entrati.length && pronto && Date.now() - ultimoAvviso > 20000 && !(TG.Strati && TG.Strati.stadio() === 0)) { ultimoAvviso = Date.now(); const p = nuovi[entrati[0]].dati; try { TG.msg(`${p.nome ? p.nome : 'Uno de ' + corto(p.paese)} è entrato`, p.paese === paese() ? 'Uno de i vostri: cercatelo' : 'Occhio a e terre vostre', 3); } catch(e){} }
   });
   canale.subscribe(s => { if (s === 'SUBSCRIBED') { pronto = true; manda(true); } });
 }
