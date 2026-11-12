@@ -1,6 +1,6 @@
 /* A GUERRA DE E NOCCHIE — tutto il mondo è spartito in celle esagonali (300 m di raggio, ≈23 ettari). Ogni cella ha un
-   padrone: il comune che ci ha fatto più punti negli ultimi 7 giorni. Si conquista stando lì e giocando lì: 1 punto ogni 20 s
-   in movimento, più tutto quello che vale punti pe' o paese (nocchie, nocchia d'oro, lavoro, primo minuto, gare) nella cella
+   padrone: il comune che ci ha fatto più punti negli ultimi 7 giorni. Si conquista stando lì e giocando lì: 1 punto ogni 5 s
+   in movimento (speed game), più tutto quello che vale punti pe' o paese (nocchie, nocchia d'oro, lavoro, primo minuto, gare) nella cella
    dove sei. In casa d'altri vale doppio. Le 18 «contrade» con il nome servono per parlare delle celle (messaggi, post, derby).
    Nel 3D: confini tra padroni diversi (linee a terra entro 1,5 km) e bandierine col colore del comune; celle colorate su
    minimappa e mappa grande; barra di conquista + «Chiama 'n amico» quando sei in terra altrui.
@@ -12,6 +12,7 @@ const ls = { get: k => { try { return localStorage.getItem(k); } catch(e){ retur
 const cfg = window.TG_STATS_CONFIG || {};
 const ev = (t, c, v, x) => { try { TG.Stats && TG.Stats.ev(t, c, v, x); } catch(e){} };
 const $ = id => document.getElementById(id);
+const PASSO = 5;  // secondi di movimento per 1 punto: è uno speed game
 const R = 300, SQ3 = Math.sqrt(3), BOUNDS = { x0: -3300, x1: 8000, z0: -4700, z1: 3200 };
 const ETTARI = Math.round(2.598 * R * R / 10000);
 // Le contrade: nomi per le celle. Stessa lista in strumenti/zone.py.
@@ -95,8 +96,8 @@ function tick(){
   let c; try { c = TG.debug.car; } catch(e){ return; } if (!c) return;
   const z = cellaDi(c.x, c.z);
   if (!cella || z.id !== cella.id) { const prima = cella; cella = z; secondi = 0; annuncia(z, prima); }
-  if (Math.abs(c.speed || 0) > 2) { secondi++; if (secondi >= 20) { secondi = 0; accumula(z, 1); aggiornaBarra(); } }
-  if (Date.now() - ultimoInvio > 30000) { ultimoInvio = Date.now(); invia(false); }
+  if (Math.abs(c.speed || 0) > 2) { secondi++; if (secondi >= PASSO) { secondi = 0; accumula(z, 1); aggiornaBarra(); } }
+  if (Date.now() - ultimoInvio > 15000) { ultimoInvio = Date.now(); invia(false); }
 }
 let ultimoAnnuncio = 0;
 function annuncia(z, prima){
@@ -150,7 +151,7 @@ function aggiornaBarra(){
   barra.style.display = 'block';
   $('znMio').innerHTML = `<b>${corto(p)}</b> ${mio}`; $('znLoro').textContent = pad ? `${corto(pad)} ${loro}` : 'nessuno 0';
   $('znFill').style.width = (loro ? Math.min(100, mio / (loro + 1) * 100) : Math.min(100, mio * 100)) + '%';
-  $('znManca').innerHTML = pad ? `Ne mancano <b>${manca}</b><br>Gira qui: +1 fra ${20 - secondi} s · nocchie ×2` : `Terra de nessuno<br>Gira qui: +1 fra ${20 - secondi} s · o raccogli`;
+  $('znManca').innerHTML = pad ? `Ne mancano <b>${manca}</b><br>Gira qui: +1 fra ${PASSO - secondi} s · nocchie ×2` : `Terra de nessuno<br>Gira qui: +1 fra ${PASSO - secondi} s · o raccogli`;
   if (pad !== p) spiega(pad);
 }
 // la prima volta in terra altrui (o libera): come si ruba, in tre righe
@@ -159,7 +160,7 @@ function spiega(pad){
   if (!caricato || ls.get('tg-zone-spiegato') || !conPaese()) return; ls.set('tg-zone-spiegato', '1');
   how = document.createElement('div'); how.id = 'znHow';
   how.setAttribute('style', 'position:fixed;left:50%;bottom:calc(140px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:31;width:min(340px,92vw);padding:12px 14px;border-radius:16px;background:rgba(16,22,21,.92);border:1px solid #f2c74e;color:#f3e7cb;font:600 13px/1.35 Figtree,"Segoe UI",system-ui,sans-serif;backdrop-filter:blur(4px)');
-  how.innerHTML = `<b style="color:#f2c74e;font-size:15px">⚔ Come se ruba 'na terra</b><br>1. <b>Gira qui dentro</b>: ogni 20 secondi +1 pe' ${nomeP(conPaese())}.<br>2. <b>Raccogli nocchie qui</b>: in casa d'altri valgono doppio.<br>3. Quando superi i punti de ${pad ? nomeP(pad) : 'chi ce sta'}, a terra cambia colore: è vostra.<br><span style="color:#c9bfa8">A barra qui sopra te dice quanto manca. Da solo è lunga: 📣 chiama 'n amico.</span><div style="text-align:right;margin-top:6px"><button type="button" style="all:unset;cursor:pointer;padding:6px 14px;border-radius:9px;background:#f2c74e;color:#17201f;font-weight:800">Ho capito</button></div>`;
+  how.innerHTML = `<b style="color:#f2c74e;font-size:15px">⚔ Come se ruba 'na terra</b><br>1. <b>Gira qui dentro</b>: ogni 5 secondi +1 pe' ${nomeP(conPaese())}.<br>2. <b>Raccogli nocchie qui</b>: in casa d'altri valgono doppio.<br>3. Quando superi i punti de ${pad ? nomeP(pad) : 'chi ce sta'}, a terra cambia colore: è vostra.<br><span style="color:#c9bfa8">A barra qui sopra te dice quanto manca. Da solo è lunga: 📣 chiama 'n amico.</span><div style="text-align:right;margin-top:6px"><button type="button" style="all:unset;cursor:pointer;padding:6px 14px;border-radius:9px;background:#f2c74e;color:#17201f;font-weight:800">Ho capito</button></div>`;
   how.querySelector('button').onclick = () => { how.remove(); how = null; };
   document.body.appendChild(how); setTimeout(() => { if (how) { how.remove(); how = null; } }, 25000);
   ev('zone_spiegate', pad || 'nessuno');
@@ -220,7 +221,7 @@ function pannello(){
     const det = Object.entries(conta).sort((a, b) => b[1] - a[1]).map(([q, n]) => `${nomeP(q)} ${n}`).join(' · ') || 'terra de nessuno';
     return { k, pad, d, det }; }).sort((a, b) => a.d - b.d);
   pan.innerHTML = `<div class="znCard"><div class="znHead"><h2>⚔ A guerra de e nocchie</h2><button class="znX" aria-label="Chiudi">×</button></div>
-  <p class="znSub"><b>Come se ruba:</b> vai in una cella, <b>gira</b> (+1 ogni 20 s) e <b>raccogli nocchie</b> lì (in casa d'altri valgono doppio). Chi ha più punti negli ultimi 7 giorni la tiene. Una cella so' ${ETTARI} ettari.</p>
+  <p class="znSub"><b>Come se ruba:</b> vai in una cella, <b>gira</b> (+1 ogni 5 s) e <b>raccogli nocchie</b> lì (in casa d'altri valgono doppio). Chi ha più punti negli ultimi 7 giorni la tiene. Una cella so' ${ETTARI} ettari.</p>
   ${svg}<div class="znLeg">${leg}</div>
   <div class="znList">${righe.map(r => `<div class="znRow" data-z="${r.k.id}"><i style="background:${colore(r.pad)}"></i><div><b>${r.k.nome}</b><small>${r.det}</small></div><em>${r.d < 950 ? Math.round(r.d / 10) * 10 + ' m' : (r.d / 1000).toFixed(1).replace('.', ',') + ' km'}</em></div>`).join('')}</div></div>`;
   pan.querySelector('.znX').onclick = () => { pan.hidden = true; };
