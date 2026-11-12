@@ -160,9 +160,10 @@ function aggiornaBarra(){
   if (pad !== p) spiega(pad);
 }
 // la prima volta in terra altrui (o libera): come si ruba, in tre righe
-let how = null;
+let how = null, spiegato = false;
 function spiega(pad){
-  if (!caricato || !tPlay || Date.now() - tPlay < 40000 || ls.get('tg-zone-spiegato') || !conPaese()) return;  // non nel primo mezzo minuto: prima si guida ls.set('tg-zone-spiegato', '1');
+  if (spiegato || !caricato || !tPlay || Date.now() - tPlay < 40000 || ls.get('tg-zone-spiegato') || !conPaese()) return;  // non nel primo mezzo minuto: prima si guida
+  spiegato = true; ls.set('tg-zone-spiegato', '1');
   how = document.createElement('div'); how.id = 'znHow';
   how.setAttribute('style', 'position:fixed;left:50%;bottom:calc(140px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:31;width:min(300px,86vw);padding:10px 12px;border-radius:14px;background:rgba(16,22,21,.92);border:1px solid #f2c74e;color:#f3e7cb;font:600 12.5px/1.3 Figtree,"Segoe UI",system-ui,sans-serif;backdrop-filter:blur(4px)');
   how.innerHTML = `<b style="color:#f2c74e;font-size:14px">⚔ Come se ruba 'na terra</b><br>1. <b>Gira qui</b>: +1 ogni 5 s pe' ${corto(conPaese())}.<br>2. <b>Raccogli nocchie qui</b>: valgono doppio.<br>3. Superi i punti ${pad ? 'de ' + corto(pad) : 'de chi ce sta'} → è vostra.<div style="text-align:right;margin-top:4px"><button type="button" style="all:unset;cursor:pointer;padding:5px 12px;border-radius:9px;background:#f2c74e;color:#17201f;font-weight:800">Ho capito</button></div>`;
