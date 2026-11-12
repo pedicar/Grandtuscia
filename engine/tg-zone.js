@@ -96,7 +96,7 @@ function tick(){
   let c; try { c = TG.debug.car; } catch(e){ return; } if (!c) return;
   const z = cellaDi(c.x, c.z);
   if (!cella || z.id !== cella.id) { const prima = cella; cella = z; secondi = 0; annuncia(z, prima); }
-  if (Math.abs(c.speed || 0) > 2) { secondi++; if (secondi >= PASSO) { secondi = 0; accumula(z, 1); aggiornaBarra(); } }
+  if (Math.abs(c.speed || 0) > 2) { secondi++; if (secondi >= (TG.Zone.squadra ? 3 : PASSO)) { secondi = 0; accumula(z, 1); aggiornaBarra(); } }
   if (Date.now() - ultimoInvio > 15000) { ultimoInvio = Date.now(); invia(false); }
 }
 let ultimoAnnuncio = 0;
@@ -151,7 +151,7 @@ function aggiornaBarra(){
   barra.style.display = 'block';
   $('znMio').innerHTML = `<b>${corto(p)}</b> ${mio}`; $('znLoro').textContent = pad ? `${corto(pad)} ${loro}` : 'nessuno 0';
   $('znFill').style.width = (loro ? Math.min(100, mio / (loro + 1) * 100) : Math.min(100, mio * 100)) + '%';
-  $('znManca').innerHTML = pad ? `Ne mancano <b>${manca}</b><br>Gira qui: +1 fra ${PASSO - secondi} s · nocchie ×2` : `Terra de nessuno<br>Gira qui: +1 fra ${PASSO - secondi} s · o raccogli`;
+  $('znManca').innerHTML = pad ? `Ne mancano <b>${manca}</b><br>${TG.Zone.squadra ? '👥 In squadra! ' : 'Gira qui: '}+1 fra ${(TG.Zone.squadra ? 3 : PASSO) - secondi} s · nocchie ×2` : `Terra de nessuno<br>${TG.Zone.squadra ? '👥 In squadra! ' : 'Gira qui: '}+1 fra ${(TG.Zone.squadra ? 3 : PASSO) - secondi} s · o raccogli`;
   if (pad !== p) spiega(pad);
 }
 // la prima volta in terra altrui (o libera): come si ruba, in tre righe
