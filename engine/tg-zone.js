@@ -234,7 +234,7 @@ function pannello(){
     const det = Object.entries(conta).sort((a, b) => b[1] - a[1]).map(([q, n]) => `${nomeP(q)} ${n}`).join(' · ') || 'terra de nessuno';
     return { k, pad, d, det }; }).sort((a, b) => a.d - b.d);
   pan.innerHTML = `<div class="znCard"><div class="znHead"><h2>⚔ A guerra de e nocchie</h2><button class="znX" aria-label="Chiudi">×</button></div>
-  <p class="znSub"><b>Come se ruba:</b> vai in una cella, <b>gira</b> (+1 ogni 5 s) e <b>raccogli nocchie</b> lì (in casa d'altri valgono doppio). Chi ha più punti negli ultimi 7 giorni la tiene. Una cella so' ${ETTARI} ettari.</p>
+  <div class="znSub" style="line-height:1.45"><b>Come se gioca</b><br>⚔ <b>Gira in una cella</b>: ogni pochi secondi un punto pe' o paese tuo. Chi ha più punti negli ultimi 7 giorni la tiene. In casa d'altri vale doppio.<br>🌰 <b>Raccogli e vendi nocchie</b>: coi soldi compri mezzi più forti (🛵 5 s · 🛺 4 s · 🚜 3 s · semovente 2 s pe' punto).<br>🏁 <b>Fai i giochi</b> (pesca, carrettini…): oro 15, argento 10, bronzo 5 nocchie pe' o paese.<br>📣 <b>Chiama 'n amico</b>: in squadra se conquista più veloce. Una cella so' ${ETTARI} ettari.</div>
   ${svg}<div class="znLeg">${leg}</div>
   <div class="znList">${righe.map(r => `<div class="znRow" data-z="${r.k.id}"><i style="background:${colore(r.pad)}"></i><div><b>${r.k.nome}</b><small>${r.det}</small></div><em>${r.d < 950 ? Math.round(r.d / 10) * 10 + ' m' : (r.d / 1000).toFixed(1).replace('.', ',') + ' km'}</em></div>`).join('')}</div></div>`;
   pan.querySelector('.znX').onclick = () => { pan.hidden = true; };
