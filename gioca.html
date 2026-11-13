@@ -47,7 +47,8 @@ body.preparo #loading{z-index:15}body.preparo .destWrap{visibility:hidden}body.p
 
 .menuDue{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px;max-width:440px}.tg-btn.second{background:rgba(243,231,203,.1);border:1px solid rgba(243,231,203,.3);box-shadow:none;text-align:left;padding:12px 14px;justify-content:flex-start}.tg-btn.second span{display:grid;gap:2px;font-size:15px}.tg-btn.second small{font-size:11.5px;font-weight:600;opacity:.75;text-transform:none;letter-spacing:0}
 body.app #bApp{display:none}body.app .menuDue{grid-template-columns:1fr}
-.destWrap summary{cursor:pointer;list-style:none;margin-top:12px;opacity:.8}.destWrap summary::before{content:'▸ '}.destWrap[open] summary::before{content:'▾ '}.destWrap summary::-webkit-details-marker{display:none}
+.destWrap summary{cursor:pointer;list-style:none;margin-top:12px;opacity:.8}
+.opzWrap summary{cursor:pointer;list-style:none;margin-top:10px;opacity:.7;font-size:12px}.opzWrap summary::-webkit-details-marker{display:none}.destWrap summary::before{content:'▸ '}.destWrap[open] summary::before{content:'▾ '}.destWrap summary::-webkit-details-marker{display:none}
 .appPassi{margin:0;padding-left:20px;display:grid;gap:8px;color:#ddd4bf;font-size:15px;line-height:1.45}.appPassi b{color:#f3e7cb}.appIco{display:inline-grid;place-items:center;width:24px;height:24px;border-radius:6px;background:rgba(255,255,255,.12);vertical-align:-6px}
 #bPlay.attesa{filter:saturate(.75) brightness(.92)}
 .ldScene{position:absolute;inset:0;width:100%;height:100%}
@@ -747,10 +748,10 @@ html body.touch #hud .where.rot>#toast.rotOn .tMore{display:inline!important;mar
       <span class="gta-l2" data-t="Adventure" aria-hidden="true">Adventure</span>
       <i class="gta-flag" aria-hidden="true"></i>
     </div><span class="sr">Grand Tuscia Adventure</span></h1>
-    <p class="intro">Hai un pezzo di terra tra Caprarola e Carbognano, un sacco e due gambe. Raccogli le nocciole, vendile, comprati la Vespa, l'Ape, il trattore. Ma qui non vince il più ricco: vince chi fa rifiorire il suo paese e diventa il più rispettato della Tuscia.</p>
+    <p class="intro">Ogni metro che guidi è terra pe' o paese tuo. Gira, raccoi e nocchie, vinci e gare: chi tiene più Tuscia a fine settimana vince. Raccoi e vendi pe' comprà mezzi più forti, e chiama 'n amico pe' rubà e terre de l'altri.</p>
     <div id="qrCard" hidden></div>
     <button class="tg-btn play" id="bPlay">
-      <span>Gioca subito<small>Parti dalla tua terra, tra Caprarola e Carbognano</small></span>
+      <span>Gioca subito<small>Scegli o paese tuo e parti</small></span>
       <svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="11" cy="27" r="8" fill="none" stroke="#fff" stroke-width="3"/><circle cx="31" cy="30" r="5" fill="none" stroke="#fff" stroke-width="3"/><path d="M4 21h15l3-9h8l3 9v6" fill="none" stroke="#fff" stroke-width="3" stroke-linejoin="round"/></svg>
     </button>
     <div class="menuDue">
@@ -766,12 +767,14 @@ html body.touch #hud .where.rot>#toast.rotOn .tMore{display:inline!important;mar
       <button class="pillBtn" id="bInvito">🎁 Invita amici</button>
       <span class="prog" id="menuProg"></span>
     </div>
+    <details class="opzWrap"><summary class="tg-label">⚙ Opzioni: grafica e ribaltamenti</summary>
     <div class="menuRow">
       <div class="seg" id="segQ" role="group" aria-label="Qualità grafica"></div>
     </div>
     <div class="menuRow">
       <div class="seg" id="segCap" role="group" aria-label="Ribaltamenti dei mezzi"></div>
     </div>
+    </details>
     <div class="keysHint"><kbd>WASD</kbd> cammina e guida · <kbd>Spazio</kbd> freno · <kbd>E</kbd> vendi, entra, aiuta · <kbd>V</kbd> garage · <kbd>R</kbd> radio · <kbd>T</kbd> stazione · <kbd>M</kbd> mappa · <kbd>C</kbd> visuale · <kbd>H</kbd> clacson</div>
   </div>
 </div>

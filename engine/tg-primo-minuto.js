@@ -74,15 +74,29 @@ function overlay(){
   ov = document.createElement('div'); ov.id = 'pmOv'; ov.hidden = true; ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-modal', 'true');
   document.body.appendChild(ov); return ov;
 }
+// la frase d'ingresso: la guerra coi numeri veri («Fabrica tiene 20 terre, Carbognano 11»)
+async function fraseGuerra(){
+  try {
+    if (!cfg.url) return '';
+    const ctl = new AbortController(); const tm = setTimeout(() => ctl.abort(), 1500);
+    const r = await fetch(cfg.url.replace(/\/$/, '') + '/rest/v1/rpc/tg_zone', { method: 'POST', signal: ctl.signal, headers: { 'Content-Type': 'application/json', apikey: cfg.key, Authorization: 'Bearer ' + cfg.key }, body: '{}' });
+    clearTimeout(tm); if (!r.ok) return '';
+    const z = await r.json(), conta = {}, nomi = {};
+    for (const k in z) { if (!/^h-?\d+_-?\d+$/.test(k) || !z[k] || !z[k][0]) continue; const w = z[k][0]; conta[w.paese] = (conta[w.paese] || 0) + 1; nomi[w.paese] = (w.nome || w.paese).replace(/ (di|in|sul|al) .*$/i, ''); }
+    const top = Object.entries(conta).sort((a, b) => b[1] - a[1]).slice(0, 3);
+    if (!top.length) return "A Tuscia è ancora tutta terra de nessuno: a prima terra è de chi arriva.";
+    return 'Mo\' ' + top.map(([p, n]) => `<b>${nomi[p]}</b> tiene ${n} terr${n === 1 ? 'a' : 'e'}`).join(', ') + '. Tu pe\' chi giochi?';
+  } catch(e){ return ''; }
+}
 async function chiediPaese(){
-  const o = overlay(); const comuni = await listaComuni();
+  const o = overlay(); const [comuni, guerra] = await Promise.all([listaComuni(), CAMP && FRASI_ARRIVO[CAMP] ? Promise.resolve('') : fraseGuerra()]);
   // i 6 più giocati come bottoni (il 10/11: 22 giocatori su 29 hanno dovuto aprire «Altro comune…» perché i primi sei erano in ordine alfabetico);
   // tutti gli altri si trovano scrivendo due lettere
   const rank = c => { const i = POPOLARI.indexOf(c.id); return i < 0 ? 99 : i; };
   const ord = comuni.slice().sort((a, b) => rank(a) - rank(b) || a.nome.localeCompare(b.nome, 'it'));
   const primi = ord.slice(0, 6), fuori = ord.find(c => c.id === 'fuori');
-  o.innerHTML = `<div class="pmBox"><div class="pmEye">TRONO DE NOCCHIE · SFIDA DEI COMUNI</div><h2>De 'ndo sei?</h2>
-  <p>${(CAMP && FRASI_ARRIVO[CAMP]) || "Ogni nocchia che raccoi è 'n punto pe' o paese tuo. Scegli o comune: a classifica è pubblica."}</p>
+  o.innerHTML = `<div class="pmBox"><div class="pmEye">⚔ A GUERRA DE I PAESI</div><h2>De 'ndo sei?</h2>
+  <p>${(CAMP && FRASI_ARRIVO[CAMP]) || "Ogni metro che guidi è terra pe' o paese tuo."} ${guerra || "Scegli o comune e parti: a classifica è pubblica."}</p>
   <div class="pmGrid">${primi.map(c => `<button data-p="${c.id}">${c.nome}</button>`).join('')}</div>
   <input class="pmCerca" id="pmCerca" type="search" autocomplete="off" autocorrect="off" spellcheck="false" placeholder="Scrivi o paese tuo (so' ${comuni.length - (fuori ? 1 : 0)} comuni de a Tuscia)…" aria-label="Cerca il tuo comune">
   <div class="pmTrovati" id="pmTrovati" hidden></div>
@@ -174,6 +188,7 @@ function rientro(){
 /* ---------- pulsante Gioca: prima il paese ---------- */
 function aggancia(){
   benvenuto(); rientro();
+  if (!CAMP) autoPlay();  // chi entra la prima volta non vede il menu: una domanda sola («De 'ndo sei?») e si parte
   const menu = $('menu');
   if (menu) { if (!menu.hidden) caricato(); else new MutationObserver((m, o) => { if (!menu.hidden) { caricato(); o.disconnect(); } }).observe(menu, { attributes: true, attributeFilter: ['hidden'] }); }
   const b = $('bPlay'); if (!b) return;
