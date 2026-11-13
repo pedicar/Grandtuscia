@@ -12,7 +12,14 @@ const ls = { get: k => { try { return localStorage.getItem(k); } catch(e){ retur
 const cfg = window.TG_STATS_CONFIG || {};
 const ev = (t, c, v, x) => { try { TG.Stats && TG.Stats.ev(t, c, v, x); } catch(e){} };
 const $ = id => document.getElementById(id);
-const PASSO = 5;  // secondi di movimento per 1 punto: è uno speed game
+// secondi di movimento per 1 punto: è uno speed game, e il mezzo conta. Il contadino che vende di più si compra mezzi migliori e conquista più veloce.
+const PASSI = { piedi: 8, vespa: 5, ape: 4, trattore: 3, semovente: 2, aereo: 6 };
+const ICONE = { piedi: '🚶', vespa: '🛵', ape: '🛺', trattore: '🚜', semovente: '🌰', aereo: '✈' };
+const mezzo = () => { try { return TG.debug.VEH.cur.id; } catch(e){ return 'vespa'; } };
+const passo = () => { const b = PASSI[mezzo()] || 5; return TG.Zone && TG.Zone.squadra ? Math.max(2, b - 2) : b; };
+// nel garage: ogni mezzo dice quanto vale in guerra
+(function guerraNelGarage(n){ const M = TG.Contadino && TG.Contadino.MEZZI; if (!M) { if (n < 20) setTimeout(() => guerraNelGarage(n + 1), 1000); return; }
+  for (const k in M) if (PASSI[k] && !/In guerra/.test(M[k].cosa)) M[k].cosa += ` ⚔ In guerra: +1 ogni ${PASSI[k]} s.`; })(0);
 const R = 300, SQ3 = Math.sqrt(3), BOUNDS = { x0: -3300, x1: 8000, z0: -4700, z1: 3200 };
 const ETTARI = Math.round(2.598 * R * R / 10000);
 // Le contrade: nomi per le celle. Stessa lista in strumenti/zone.py.
@@ -97,7 +104,7 @@ function tick(){
   let c; try { c = TG.debug.car; } catch(e){ return; } if (!c) return;
   const z = cellaDi(c.x, c.z);
   if (!cella || z.id !== cella.id) { const prima = cella; cella = z; secondi = 0; annuncia(z, prima); }
-  if (Math.abs(c.speed || 0) > 2) { secondi++; if (secondi >= (TG.Zone.squadra ? 3 : PASSO)) { secondi = 0; accumula(z, 1); aggiornaBarra(); } }
+  if (Math.abs(c.speed || 0) > 2) { secondi++; if (secondi >= passo()) { secondi = 0; accumula(z, 1); aggiornaBarra(); } }
   if (Date.now() - ultimoInvio > 15000) { ultimoInvio = Date.now(); invia(false); }
 }
 let ultimoAnnuncio = 0;
@@ -155,8 +162,8 @@ function aggiornaBarra(){
   barra.style.display = 'block';
   $('znMio').innerHTML = `<b>${corto(p)}</b> ${mio}`; $('znLoro').textContent = pad ? `${corto(pad)} ${loro}` : 'nessuno 0';
   $('znFill').style.width = (loro ? Math.min(100, mio / (loro + 1) * 100) : Math.min(100, mio * 100)) + '%';
-  const fra = (TG.Zone.squadra ? 3 : PASSO) - secondi;
-  $('znManca').innerHTML = (pad ? `Mancano <b>${manca}</b> · ` : '') + (TG.Zone.squadra ? '👥 ' : '') + `+1 fra ${fra} s`;
+  const fra = Math.max(0, passo() - secondi);
+  $('znManca').innerHTML = (pad ? `Mancano <b>${manca}</b> · ` : '') + (TG.Zone.squadra ? '👥' : '') + (ICONE[mezzo()] || '') + ` +1 fra ${fra} s`;
   if (pad !== p) spiega(pad);
 }
 // la prima volta in terra altrui (o libera): come si ruba, in tre righe
@@ -166,7 +173,7 @@ function spiega(pad){
   spiegato = true; ls.set('tg-zone-spiegato', '1');
   how = document.createElement('div'); how.id = 'znHow';
   how.setAttribute('style', 'position:fixed;left:50%;bottom:calc(140px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:31;width:min(300px,86vw);padding:10px 12px;border-radius:14px;background:rgba(16,22,21,.92);border:1px solid #f2c74e;color:#f3e7cb;font:600 12.5px/1.3 Figtree,"Segoe UI",system-ui,sans-serif;backdrop-filter:blur(4px)');
-  how.innerHTML = `<b style="color:#f2c74e;font-size:14px">⚔ Come se ruba 'na terra</b><br>1. <b>Gira qui</b>: +1 ogni 5 s pe' ${corto(conPaese())}.<br>2. <b>Raccogli nocchie qui</b>: valgono doppio.<br>3. Superi i punti ${pad ? 'de ' + corto(pad) : 'de chi ce sta'} → è vostra.<div style="text-align:right;margin-top:4px"><button type="button" style="all:unset;cursor:pointer;padding:5px 12px;border-radius:9px;background:#f2c74e;color:#17201f;font-weight:800">Ho capito</button></div>`;
+  how.innerHTML = `<b style="color:#f2c74e;font-size:14px">⚔ Come se ruba 'na terra</b><br>1. <b>Gira qui</b>: +1 ogni ${PASSI[mezzo()] || 5} s pe' ${corto(conPaese())} (co' i mezzi più grossi, più veloce).<br>2. <b>Raccogli nocchie qui</b>: valgono doppio.<br>3. Superi i punti ${pad ? 'de ' + corto(pad) : 'de chi ce sta'} → è vostra.<div style="text-align:right;margin-top:4px"><button type="button" style="all:unset;cursor:pointer;padding:5px 12px;border-radius:9px;background:#f2c74e;color:#17201f;font-weight:800">Ho capito</button></div>`;
   how.querySelector('button').onclick = () => { how.remove(); how = null; };
   document.body.appendChild(how); setTimeout(() => { if (how) { how.remove(); how = null; } }, 25000);
   ev('zone_spiegate', pad || 'nessuno');
