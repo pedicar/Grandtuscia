@@ -27,6 +27,9 @@ if (S === 0) {
   if (!ls.get('tg-primo-minuto')) { ls.set('tg-primo-minuto', '1'); ls.set('tg-strati-pm-rinviato', '1'); }  // il cronometro arriva allo stadio 1, come sfida
 } else if (ls.get('tg-strati-pm-rinviato')) { ls.del('tg-strati-pm-rinviato'); ls.del('tg-primo-minuto'); }
 const st = document.createElement('style'); st.textContent = `
+/* sempre: niente orologio e richieste del contadino in alto finché non si arriva allo stadio 2 (resta la radio) */
+html[data-stadio="0"] #hOra#hOra#hOra,html[data-stadio="1"] #hOra#hOra#hOra,html[data-stadio="0"] #hGoal#hGoal#hGoal,html[data-stadio="1"] #hGoal#hGoal#hGoal{display:none!important}
+html.tg-noPodere #prompt{display:none!important}
 /* stadio 0: schermo libero */
 html[data-stadio="0"] #ngHud,html[data-stadio="0"] #sfHud,html[data-stadio="0"] #pmRiga,html[data-stadio="0"] #pmHud,html[data-stadio="0"] #prMini{display:none!important}
 html[data-stadio="0"] body.touch #hud .where>#score,html[data-stadio="0"] body.touch #hud .where.rot>#score,html[data-stadio="0"] body.phoneBox .where.aperto #score{display:none!important}
@@ -59,6 +62,8 @@ function ascolta(){
   n._strati = 1; S0.ev = n;
 }
 new MutationObserver(() => { if (document.body.classList.contains('playing') && !t0) t0 = Date.now(); }).observe(document.documentElement, { attributes: true, subtree: true, attributeFilter: ['class'] });
+// stadio 0: il bottone «La tua terra · IL PODERE» (vendere, mezzi, terreni) non serve nei primi minuti: si guida e si raccoglie
+setInterval(() => { try { const n = document.getElementById('pName'), on = S === 0 && n && /tua terra|podere/i.test(n.textContent) && t0 && Date.now() - t0 < 240000; document.documentElement.classList.toggle('tg-noPodere', !!on); } catch(e){} }, 800);
 TG.Strati = { stadio: () => S, giorni: () => giorni.length, forza: n => { ls.set('tg-strati-forza', n); location.reload(); }, libera: () => { ls.del('tg-strati-forza'); location.reload(); } };
 let tent = 0; const prova = () => { radioZitta(); ascolta(); if (++tent < 30 && (!TG.Stats || !window.RadioNocchia)) setTimeout(prova, 1000); };
 prova();

@@ -98,16 +98,16 @@ function aggiornaBox(){
   if (!document.body.classList.contains('playing')) { box.style.display = 'none'; return; }
   let c; try { c = TG.debug.car; } catch(e){ return; } if (!c) return;
   const dentro = terraIn(c.x, c.z), T = dentro || vicina(c.x, c.z, 60);
-  if (!T) { box.style.display = 'none'; return; }
+  if (!T) { box.style.display = 'none'; const pr = $('primi'); if (pr) pr.style.visibility = ''; return; }
   const m = TG.debug.mini || $('mini'); if (m) { const r = m.getBoundingClientRect(); box.style.top = (r.bottom + 6) + 'px'; box.style.right = Math.max(10, innerWidth - r.right) + 'px'; } else box.style.top = 'calc(232px + env(safe-area-inset-top,0px))';
   const p = paese(), l = righe(T.id), pad = l[0] && l[0].punti > 0 ? l[0] : null, mio = punti(T.id, p) + (daMandare[T.id] || 0);
   const altro = pad && pad.paese !== p ? pad : (l.find(x => x.paese !== p) || null);
   box.style.display = 'block'; box.style.borderColor = pad ? colore(pad.paese) : 'rgba(255,255,255,.3)';
   const riga = (pp, n) => `<span><i style="background:${colore(pp)}"></i>${pp === p ? '<b>' : ''}${corto(pp)} ${n}${pp === p ? '</b>' : ''}</span>`;
-  const max = Math.max(1, mio, altro ? altro.punti : 0);
-  box.innerHTML = `<div class="n">🌰 ${breve(T.nome)}</div><div class="r">${p ? riga(p, mio) : ''}${altro ? riga(altro.paese, altro.punti) : '<span>nessuno</span>'}</div>`
-    + `<div class="b"><i style="width:${Math.round(mio / max * 100)}%;background:${colore(p)}"></i></div>`
-    + `<div class="m">${!dentro ? 'Entra e raccoi' : (!pad ? 'Terra de nessuno: raccoi e è vostra' : pad.paese === p ? 'È vostra: tenetela' : `Ne mancano ${altro.punti - mio + 1}: raccoi!`)}</div>`;
+  const consiglio = !dentro ? 'entra e raccoi' : (!pad ? 'raccoi: è libero' : pad.paese === p ? 'è vostro' : `ne mancano ${altro.punti - mio + 1}`);
+  box.innerHTML = `<div class="n">🌰 ${breve(T.nome)} · <span style="color:#c9bfa8;font-weight:600">${consiglio}</span></div><div class="r">${p ? riga(p, mio) : ''}${altro ? riga(altro.paese, altro.punti) : '<span>nessuno</span>'}</div>`;
+  // il compito iniziale («Raccogli 10 nocciole») dice la stessa cosa: quando c'è il blocco, il compito si toglie
+  const pr = $('primi'); if (pr) pr.style.visibility = 'hidden';
 }
 
 /* ---------- cartelli sopra i terreni ---------- */
@@ -124,10 +124,11 @@ function cartello(T){
   c.fillStyle = '#f3e7cb'; c.font = '700 30px Figtree, system-ui, sans-serif'; c.fillText(breve(T.nome).slice(0, 30), 270, 40);
   c.fillStyle = p ? col : '#c9bfa8'; c.font = '800 46px Figtree, system-ui, sans-serif'; c.fillText(testo.slice(0, 18), 270, 88);
   const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(cv), transparent: true, depthWrite: false }));
-  s.scale.set(32, 8, 1); let y = 0; try { y = TG.debug.world.ground(T.x, T.z); } catch(e){}
-  s.position.set(T.x, y + 22, T.z); s.renderOrder = 3;
+  s.scale.set(22, 5.5, 1); let y = 0; try { y = TG.debug.world.ground(T.x, T.z); } catch(e){}
+  s.position.set(T.x, y + 30, T.z); s.renderOrder = 3;
   TG.debug.scene.add(s); cartelli[T.id] = { s, k };
 }
+function nascondiVicini(){ let c; try { c = TG.debug.car; } catch(e){ return; } if (!c) return; for (const T of TERRE) { const k = cartelli[T.id]; if (k) k.s.visible = Math.hypot(c.x - T.x, c.z - T.z) > T.rad + 90; } }
 let vCart = -1;
 function aggiornaCartelli(){ if (vCart === versione || !window.THREE) return; vCart = versione; for (const T of TERRE) try { cartello(T); } catch(e){} }
 
@@ -202,7 +203,7 @@ function avvia(){
   TERRE = costruisci(); if (TERRE.length < 2) return setTimeout(avvia, 1500);
   apriTutti(); aggancia();
   aggiorna().then(controllaPerse); setInterval(aggiorna, 60000);
-  setInterval(() => { aggiornaBox(); aggiornaCartelli(); bottone(); }, 700);
+  setInterval(() => { aggiornaBox(); aggiornaCartelli(); nascondiVicini(); bottone(); }, 700);
   setInterval(invia, 5000); addEventListener('pagehide', invia);
   requestAnimationFrame(mini);
 }
