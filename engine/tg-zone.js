@@ -125,11 +125,11 @@ let chip = null, barra = null;
 function ui(){
   if (chip) return;
   const st = document.createElement('style'); st.textContent = `
-#znChip{position:fixed;z-index:30;right:10px;width:min(172px,46vw);padding:4px 8px;border-radius:12px;border:1px solid rgba(255,255,255,.3);background:rgba(16,22,21,.8);color:#f3e7cb;font:800 11px/1.25 Figtree,"Segoe UI",system-ui,sans-serif;cursor:pointer;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);text-align:left}
+#znChip{position:fixed;z-index:30;right:10px;width:min(196px,52vw);padding:4px 8px;border-radius:12px;border:1px solid rgba(255,255,255,.3);background:rgba(16,22,21,.8);color:#f3e7cb;font:800 11px/1.25 Figtree,"Segoe UI",system-ui,sans-serif;cursor:pointer;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);text-align:left}
 #znChip .c{display:flex;align-items:center;gap:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#znChip .c i{flex:none;width:8px;height:8px;border-radius:50%}
 #znBar{display:none;margin-top:3px;font-weight:600;color:#c9bfa8}#znBar .t{display:flex;justify-content:space-between;gap:6px;white-space:nowrap;overflow:hidden;color:#f3e7cb}#znBar .t b{color:#f2c74e}
 #znBar .b{height:4px;border-radius:2px;background:rgba(255,255,255,.14);margin:3px 0;overflow:hidden}#znBar .b i{display:block;height:100%;background:#f2c74e;width:0;transition:width .4s}
-#znBar .m{display:flex;justify-content:space-between;align-items:center;gap:4px;white-space:nowrap;overflow:hidden}#znBar .m b{color:#f3e7cb}
+#znBar .m{display:flex;justify-content:space-between;align-items:center;gap:4px;white-space:nowrap}#znBar .m>span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis}#znBar .m b{color:#f3e7cb}
 #znBar button{all:unset;cursor:pointer;flex:none;padding:2px 7px;border-radius:7px;background:#d8432a;color:#fff;font:800 11px Figtree,system-ui,sans-serif}
 body:has(#mapOv:not([hidden])) #znChip,body:has(#pmOv:not([hidden])) #znChip,body:has(#lvOv:not([hidden])) #znChip,body:has(#rtOv:not([hidden])) #znChip,body:has(#znOv:not([hidden])) #znChip,body:not(.playing) #znChip{display:none!important}
 #znMini{position:fixed;pointer-events:none;border-radius:50%;z-index:11}
@@ -163,7 +163,7 @@ function aggiornaBarra(){
   $('znMio').innerHTML = `<b>${corto(p)}</b> ${mio}`; $('znLoro').textContent = pad ? `${corto(pad)} ${loro}` : 'nessuno 0';
   $('znFill').style.width = (loro ? Math.min(100, mio / (loro + 1) * 100) : Math.min(100, mio * 100)) + '%';
   const fra = Math.max(0, passo() - secondi);
-  $('znManca').innerHTML = (pad ? `Mancano <b>${manca}</b> · ` : '') + (TG.Zone.squadra ? '👥' : '') + (ICONE[mezzo()] || '') + ` +1 fra ${fra} s`;
+  $('znManca').innerHTML = (pad ? `Mancano <b>${manca}</b> · ` : '') + (TG.Zone.squadra ? '👥' : '') + (ICONE[mezzo()] || '') + ` +1 fra ${fra}s`;
   if (pad !== p) spiega(pad);
 }
 // la prima volta in terra altrui (o libera): come si ruba, in tre righe
@@ -355,8 +355,28 @@ function aggancia(){
   n._zone = 1; PM.mandaPunti = n;
 }
 function giro(){ try { overlayMappa(); overlayMini(); } catch(e){} requestAnimationFrame(giro); }
+// prima volta: se parti in terra d'altri, la freccia ti porta alla terra de nessuno più vicina (una cella si prende subito, 95 punti no)
+function primaTerra(){
+  if (ls.get('tg-zone-prima-terra') || !caricato || !conPaese()) return false;
+  if (!document.body.classList.contains('playing')) return false;
+  let c, E; try { c = TG.debug.car; E = TG.debug.world; } catch(e){ return false; } if (!c || !cella) return false;
+  ls.set('tg-zone-prima-terra', '1');
+  const p = conPaese(), qui = padrone(cella.id);
+  if (!qui || qui === p) return true;  // già in terra libera o tua: niente da fare
+  const acqua = (x, z) => { try { return E.isWater && E.isWater(x, z); } catch(e){ return false; } };
+  const libere = celleVicine(c.x, c.z, 1800).filter(x => !padrone(x.id) && !acqua(x.x, x.z)).sort((a, b) => Math.hypot(a.x - c.x, a.z - c.z) - Math.hypot(b.x - c.x, b.z - c.z));
+  const t = libere[0]; if (!t) return true;
+  const d = Math.hypot(t.x - c.x, t.z - c.z), n = nomeCella(t);
+  setTimeout(() => {
+    try { TG.debug.setDest({ x: t.x, z: t.z, name: 'Terra de nessuno · ' + n }); } catch(e){}
+    try { TG.msg(`Qui è terra de ${corto(qui)}`, `A ${d < 950 ? Math.round(d / 10) * 10 + ' m' : (d / 1000).toFixed(1).replace('.', ',') + ' km'} c'è terra de nessuno: segui a freccia e pijatela pe' ${corto(p)}`, 6); } catch(e){}
+    ev('prima_terra', t.id, Math.round(d), { da: qui });
+  }, 5000);
+  return true;
+}
 function avvia(){
   if (!TG.debug || !TG.PrimoMinuto) return setTimeout(avvia, 1000);
+  { const t = setInterval(() => { if (primaTerra() || ls.get('tg-zone-prima-terra')) clearInterval(t); }, 1500); }
   aggancia(); aggiornaPadroni(); setInterval(aggiornaPadroni, 90000);
   setInterval(tick, 1000); bottone(); setInterval(bottone, 5000);
   setInterval(aggiornaChip, 1000); setInterval(() => { try { confini3D(); } catch(e){} }, 700); giro();
