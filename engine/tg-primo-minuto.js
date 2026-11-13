@@ -79,13 +79,13 @@ async function fraseGuerra(){
   try {
     if (!cfg.url) return '';
     const ctl = new AbortController(); const tm = setTimeout(() => ctl.abort(), 1500);
-    const r = await fetch(cfg.url.replace(/\/$/, '') + '/rest/v1/rpc/tg_zone', { method: 'POST', signal: ctl.signal, headers: { 'Content-Type': 'application/json', apikey: cfg.key, Authorization: 'Bearer ' + cfg.key }, body: '{}' });
+    const r = await fetch(cfg.url.replace(/\/$/, '') + '/rest/v1/rpc/tg_terre', { method: 'POST', signal: ctl.signal, headers: { 'Content-Type': 'application/json', apikey: cfg.key, Authorization: 'Bearer ' + cfg.key }, body: '{}' });
     clearTimeout(tm); if (!r.ok) return '';
     const z = await r.json(), conta = {}, nomi = {};
-    for (const k in z) { if (!/^h-?\d+_-?\d+$/.test(k) || !z[k] || !z[k][0]) continue; const w = z[k][0]; conta[w.paese] = (conta[w.paese] || 0) + 1; nomi[w.paese] = (w.nome || w.paese).replace(/ (di|in|sul|al) .*$/i, ''); }
+    for (const k in z) { if (!/^t:/.test(k) || !z[k] || !z[k][0]) continue; const w = z[k][0]; conta[w.paese] = (conta[w.paese] || 0) + 1; nomi[w.paese] = (w.nome || w.paese).replace(/ (di|in|sul|al) .*$/i, ''); }
     const top = Object.entries(conta).sort((a, b) => b[1] - a[1]).slice(0, 3);
-    if (!top.length) return "A Tuscia è ancora tutta terra de nessuno: a prima terra è de chi arriva.";
-    return 'Mo\' ' + top.map(([p, n]) => `<b>${nomi[p]}</b> tiene ${n} terr${n === 1 ? 'a' : 'e'}`).join(', ') + '. Tu pe\' chi giochi?';
+    if (!top.length) return "Questa settimana i terreni so' ancora tutti liberi: o primo che raccoje se li pija.";
+    return 'Mo\' ' + top.map(([p, n]) => `<b>${nomi[p]}</b> tiene ${n} terren${n === 1 ? 'o' : 'i'}`).join(', ') + '. Tu pe\' chi giochi?';
   } catch(e){ return ''; }
 }
 async function chiediPaese(){
@@ -96,7 +96,7 @@ async function chiediPaese(){
   const ord = comuni.slice().sort((a, b) => rank(a) - rank(b) || a.nome.localeCompare(b.nome, 'it'));
   const primi = ord.slice(0, 6), fuori = ord.find(c => c.id === 'fuori');
   o.innerHTML = `<div class="pmBox"><div class="pmEye">⚔ A GUERRA DE I PAESI</div><h2>De 'ndo sei?</h2>
-  <p>${(CAMP && FRASI_ARRIVO[CAMP]) || "Ogni metro che guidi è terra pe' o paese tuo."} ${guerra || "Scegli o comune e parti: a classifica è pubblica."}</p>
+  <p>${(CAMP && FRASI_ARRIVO[CAMP]) || "Ogni nocchia che raccoi è pe' o paese tuo: chi ne raccoje de più se pija o terreno."} ${guerra || "Scegli o comune e parti: a classifica è pubblica."}</p>
   <div class="pmGrid">${primi.map(c => `<button data-p="${c.id}">${c.nome}</button>`).join('')}</div>
   <input class="pmCerca" id="pmCerca" type="search" autocomplete="off" autocorrect="off" spellcheck="false" placeholder="Scrivi o paese tuo (so' ${comuni.length - (fuori ? 1 : 0)} comuni de a Tuscia)…" aria-label="Cerca il tuo comune">
   <div class="pmTrovati" id="pmTrovati" hidden></div>
