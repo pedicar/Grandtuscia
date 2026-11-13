@@ -38,6 +38,8 @@ async function collega(){
     altri = nuovi; aggiornaConteggio();
     if (entrati.length && pronto && Date.now() - ultimoAvviso > 20000 && !(TG.Strati && TG.Strati.stadio() === 0)) { ultimoAvviso = Date.now(); const p = nuovi[entrati[0]].dati; try { TG.msg(`${p.nome ? p.nome : 'Uno de ' + corto(p.paese)} è entrato`, p.paese === paese() ? 'Uno de i vostri: cercatelo' : 'Occhio a e terre vostre', 3); } catch(e){} }
   });
+  // messaggi di guerra tra giocatori (assalto, presa di una nocchia, fine): li gira a chi ascolta (tg-assalto.js)
+  canale.on('broadcast', { event: 'guerra' }, m => { try { if (m && m.payload && m.payload.dev !== dev()) dispatchEvent(new CustomEvent('tg-guerra', { detail: m.payload })); } catch(e){} });
   canale.subscribe(s => { if (s === 'SUBSCRIBED') { pronto = true; manda(true); } });
 }
 function manda(forza){
@@ -115,7 +117,7 @@ function aggiornaConteggio(){
   const per = {}; for (const k in altri) { const p = altri[k].dati.paese; per[p] = (per[p] || 0) + 1; }
   el.innerHTML = `🟢 <b style="color:#f3e7cb">${n} in giro</b>: ` + Object.entries(per).sort((a, b) => b[1] - a[1]).map(([p, c]) => `<span style="color:${colore(p)}">${c} ${corto(p)}</span>`).join(', ');
 }
-TG.Presenza = { altri: () => altri, conteggio: () => Object.keys(altri).length, manda, _dbg: () => ({ me, pronto, altri }) };
+TG.Presenza = { invia: d => { try { if (canale && pronto) canale.send({ type: 'broadcast', event: 'guerra', payload: Object.assign({ dev: dev(), t: Date.now() }, d) }); } catch(e){} }, etichetta: (t, c) => etichetta(t, c), altri: () => altri, conteggio: () => Object.keys(altri).length, manda, _dbg: () => ({ me, pronto, altri }) };
 function avvia(){
   if (!TG.debug || !TG.PrimoMinuto) return setTimeout(avvia, 1000);
   collega(); setInterval(() => { if (!canale) collega(); manda(false); }, 1000); giro(); giroMini();

@@ -67,16 +67,22 @@ async function rpc(nome, body){
   const r = await fetch(cfg.url.replace(/\/$/, '') + '/rest/v1/rpc/' + nome, { method: 'POST', headers: { 'Content-Type': 'application/json', apikey: cfg.key, Authorization: 'Bearer ' + cfg.key }, body: JSON.stringify(body || {}) });
   if (!r.ok) throw new Error('HTTP ' + r.status); return r.json();
 }
-let padroni = {}, locali = {}, caricato = false, tPlay = 0, cella = null, daMandare = {}, secondi = 0, ultimoInvio = 0, versione = 0;
+let padroni = {}, difensori = {}, locali = {}, caricato = false, tPlay = 0, cella = null, daMandare = {}, secondi = 0, ultimoInvio = 0, versione = 0;
 // punti di un paese in una cella: quelli del server + quelli miei accettati da allora (così il colore cambia subito)
 function punti(id, p){ const l = padroni[id] || []; const r = l.find(x => x.paese === p); return (r ? r.punti : 0) + ((locali[id] || {})[p] || 0); }
 function padrone(id){
+  // da oggi la cella è de chi la difende (record d'assalto degli ultimi 7 giorni); dove nessuno l'ha ancora assaltata, valgono i vecchi punti
+  if (difensori[id]) return difensori[id].paese;
   const l = padroni[id] || []; let best = l[0] ? { paese: l[0].paese, punti: l[0].punti } : null;
   const p = conPaese(); if (p) { const mio = punti(id, p); if (mio > 0 && (!best || mio > best.punti)) best = { paese: p, punti: mio }; }
   return best ? best.paese : null;
 }
 const padronePunti = id => { const p = padrone(id); return p ? punti(id, p) : 0; };
-async function aggiornaPadroni(){ try { const n = await rpc('tg_zone'); if (n && typeof n === 'object') { padroni = n; locali = {}; versione++; } } catch(e){} caricato = true; }
+async function aggiornaPadroni(){ try { const [n, d] = await Promise.all([rpc('tg_zone'), rpc('tg_celle').catch(() => null)]); if (n && typeof n === 'object') { padroni = n; locali = {}; } if (d && typeof d === 'object') difensori = Object.assign(d, localiDif()); versione++; } catch(e){} caricato = true; }
+// le celle prese da me negli ultimi minuti valgono subito, anche prima che il server le ridia
+const mieDif = {}; function localiDif(){ const o = {}, t = Date.now(); for (const k in mieDif) if (t - mieDif[k].t < 180000) o[k] = mieDif[k].d; return o; }
+function difensore(id){ return difensori[id] || null; }
+function nuovoDifensore(id, d){ difensori[id] = d; mieDif[id] = { d, t: Date.now() }; versione++; aggiornaChip(); }
 function accumula(c, n){ if (!c || !conPaese() || !n) return; daMandare[c.id] = (daMandare[c.id] || 0) + n; }
 async function invia(forza){
   const p = conPaese(), d = dev(); if (!p || !d) return;
@@ -104,7 +110,6 @@ function tick(){
   let c; try { c = TG.debug.car; } catch(e){ return; } if (!c) return;
   const z = cellaDi(c.x, c.z);
   if (!cella || z.id !== cella.id) { const prima = cella; cella = z; secondi = 0; annuncia(z, prima); }
-  if (Math.abs(c.speed || 0) > 2) { secondi++; if (secondi >= passo()) { secondi = 0; accumula(z, 1); aggiornaBarra(); } }
   if (Date.now() - ultimoInvio > 15000) { ultimoInvio = Date.now(); invia(false); }
 }
 let ultimoAnnuncio = 0;
@@ -113,9 +118,10 @@ function annuncia(z, prima){
   if (prima && pad === padPrima) return;  // stessa terra: niente
   if (Date.now() - ultimoAnnuncio < 6000) return; ultimoAnnuncio = Date.now();
   const n = nomeCella(z); let t, s;
-  if (!pad) { t = `${n} · terra de nessuno`; s = p ? `A prima nocchia qui è de ${nomeP(p)}` : ''; }
-  else if (pad === p) { t = `${n} · terra de ${nomeP(pad)}`; s = 'Casa vostra'; }
-  else { t = `${n} · terra de ${nomeP(pad)}`; s = p ? `Qui ogni punto vale doppio pe' ${nomeP(p)}` : ''; }
+  const d = difensore(z.id);
+  if (!pad) { t = `${n} · terra de nessuno`; s = p ? `Tocca ⚔ Assalta: 6 nocchie in 90 s e è vostra` : ''; }
+  else if (pad === p) { t = `${n} · terra de ${nomeP(pad)}`; s = d ? `La difende ${d.nome || 'uno de ' + corto(pad)} · ${fmtT(d.tempo)}` : 'Casa vostra'; }
+  else { t = `${n} · terra de ${nomeP(pad)}`; s = p ? (d ? `Batti ${d.nome || 'er difensore'} (${fmtT(d.tempo)}): tocca ⚔ Assalta` : `Tocca ⚔ Assalta pe' ruballa`) : ''; }
   try { TG.msg(t, s, 3); } catch(e){}
   ev('zona_entrata', z.id, null, { padrone: pad });
 }
@@ -130,16 +136,17 @@ function ui(){
 #znBar{display:none;margin-top:3px;font-weight:600;color:#c9bfa8}#znBar .t{display:flex;justify-content:space-between;gap:6px;white-space:nowrap;overflow:hidden;color:#f3e7cb}#znBar .t b{color:#f2c74e}
 #znBar .b{height:4px;border-radius:2px;background:rgba(255,255,255,.14);margin:3px 0;overflow:hidden}#znBar .b i{display:block;height:100%;background:#f2c74e;width:0;transition:width .4s}
 #znBar .m{display:flex;justify-content:space-between;align-items:center;gap:4px;white-space:nowrap}#znBar .m>span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis}#znBar .m b{color:#f3e7cb}
-#znBar button{all:unset;cursor:pointer;flex:none;padding:2px 7px;border-radius:7px;background:#d8432a;color:#fff;font:800 11px Figtree,system-ui,sans-serif}
+#znBar button{all:unset;cursor:pointer;flex:none;padding:2px 7px;border-radius:7px;background:#d8432a;color:#fff;font:800 11px Figtree,system-ui,sans-serif}#znBar button.ass{display:block;text-align:center;margin-top:5px;padding:6px 0;border-radius:9px;background:#f2c74e;color:#17201f;font-size:13px}#znBar button.ass[hidden]{display:none}
 body:has(#mapOv:not([hidden])) #znChip,body:has(#pmOv:not([hidden])) #znChip,body:has(#lvOv:not([hidden])) #znChip,body:has(#rtOv:not([hidden])) #znChip,body:has(#znOv:not([hidden])) #znChip,body:not(.playing) #znChip{display:none!important}
 #znMini{position:fixed;pointer-events:none;border-radius:50%;z-index:11}
 body:not(.playing) #znHow,body:has(#mapOv:not([hidden])) #znHow,body:has(#lvOv:not([hidden])) #znHow,body:has(#rtOv:not([hidden])) #znHow{display:none!important}`;
   document.head.appendChild(st);
   chip = document.createElement('div'); chip.id = 'znChip';
-  chip.innerHTML = '<div class="c" id="znTesta"></div><div id="znBar"><div class="t"><span id="znMio"></span><span id="znLoro"></span></div><div class="b"><i id="znFill"></i></div><div class="m"><span id="znManca"></span><button type="button" id="znAmico" title="Chiama \'n amico">📣</button></div></div>';
+  chip.innerHTML = '<div class="c" id="znTesta"></div><div id="znBar"><div class="t"><span id="znMio"></span><span id="znLoro"></span></div><div class="b"><i id="znFill"></i></div><div class="m"><span id="znManca"></span><button type="button" id="znAmico" title="Chiama \'n amico">📣</button></div><button type="button" id="znAss" class="ass">⚔ Assalta</button></div>';
   document.body.appendChild(chip); barra = $('znBar');
   chip.onclick = e => { if (e.target.id === 'znAmico') return; aggiornaPadroni().then(pannello); };
   $('znAmico').onclick = e => { e.stopPropagation(); chiamaAmico(); };
+  $('znAss').onclick = e => { e.stopPropagation(); if (TG.Assalto && cella) TG.Assalto.parti(cella); };
 }
 function posiziona(){
   const m = $('mini'); if (!m) { chip.style.top = 'calc(232px + env(safe-area-inset-top,0px))'; return; }
@@ -156,16 +163,15 @@ function aggiornaChip(){
 function aggiornaBarra(){
   if (!barra || !cella) return;
   const p = conPaese(); if (!p) { barra.style.display = 'none'; return; }
-  const pad = padrone(cella.id);
-  if (pad === p) { barra.style.display = 'none'; return; }
-  const mio = punti(cella.id, p) + (daMandare[cella.id] || 0), loro = pad ? padronePunti(cella.id) : 0, manca = Math.max(1, loro - mio + 1);
-  barra.style.display = 'block';
-  $('znMio').innerHTML = `<b>${corto(p)}</b> ${mio}`; $('znLoro').textContent = pad ? `${corto(pad)} ${loro}` : 'nessuno 0';
-  $('znFill').style.width = (loro ? Math.min(100, mio / (loro + 1) * 100) : Math.min(100, mio * 100)) + '%';
-  const fra = Math.max(0, passo() - secondi);
-  $('znManca').innerHTML = (pad ? `Mancano <b>${manca}</b> · ` : '') + (TG.Zone.squadra ? '👥' : '') + (ICONE[mezzo()] || '') + ` +1 fra ${fra}s`;
+  const A = TG.Assalto && TG.Assalto.attivo();
+  if (A) { barra.style.display = 'block'; $('znMio').innerHTML = A.riga1; $('znLoro').innerHTML = A.riga1b || ''; $('znFill').style.width = A.fill + '%'; $('znManca').innerHTML = A.riga2; $('znAss').hidden = true; return; }
+  const pad = padrone(cella.id), d = difensore(cella.id);
+  barra.style.display = 'block'; $('znAss').hidden = false;
+  if (pad === p) { $('znMio').innerHTML = d ? `🛡 <b>${d.nome || 'Uno de ' + corto(pad)}</b>` : '🛡 Casa vostra'; $('znLoro').textContent = d ? fmtT(d.tempo) : ''; $('znFill').style.width = '100%'; $('znManca').innerHTML = 'Migliora o tempo e difendila'; $('znAss').textContent = '⚔ Allenati'; }
+  else { $('znMio').innerHTML = d ? `🛡 ${d.nome || 'Uno'} · ${corto(d.paese)}` : (pad ? `🛡 ${corto(pad)}` : 'Nessuno a difende'); $('znLoro').innerHTML = d ? `<b>${fmtT(d.tempo)}</b>` : ''; $('znFill').style.width = '0%'; $('znManca').innerHTML = d ? `Battilo: 6 nocchie` : `6 nocchie in 90 s`; $('znAss').textContent = '⚔ Assalta'; }
   if (pad !== p) spiega(pad);
 }
+const fmtT = t => t == null ? '' : (Math.round(t * 10) / 10).toFixed(1).replace('.', ',') + ' s';
 // la prima volta in terra altrui (o libera): come si ruba, in tre righe
 let how = null, spiegato = false;
 function spiega(pad){
@@ -173,7 +179,7 @@ function spiega(pad){
   spiegato = true; ls.set('tg-zone-spiegato', '1');
   how = document.createElement('div'); how.id = 'znHow';
   how.setAttribute('style', 'position:fixed;left:50%;bottom:calc(140px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:31;width:min(300px,86vw);padding:10px 12px;border-radius:14px;background:rgba(16,22,21,.92);border:1px solid #f2c74e;color:#f3e7cb;font:600 12.5px/1.3 Figtree,"Segoe UI",system-ui,sans-serif;backdrop-filter:blur(4px)');
-  how.innerHTML = `<b style="color:#f2c74e;font-size:14px">⚔ Come se ruba 'na terra</b><br>1. <b>Gira qui</b>: +1 ogni ${PASSI[mezzo()] || 5} s pe' ${corto(conPaese())} (co' i mezzi più grossi, più veloce).<br>2. <b>Raccogli nocchie qui</b>: valgono doppio.<br>3. Superi i punti ${pad ? 'de ' + corto(pad) : 'de chi ce sta'} → è vostra.<div style="text-align:right;margin-top:4px"><button type="button" style="all:unset;cursor:pointer;padding:5px 12px;border-radius:9px;background:#f2c74e;color:#17201f;font-weight:800">Ho capito</button></div>`;
+  how.innerHTML = `<b style="color:#f2c74e;font-size:14px">⚔ Come se ruba 'na terra</b><br>1. Tocca <b>⚔ Assalta</b> (sotto a minimappa).<br>2. Prendi <b>6 nocchie</b> sparse ne a cella, guidando, in meno de 90 s.<br>3. Se fai mejo de chi a difende (o fantasma suo corre co' te) → è vostra, e o difensore diventi tu.<div style="text-align:right;margin-top:4px"><button type="button" style="all:unset;cursor:pointer;padding:5px 12px;border-radius:9px;background:#f2c74e;color:#17201f;font-weight:800">Ho capito</button></div>`;
   how.querySelector('button').onclick = () => { how.remove(); how = null; };
   document.body.appendChild(how); setTimeout(() => { if (how) { how.remove(); how = null; } }, 25000);
   ev('zone_spiegate', pad || 'nessuno');
@@ -234,7 +240,7 @@ function pannello(){
     const det = Object.entries(conta).sort((a, b) => b[1] - a[1]).map(([q, n]) => `${nomeP(q)} ${n}`).join(' · ') || 'terra de nessuno';
     return { k, pad, d, det }; }).sort((a, b) => a.d - b.d);
   pan.innerHTML = `<div class="znCard"><div class="znHead"><h2>⚔ A guerra de e nocchie</h2><button class="znX" aria-label="Chiudi">×</button></div>
-  <div class="znSub" style="line-height:1.45"><b>Come se gioca</b><br>⚔ <b>Gira in una cella</b>: ogni pochi secondi un punto pe' o paese tuo. Chi ha più punti negli ultimi 7 giorni la tiene. In casa d'altri vale doppio.<br>🌰 <b>Raccogli e vendi nocchie</b>: coi soldi compri mezzi più forti (🛵 5 s · 🛺 4 s · 🚜 3 s · semovente 2 s pe' punto).<br>🏁 <b>Fai i giochi</b> (pesca, carrettini…): oro 15, argento 10, bronzo 5 nocchie pe' o paese.<br>📣 <b>Chiama 'n amico</b>: in squadra se conquista più veloce. Una cella so' ${ETTARI} ettari.</div>
+  <div class="znSub" style="line-height:1.45"><b>Come se gioca</b><br>⚔ <b>Assalta una cella</b>: tocca ⚔ Assalta e prendi 6 nocchie in 90 s. La cella è de chi c'ha messo meno (ultimi 7 giorni): o fantasma suo corre co' te. Se ce sta 'n altro ne a stessa cella è duello.<br>🌰 <b>Raccogli e vendi nocchie</b>: coi soldi compri mezzi più forti (o trattore e a semovente pijano e nocchie da più lontano).<br>🏁 <b>Fai i giochi</b> (pesca, carrettini…): oro 15, argento 10, bronzo 5 nocchie pe' o paese.<br>📣 <b>Chiama 'n amico</b>: in squadra se conquista più veloce. Una cella so' ${ETTARI} ettari.</div>
   ${svg}<div class="znLeg">${leg}</div>
   <div class="znList">${righe.map(r => `<div class="znRow" data-z="${r.k.id}"><i style="background:${colore(r.pad)}"></i><div><b>${r.k.nome}</b><small>${r.det}</small></div><em>${r.d < 950 ? Math.round(r.d / 10) * 10 + ' m' : (r.d / 1000).toFixed(1).replace('.', ',') + ' km'}</em></div>`).join('')}</div></div>`;
   pan.querySelector('.znX').onclick = () => { pan.hidden = true; };
@@ -369,7 +375,7 @@ function primaTerra(){
   const d = Math.hypot(t.x - c.x, t.z - c.z), n = nomeCella(t);
   setTimeout(() => {
     try { TG.debug.setDest({ x: t.x, z: t.z, name: 'Terra de nessuno · ' + n }); } catch(e){}
-    try { TG.msg(`Qui è terra de ${corto(qui)}`, `A ${d < 950 ? Math.round(d / 10) * 10 + ' m' : (d / 1000).toFixed(1).replace('.', ',') + ' km'} c'è terra de nessuno: segui a freccia e pijatela pe' ${corto(p)}`, 6); } catch(e){}
+    try { TG.msg(`Qui è terra de ${corto(qui)}`, `A ${d < 950 ? Math.round(d / 10) * 10 + ' m' : (d / 1000).toFixed(1).replace('.', ',') + ' km'} c'è terra de nessuno: segui a freccia e tocca ⚔ Assalta pe' ${corto(p)}`, 6); } catch(e){}
     ev('prima_terra', t.id, Math.round(d), { da: qui });
   }, 5000);
   return true;
@@ -382,7 +388,7 @@ function avvia(){
   setInterval(aggiornaChip, 1000); setInterval(() => { try { confini3D(); } catch(e){} }, 700); giro();
   addEventListener('pagehide', () => invia(true));
 }
-TG.Zone = { R, CONTRADE, BOUNDS, cellaDi, cellaDaId, angoli, vicini, tutteLeCelle, celleVicine, contrada, nomeCella, padrone, punti, padroni: () => padroni, pannello, colore, salta: 0,
+TG.Zone = { difensore, nuovoDifensore, fmtT, corto, nomeP, conPaese, R, CONTRADE, BOUNDS, cellaDi, cellaDaId, angoli, vicini, tutteLeCelle, celleVicine, contrada, nomeCella, padrone, punti, padroni: () => padroni, pannello, colore, salta: 0,
   accredita: (id, n) => { let c = cellaDaId(id); if (!c) { const k = CONTRADE.find(z => z.id === id); c = k && cellaDi(k.x, k.z); } if (c) { accumula(c, Math.min(30, Math.round(n))); invia(true); } },
   zonaDi: (x, z) => { const c = cellaDi(x, z); const k = contrada(x, z); return Object.assign({ nome: k ? k.nome : 'a campagna' }, c); },
   aggiorna: aggiornaPadroni, cella: () => cella, chiamaAmico, _dbg: () => ({ cella, daMandare, secondi, locali, versione }) };
