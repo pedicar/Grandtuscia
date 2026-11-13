@@ -128,7 +128,11 @@ function cartello(T){
   s.position.set(T.x, y + 30, T.z); s.renderOrder = 3;
   TG.debug.scene.add(s); cartelli[T.id] = { s, k };
 }
-function nascondiVicini(){ let c; try { c = TG.debug.car; } catch(e){ return; } if (!c) return; for (const T of TERRE) { const k = cartelli[T.id]; if (k) k.s.visible = Math.hypot(c.x - T.x, c.z - T.z) > T.rad + 90; } }
+function nascondiVicini(){ let c; try { c = TG.debug.car; } catch(e){ return; } if (!c) return;
+  for (const T of TERRE) { const k = cartelli[T.id], d = Math.hypot(c.x - T.x, c.z - T.z); if (k) k.s.visible = d > T.rad + 90 && d < 1100; }
+  // tanti terreni: quelli lontani non si disegnano (piante, cartello de legno, nome, ingressi)
+  try { for (const o of TG.debug.campi()) { const cp = o.campo, d = Math.hypot(c.x - cp.cx, c.z - cp.cz) - cp.rad, v = d < 650; if (cp.g) cp.g.visible = v; if (o.g) o.g.visible = d < 450; if (o.label) o.label.visible = d < 450; if (cp.patch) for (const h of cp.patch) h.visible = d < 350; } } catch(e){}
+}
 let vCart = -1;
 function aggiornaCartelli(){ if (vCart === versione || !window.THREE) return; vCart = versione; for (const T of TERRE) try { cartello(T); } catch(e){} }
 
