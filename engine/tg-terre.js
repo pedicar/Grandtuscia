@@ -15,7 +15,8 @@ const msg = (a, b, s) => { try { TG.msg(a, b, s); } catch(e){} };
 const $ = id => document.getElementById(id);
 const COLORI = { caprarola: '#d8432a', fabrica: '#2f7fd1', carbognano: '#2e9e5b', ronciglione: '#e0a21b', canepina: '#8e44ad', vallerano: '#16a085', soriano: '#c0392b', 'civita-castellana': '#7f8c8d', viterbo: '#f39c12', nepi: '#1abc9c', vignanello: '#9b59b6', corchiano: '#e67e22', sutri: '#3498db', vetralla: '#27ae60', 'bassano-romano': '#d35400', gallese: '#2c3e50', fuori: '#95a5a6' };
 const colore = p => { if (!p) return '#8a8f88'; if (COLORI[p]) return COLORI[p]; let h = 0; for (const c of p) h = (h * 31 + c.charCodeAt(0)) % 360; return `hsl(${h} 55% 50%)`; };
-const paese = () => { const p = (TG.PrimoMinuto && TG.PrimoMinuto.paese) || ls.get('tg-paese-dev'); return p && p !== 'nessuno' ? p : null; };
+const SF = () => { const S = TG.Sfida; return S && S.attiva && S.p && CENTRI[S.p[0]] && CENTRI[S.p[1]] ? S : null; };
+const paese = () => { const S = SF(); if (S) return S.squadra(); const p = (TG.PrimoMinuto && TG.PrimoMinuto.paese) || ls.get('tg-paese-dev'); return p && p !== 'nessuno' ? p : null; };
 const nomeP = p => { try { return (TG.PrimoMinuto && TG.PrimoMinuto.nomeComune(p)) || p; } catch(e){ return p; } };
 const corto = p => (nomeP(p) || '').replace(/ (di|in|sul|al|nel) .*$/i, '');
 const dev = () => { try { return TG.Stats && TG.Stats.dispositivo; } catch(e){ return null; } };
@@ -48,9 +49,16 @@ const giornoRoma = () => { try { return new Intl.DateTimeFormat('en-CA', { timeZ
 const hash = s => { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; };
 let accesi = new Set(), giornoAccesi = '', battaglia = null;
 function calcolaAccesi(){
-  const g = giornoRoma(); if (g === giornoAccesi && accesi.size) return; giornoAccesi = g;
+  const S = SF(), g = giornoRoma() + (S ? '|' + S.id : ''); if (g === giornoAccesi && accesi.size) return; giornoAccesi = g;
   const gruppi = {};
   for (const T of TERRE) { if (T.podere) continue; let best = 'fabrica', bd = 1e12; for (const k in CENTRI) { const d = Math.hypot(T.x - CENTRI[k][0], T.z - CENTRI[k][1]); if (d < bd) { bd = d; best = k; } } (gruppi[best] = gruppi[best] || []).push(T); }
+  if (S) {   // a sfida: 6 campi pe' paese, quelli più vicini a o confine tra i due
+    const a = CENTRI[S.p[0]], b = CENTRI[S.p[1]], mx = (a[0] + b[0]) / 2, mz = (a[1] + b[1]) / 2, s = new Set();
+    for (const q of S.p) (gruppi[q] || []).sort((u, v) => Math.hypot(u.x - mx, u.z - mz) - Math.hypot(v.x - mx, v.z - mz)).slice(0, 6).forEach(T => s.add(T.id));
+    accesi = s; versione++; battaglia = null;
+    try { for (const T of TERRE) if (!T.podere) TG.debug.accendi(T.id.slice(2), s.has(T.id)); } catch(e){}
+    return;
+  }
   const s = new Set(['t:podere']);
   for (const k in gruppi) gruppi[k].sort((a, b) => hash(g + a.id) - hash(g + b.id)).slice(0, 3).forEach(T => s.add(T.id));
   accesi = s; versione++;
@@ -71,7 +79,7 @@ function punti(id, p){ const l = classifica[id] || []; const r = l.find(x => x.p
 function righe(id){
   const m = {}; for (const r of (classifica[id] || [])) m[r.paese] = r.punti;
   for (const p in (locali[id] || {})) m[p] = (m[p] || 0) + locali[id][p];
-  return Object.entries(m).map(([paese, punti]) => ({ paese, punti })).sort((a, b) => b.punti - a.punti);
+  const S = SF(); return Object.entries(m).filter(([q]) => !S || S.p.includes(q)).map(([paese, punti]) => ({ paese, punti })).sort((a, b) => b.punti - a.punti);
 }
 const padrone = id => { const r = righe(id)[0]; return r && r.punti > 0 ? r.paese : null; };
 async function aggiorna(){ try { const n = await rpc('tg_terre'); if (n && typeof n === 'object') { classifica = n; locali = {}; versione++; } } catch(e){} caricato = true; }
@@ -279,7 +287,7 @@ function aggiornaCartelli(){ if (vCart === versione || !window.THREE) return; vC
 /* ---------- I CAMPI DA PRENDE SE VEDONO DA LONTANO: sopra ogni campo acceso una colonna de luce (arancione se è libero o de
    l'altri, co' o colore vostro se è vostro, rossa e più alta pe' a battaglia) e o bordo de o campo acceso che brilla pe' terra. ---------- */
 let fariGrp = null, fariVer = -1; const fari = {};
-function coloreFaro(T){ const p = padrone(T.id), mio = paese(); if (T.id === battaglia) return '#ff3b2f'; if (p && p === mio) return colore(p); return '#ff6a00'; }
+function coloreFaro(T){ const p = padrone(T.id), mio = paese(); if (SF()) return p ? colore(p) : '#ff6a00'; if (T.id === battaglia) return '#ff3b2f'; if (p && p === mio) return colore(p); return '#ff6a00'; }
 function costruisciFari(){
   if (!window.THREE) return; let sc, E; try { sc = TG.debug.scene; E = TG.debug.world; } catch(e){ return; } if (!sc || !E) return;
   if (!fariGrp) { fariGrp = new THREE.Group(); sc.add(fariGrp); }
@@ -327,10 +335,10 @@ function pannello(){
     pan.addEventListener('click', e => { if (e.target === pan) pan.hidden = true; });
   }
   let c = { x: 0, z: 0 }; try { c = TG.debug.car; } catch(e){}
-  const tot = {}; for (const T of TERRE) { const p = padrone(T.id); if (p) tot[p] = (tot[p] || 0) + 1; }
+  const S = SF(), tot = {}; for (const T of TERRE) { if (S && !acceso(T.id)) continue; const p = padrone(T.id); if (p) tot[p] = (tot[p] || 0) + 1; }
   const testa = Object.entries(tot).sort((a, b) => b[1] - a[1]).map(([p, n]) => `<b style="color:${colore(p)}">${corto(p)} ${n}</b>`).join(' · ') || 'Ancora tutti liberi';
   const lista = TERRE.filter(T => acceso(T.id)).map(T => ({ T, d: Math.hypot(T.x - c.x, T.z - c.z), l: righe(T.id) })).sort((a, b) => (b.T.id === battaglia) - (a.T.id === battaglia) || a.d - b.d);
-  pan.innerHTML = `<div class="c"><h2>🔥 I terreni accesi oggi <button aria-label="Chiudi">×</button></h2><p>Oggi se combatte su questi: solo qui e nocchie contano. Ogni terreno è de o paese che c'ha raccolto de più; se nun ce torni se raffredda. Domenica vince chi ne tiene de più. ${testa}</p>`
+  pan.innerHTML = (S ? `<div class="c"><h2>⚔ ${S.nome(S.p[0])} contro ${S.nome(S.p[1])} <button aria-label="Chiudi">×</button></h2><p>Se combatte su questi ${accesi.size} campi. Ogni campo è de a squadra che c'ha raccolto più nocchie; domenica sera vince chi ne tiene de più. ${testa}</p>` : `<div class="c"><h2>🔥 I terreni accesi oggi <button aria-label="Chiudi">×</button></h2><p>Oggi se combatte su questi: solo qui e nocchie contano. Ogni terreno è de o paese che c'ha raccolto de più; se nun ce torni se raffredda. Domenica vince chi ne tiene de più. ${testa}</p>`)
     + lista.map(({ T, d, l }) => `<div class="row" data-t="${T.id}"><i style="background:${colore(l[0] && l[0].paese)}"></i><div><b>${T.id === battaglia ? "⚔ " : ""}${breve(T.nome)}${T.id === battaglia ? " · vale doppio" : ""}</b><small>${l.length ? l.slice(0, 2).map(r => corto(r.paese) + ' ' + r.punti).join(' · ') : 'libero'}</small></div><em>${d < 950 ? Math.round(d / 10) * 10 + ' m' : (d / 1000).toFixed(1).replace('.', ',') + ' km'}</em></div>`).join('') + '</div>';
   pan.querySelector('h2 button').onclick = () => { pan.hidden = true; };
   pan.querySelectorAll('.row').forEach(r => r.onclick = () => { const T = TERRE.find(x => x.id === r.dataset.t); pan.hidden = true; try { const m = document.querySelector('#mapOv [data-close]'); m && m.click(); TG.debug.setDest({ x: T.x, z: T.z, name: breve(T.nome) }); msg('Segui a freccia: ' + breve(T.nome)); } catch(e){} ev('terra_vai', T.id); });
@@ -413,7 +421,7 @@ async function premioGioco(){
   if (document.body.classList.contains('playing')) via(); else new MutationObserver((x, o) => { if (document.body.classList.contains('playing')) { o.disconnect(); via(); } }).observe(document.body, { attributes: true, attributeFilter: ['class'] });
   ev('terre_premio', da, bonus, { med: q.get('med') || null, preso });
 }
-TG.Terre = { colore, padrone, righe, terraIn, aggiorna, pannello, descrivi, puntoGuerra, mio: id => punti(id, paese()) + (daMandare[id] || 0), acceso, accesi: () => accesi, battaglia: () => battaglia, _card: cardImmagine, lista: () => TERRE, _dbg: () => ({ classifica, locali, daMandare }) };
+TG.Terre = { colore, padrone, righe, terraIn, aggiorna, pannello, descrivi, puntoGuerra, mio: id => punti(id, paese()) + (daMandare[id] || 0), acceso, accesi: () => accesi, battaglia: () => battaglia, _card: cardImmagine, lista: () => TERRE, sfida: SF, _dbg: () => ({ classifica, locali, daMandare }) };
 // per i moduli che usavano le zone (presenza: colore del paese)
 TG.Zone = TG.Zone || { colore, squadra: false };
 function avvia(){
