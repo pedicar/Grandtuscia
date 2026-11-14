@@ -25,13 +25,21 @@ const C = TG.Cassone = {
     if (!(a > 0)) return 0; const c = cap(); if (n >= c) { C.avvisa(); return 0; }
     const k = Math.min(a, c - n); const era = n; n += k; salva();
     if (prima10 && n >= 10) { prima10 = false; ls.set('tg-cassone-10', '1'); msg('Brau! 10 nocchie ne o cassone', 'Riempilo, poi scegli dove scaricà', 3.5); }
-    if (era < c * .5 && n >= c * .5 && n < c) msg('O cassone se sta a riempì', `${n}/${c}: ancora poche e se parte a l'attacco`, 2.5);
-    if (n >= c) { ev('cassone_pieno', mezzo(), c); msg('Cassone pieno: è ora de fa\' guerra!', 'Apri a mappa e scegli o terreno, o scarica qui', 4.5); avvisoPieno = Date.now(); }
+    if (era < c * .5 && n >= c * .5 && n < c) { if (!ls.get('tg-primo-scarico')) grande(`Hai già ${n} nocchie!`, "Puoi già attaccà: entra in un campo de l'altri e premi ATTACCA", false); else msg('O cassone se sta a riempì', `${n}/${c}: ancora poche e se parte a l'attacco`, 2.5); }
+    if (n >= c) { ev('cassone_pieno', mezzo(), c); grande('Cassone pieno!', 'Scarica su un terreno: entra in un campo e premi ATTACCA, o tocca qui pe\' sceglie da a mappa', true); avvisoPieno = Date.now(); }
     return k;
   },
   togli(a){ n = Math.max(0, n - a); salva(); },
   avvisa(){ if (Date.now() - avvisoPieno < 25000) return; avvisoPieno = Date.now(); msg('Cassone pieno', 'Vai a scaricà su un terreno: apri a mappa e scegli', 3.5); }
 };
+
+/* ---------- o messaggio grande in mezzo (cassone pieno, primo attacco): nun blocca, sparisce da solo ---------- */
+function grande(t, s, mappa){
+  let g = $('scGrande'); if (g) g.remove();
+  g = document.createElement('div'); g.id = 'scGrande'; g.innerHTML = `<b>🌰 ${t}</b><span>${s}</span>${mappa ? '<i>🗺 Tocca pe\' a mappa</i>' : ''}`;
+  g.onclick = () => { g.remove(); if (mappa) { const b = $('bMap'); b && b.click(); } };
+  document.body.appendChild(g); setTimeout(() => { g.classList.add('via'); setTimeout(() => g.remove(), 500); }, 6500);
+}
 
 /* ---------- o bottone SCARICA ---------- */
 const st = document.createElement('style'); st.textContent = `
@@ -41,6 +49,7 @@ const st = document.createElement('style'); st.textContent = `
 #scBtn.go{animation:scPulse 1.1s ease-in-out infinite}@keyframes scPulse{50%{transform:scale(1.06)}}
 body:not(.playing) #scBtn,body:has(#mapOv:not([hidden])) #scBtn,body:has(#trFesta) #scBtn,body:has(#trOv:not([hidden])) #scBtn{display:none!important}
 html.tg-scarica #prompt{display:none!important}
+#scGrande{position:fixed;z-index:36;left:50%;top:42%;transform:translate(-50%,-50%);width:min(330px,86vw);padding:16px 18px 14px;border-radius:20px;background:rgba(16,22,21,.93);border:3px solid #ff8a3c;color:#f3e7cb;text-align:center;font:700 15px/1.3 Figtree,"Segoe UI",system-ui,sans-serif;box-shadow:0 12px 34px rgba(0,0,0,.45);cursor:pointer;animation:scIn .35s cubic-bezier(.2,1.4,.4,1)}#scGrande b{display:block;font:900 26px/1.1 Figtree,sans-serif;color:#fff;margin-bottom:6px}#scGrande span{display:block}#scGrande i{display:inline-block;margin-top:10px;padding:7px 14px;border-radius:999px;background:#ff8a3c;color:#fff;font:900 14px Figtree,sans-serif;font-style:normal}#scGrande.via{opacity:0;transition:opacity .4s}@keyframes scIn{from{transform:translate(-50%,-50%) scale(.6);opacity:0}}body:not(.playing) #scGrande,body:has(#mapOv:not([hidden])) #scGrande{display:none}
 #scVolo{position:fixed;z-index:34;pointer-events:none;font-size:22px;transition:transform .7s cubic-bezier(.3,.6,.4,1),opacity .7s}`;
 document.head.appendChild(st);
 let btn = null, occupato = false;
@@ -60,7 +69,7 @@ async function scarica(){
   const W = TG.Terre, D = TG.debug; if (occupato || !W || !D) return;
   const T = W.terraIn(D.car.x, D.car.z); if (!T || n < MINIMO) return;
   occupato = true; btn._h = '…'; btn.innerHTML = '…'; volo();
-  try { const r = await W.deposita(T, n); if (r && r.aggiunti) { C.togli(r.aggiunti); try { TG.Semplice && TG.Semplice.libera && TG.Semplice.libera(); } catch(e){} } else if (r && r.tetto) msg('Pe\' oggi basta', 'Hai scaricato tanto: riprova domani', 3.5); else msg('Nun è riuscito', 'Controlla a connessione e riprova', 3); }
+  try { const r = await W.deposita(T, n); if (r && r.aggiunti) { ls.set('tg-primo-scarico', '1'); const g = $('scGrande'); g && g.remove(); C.togli(r.aggiunti); try { TG.Semplice && TG.Semplice.libera && TG.Semplice.libera(); } catch(e){} } else if (r && r.tetto) msg('Pe\' oggi basta', 'Hai scaricato tanto: riprova domani', 3.5); else msg('Nun è riuscito', 'Controlla a connessione e riprova', 3); }
   catch(e){ msg('Nun è riuscito', 'Controlla a connessione e riprova', 3); }
   occupato = false; bottone();
 }

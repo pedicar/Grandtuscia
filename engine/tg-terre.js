@@ -101,7 +101,7 @@ async function invia(){
 // 2.0: ogni nocchia raccolta (ovunque) va ne o cassone; i punti arrivano solo scaricando su un terreno (deposita)
 function contaGuerra(t, a){
   if (!((t === 'n' || t === 'c') && a > 0)) return;
-  try { TG.Cassone && TG.Cassone.aggiungi(a); } catch(e){}
+  try { TG.Cassone && TG.Cassone.aggiungi(a * 2); } catch(e){}   // ogni nocchia vale 2 ne o cassone: o primo attacco in 2-3 minuti
 }
 /* ---------- O SCARICO: o cassone su un terreno, pe' o paese tuo ---------- */
 async function deposita(T, k){
