@@ -124,8 +124,9 @@ function cardImmagine(T, prima, p, tot, nome){
   const txt = (t, y, font, fill, sh) => { c.font = font; c.textAlign = 'center'; c.textBaseline = 'middle'; if (sh) { c.fillStyle = 'rgba(0,0,0,.45)'; c.fillText(t, W / 2, y + 6); } c.fillStyle = fill; c.fillText(t, W / 2, y); };
   const adatta = (t, max, size, peso) => { let s = size; c.font = `${peso} ${s}px Figtree, system-ui, sans-serif`; while (c.measureText(t).width > max && s > 30) { s -= 4; c.font = `${peso} ${s}px Figtree, system-ui, sans-serif`; } return c.font; };
   txt('🚩 ' + corto(p).toUpperCase(), 330, '900 64px Figtree, system-ui, sans-serif', '#fff', true);
-  txt('TERRENO', 470, '900 150px Figtree, system-ui, sans-serif', '#fff', true);
-  txt('PRESO!', 620, '900 150px Figtree, system-ui, sans-serif', '#fff', true);
+  const molti = / e altri \d+$/.test(nome), q = molti ? (+nome.match(/ e altri (\d+)$/)[1] + 1) : 1;
+  txt(molti ? q + ' TERRENI' : 'TERRENO', 470, '900 150px Figtree, system-ui, sans-serif', '#fff', true);
+  txt(molti ? 'PRESI!' : 'PRESO!', 620, '900 150px Figtree, system-ui, sans-serif', '#fff', true);
   // riquadro
   c.fillStyle = 'rgba(14,18,16,.82)'; c.strokeStyle = col; c.lineWidth = 8; c.beginPath(); c.roundRect(90, 730, W - 180, 330, 40); c.fill(); c.stroke();
   txt(nome, 810, adatta(nome, W - 260, 64, 800), '#f3e7cb');
@@ -149,8 +150,8 @@ async function condividiCard(T, prima, p, tot, nome){
     msg('Card scaricata!', 'Pubblicala co\' o testo che t\'ho copiato', 3);
   } catch(e){ if (e && e.name === 'AbortError') return; try { await navigator.clipboard.writeText(testo + ' ' + url); msg('Copiato!', 'Incollalo ne o gruppo de o paese', 2); } catch(x){} }
 }
-function festa(T, prima, p){
-  if (!T) return; const col = colore(p), nome = breve(T.nome);
+function festa(T, prima, p, quanti, sottotitolo){
+  if (!T) return; const col = colore(p), nome = quanti > 1 ? `${breve(T.nome)} e altri ${quanti - 1}` : breve(T.nome);
   versione++; try { aggiornaCartelli(); } catch(e){}
   try { navigator.vibrate && navigator.vibrate([70, 50, 70, 50, 180]); } catch(e){}
   fanfara(); fuochi(T, col);
@@ -174,7 +175,7 @@ function festa(T, prima, p){
 @keyframes trVia{to{opacity:0;transform:scale(1.04)}}`; document.head.appendChild(st); }
   const old = document.getElementById('trFesta'); if (old) old.remove();
   const d = document.createElement('div'); d.id = 'trFesta'; d.style.setProperty('--c', col);
-  d.innerHTML = `<div class="fl"></div><div class="bx"><div class="k">🚩 ${corto(p)}</div><h2>TERRENO PRESO!</h2><div class="n">${nome}</div><div class="s">${prima ? `L'avete fregato a <b style="color:${colore(prima)}">${corto(prima)}</b>` : 'Era libero: mo\' è vostro'} · <b>${corto(p)}</b> mo' tiene ${tot} terren${tot === 1 ? 'o' : 'i'}</div><button type="button">📣 Condividi a vittoria</button></div>`;
+  d.innerHTML = `<div class="fl"></div><div class="bx"><div class="k">🚩 ${corto(p)}</div><h2>${quanti > 1 ? quanti + ' TERRENI PRESI!' : 'TERRENO PRESO!'}</h2><div class="n">${nome}</div><div class="s">${sottotitolo ? sottotitolo + ' · ' : ''}${prima ? `L'avete fregato a <b style="color:${colore(prima)}">${corto(prima)}</b>` : 'Era libero: mo\' è vostro'} · <b>${corto(p)}</b> mo' tiene ${tot} terren${tot === 1 ? 'o' : 'i'}</div><button type="button">📣 Condividi a vittoria</button></div>`;
   for (let i = 0; i < 34; i++) { const n = document.createElement('i'); n.className = 'nc'; n.textContent = T.frutto === 'c' ? '🌰' : (i % 5 ? '🌰' : '✨'); n.style.left = Math.random() * 100 + 'vw'; n.style.animationDuration = (1.6 + Math.random() * 1.6) + 's'; n.style.animationDelay = (Math.random() * .6) + 's'; n.style.setProperty('--r', (Math.random() * 720 - 360) + 'deg'); d.appendChild(n); }
   document.body.appendChild(d);
   let chiuso = false; const chiudi = () => { if (chiuso) return; chiuso = true; d.classList.add('via'); setTimeout(() => d.remove(), 360); };
@@ -314,6 +315,33 @@ function descrivi(id){
   else if (p && l[0].paese === p) t += '<br>È vostro: tenetelo.';
   return t;
 }
+
+/* ---------- IL PREMIO DE I GIOCHI: ogni partita a un gioco vicino ai terreni vince o terreno più vicino pe' o paese tuo,
+   co' l'oro ne vince 5. Si legge dal ritorno ne o mondo (?da=<gioco>&esito=…&med=…); una volta sola pe' partita. ---------- */
+let RITORNO = null; try { RITORNO = new URLSearchParams(location.search); } catch(e){}   // letto subito: o mondo poi pulisce l'indirizzo
+async function premioGioco(){
+  const q = RITORNO; if (!q) return;
+  const da = q.get('da'), esito = q.get('esito'); if (!da || !esito) return;
+  const chiave = 'tg-premio-' + da + '-' + (q.get('t') || '') + '-' + (q.get('med') || '');
+  if (ls.get(chiave)) return;
+  const p = paese(), d = dev();
+  let A = null; try { A = (TG.debug.acts || []).find(a => a.id === da); } catch(e){}
+  if (!A || !p || !d) { if ((premioGioco.n = (premioGioco.n || 0) + 1) < 40) setTimeout(premioGioco, 1500); return; }
+  ls.set(chiave, '1');
+  const quanti = q.get('med') === 'oro' ? 5 : 1;
+  const lista = TERRE.filter(T => padrone(T.id) !== p).map(T => ({ T, d: Math.hypot(T.x - A.x, T.z - A.z) - T.rad })).filter(o => o.d < 2500).sort((a, b) => a.d - b.d);
+  const presi = []; let primaPadrone = null;
+  for (const { T } of lista) {
+    if (presi.length >= quanti) break;
+    const l = righe(T.id), cap = l.find(r => r.paese !== p), serve = (cap ? cap.punti : 0) - punti(T.id, p) + 1;
+    if (serve > 80) continue;   // troppo lontano pe' un premio: se lo devono pijà co' e nocchie
+    try { const r = await rpc('tg_terra_punto', { p_dev: d, p_terra: T.id, p_paese: p, p_punti: Math.max(1, serve) }); if (r && r.aggiunti) { locali[T.id] = locali[T.id] || {}; locali[T.id][p] = (locali[T.id][p] || 0) + r.aggiunti; versione++; if (padrone(T.id) === p) { presi.push(T); if (!primaPadrone && cap) primaPadrone = cap.paese; festeggiati[T.id] = 1; ev('terra_presa', T.id, null, { a: cap && cap.paese, gioco: da }); } } } catch(e){}
+  }
+  if (!presi.length) return;
+  const via = () => setTimeout(() => festa(presi[0], primaPadrone, p, presi.length, quanti > 1 ? '🥇 Premio de l\'oro' : '🎮 Premio de a partita'), 1800);
+  if (document.body.classList.contains('playing')) via(); else new MutationObserver((x, o) => { if (document.body.classList.contains('playing')) { o.disconnect(); via(); } }).observe(document.body, { attributes: true, attributeFilter: ['class'] });
+  ev('terre_premio', da, presi.length, { med: q.get('med') || null });
+}
 TG.Terre = { colore, padrone, righe, terraIn, aggiorna, pannello, descrivi, _card: cardImmagine, lista: () => TERRE, _dbg: () => ({ classifica, locali, daMandare }) };
 // per i moduli che usavano le zone (presenza: colore del paese)
 TG.Zone = TG.Zone || { colore, squadra: false };
@@ -321,7 +349,7 @@ function avvia(){
   if (!TG.debug || !TG.debug.campi || !TG.Profile || !TG.Contadino) return setTimeout(avvia, 1000);
   TERRE = costruisci(); if (TERRE.length < 2) return setTimeout(avvia, 1500);
   apriTutti(); aggancia();
-  aggiorna().then(controllaPerse); setInterval(aggiorna, 60000);
+  aggiorna().then(controllaPerse).then(premioGioco); setInterval(aggiorna, 60000);
   setInterval(() => { aggiornaBox(); aggiornaCartelli(); nascondiVicini(); bottone(); }, 700);
   setInterval(invia, 5000); addEventListener('pagehide', invia);
   requestAnimationFrame(mini);
