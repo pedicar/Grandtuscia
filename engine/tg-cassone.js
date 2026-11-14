@@ -36,7 +36,7 @@ const C = TG.Cassone = {
 /* ---------- o bottone SCARICA ---------- */
 const st = document.createElement('style'); st.textContent = `
 #scBtn{position:fixed;z-index:33;right:calc(14px + env(safe-area-inset-right,0px));bottom:calc(118px + env(safe-area-inset-bottom,0px));display:none;flex-direction:column;align-items:center;justify-content:center;min-width:148px;padding:12px 18px 10px;border:0;border-radius:22px;background:#ff8a3c;color:#fff;font:900 20px/1.05 Figtree,"Segoe UI",system-ui,sans-serif;box-shadow:0 5px 0 #b4561c,0 10px 24px rgba(0,0,0,.35);cursor:pointer;touch-action:manipulation}
-#scBtn small{display:block;margin-top:3px;font:800 12px/1.2 Figtree,sans-serif;opacity:.95}
+#scBtn *{pointer-events:none}#scBtn small{display:block;margin-top:3px;font:800 12px/1.2 Figtree,sans-serif;opacity:.95}
 #scBtn:active{transform:translateY(3px);box-shadow:0 2px 0 #b4561c,0 6px 14px rgba(0,0,0,.3)}
 #scBtn.go{animation:scPulse 1.1s ease-in-out infinite}@keyframes scPulse{50%{transform:scale(1.06)}}
 body:not(.playing) #scBtn,body:has(#mapOv:not([hidden])) #scBtn,body:has(#trFesta) #scBtn,body:has(#trOv:not([hidden])) #scBtn{display:none!important}
@@ -53,13 +53,13 @@ function bottone(){
   if (!ok || occupato) { btn.style.display = occupato ? 'flex' : 'none'; return; }
   btn.style.display = 'flex';
   const s = W.stato(T.id), verbo = s === 'nostro' ? '🛡 RINFORZA' : s === 'libero' ? '🚩 PRENDI' : '⚔ ATTACCA';
-  btn.innerHTML = `${verbo}<small>scarica ${n} nocchie</small>`;
+  const h = `${verbo}<small>scarica ${n} nocchie</small>`; if (btn._h !== h) { btn._h = h; btn.innerHTML = h; }   // riscritto solo se cambia: sennò Safari perde o clic
   btn.classList.toggle('go', C.pieno());
 }
 async function scarica(){
   const W = TG.Terre, D = TG.debug; if (occupato || !W || !D) return;
   const T = W.terraIn(D.car.x, D.car.z); if (!T || n < MINIMO) return;
-  occupato = true; btn.innerHTML = '…'; volo();
+  occupato = true; btn._h = '…'; btn.innerHTML = '…'; volo();
   try { const r = await W.deposita(T, n); if (r && r.aggiunti) { C.togli(r.aggiunti); try { TG.Semplice && TG.Semplice.libera && TG.Semplice.libera(); } catch(e){} } else if (r && r.tetto) msg('Pe\' oggi basta', 'Hai scaricato tanto: riprova domani', 3.5); else msg('Nun è riuscito', 'Controlla a connessione e riprova', 3); }
   catch(e){ msg('Nun è riuscito', 'Controlla a connessione e riprova', 3); }
   occupato = false; bottone();
