@@ -21,12 +21,12 @@ const salva = () => ls.set('tg-cassone', String(n));
 const C = TG.Cassone = {
   get n(){ return n; }, cap, MINIMO,
   pieno: () => n >= cap(),
-  aggiungi(a){
-    if (!(a > 0)) return 0; const c = cap(); if (n >= c) { C.avvisa(); return 0; }
-    const k = Math.min(a, c - n); const era = n; n += k; salva();
+  aggiungi(a, forza){   // forza: i premi de i giochi entrano anche oltre o cassone
+    if (!(a > 0)) return 0; const c = cap(); if (n >= c && !forza) { C.avvisa(); return 0; }
+    const k = forza ? a : Math.min(a, c - n); const era = n; n += k; salva();
     if (prima10 && n >= 10) { prima10 = false; ls.set('tg-cassone-10', '1'); msg('Brau! 10 nocchie ne o cassone', 'Co\' e nocchie se compra: terreni e mezzi', 3.5); }
     if (era < c * .5 && n >= c * .5 && n < c) { if (!ls.get('tg-primo-scarico')) grande(`Hai già ${n} nocchie!`, "I terreni liberi costano 10: entra in un campo e premi COMPRA", false); else msg('O cassone se sta a riempì', `${n}/${c}: ancora poche e se parte a l'attacco`, 2.5); }
-    if (n >= c) { ev('cassone_pieno', mezzo(), c); grande('Cassone pieno!', 'Co\' e nocchie compri terreni e mezzi novi: entra in un campo e premi COMPRA, o tocca qui pe\' a mappa', true); avvisoPieno = Date.now(); }
+    if (n >= c && era < c) { ev('cassone_pieno', mezzo(), c); grande('Cassone pieno!', 'Co\' e nocchie compri terreni e mezzi novi: entra in un campo e premi COMPRA, o tocca qui pe\' a mappa', true); avvisoPieno = Date.now(); }
     return k;
   },
   togli(a){ n = Math.max(0, n - a); salva(); },

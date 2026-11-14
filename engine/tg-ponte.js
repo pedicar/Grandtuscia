@@ -18,7 +18,7 @@ const G={
  vicovolo:{t:"Sprint alle Pantanacce",o:"Dal decollo passa 2 porte e atterra sul campo in meno di 2 minuti.",c:["Trascina il dito per inclinare l'ala","Frecce o mouse per inclinare l'ala"]}
 };
 const ls={g:k=>{try{return localStorage.getItem(k)}catch(e){return null}},s:(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}}};
-function premio(){return"Ogni partita: +20 nocchie pe' o paese tuo ne o terreno acceso più vicino · co' l'oro +60"+(P.diretto?" (quanno torni ne o mondo)":"")}
+function premio(){return"Ogni partita: fino a 120 nocchie ne o cassone (oro 120 · argento 90 · bronzo 70) pe' comprà terreni e mezzi"+(P.diretto?" (quanno torni ne o mondo)":"")}
 let box=null,btn=null,timer=0;
 function chiudi(){if(box){box.remove();box=null}clearTimeout(timer)}
 function mostra(){

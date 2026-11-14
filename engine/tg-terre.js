@@ -438,8 +438,8 @@ async function premioGioco(){
   let A = null; try { A = (TG.debug.acts || []).find(a => a.id === da); } catch(e){}
   if (!A || !TG.Cassone) { if ((premioGioco.n = (premioGioco.n || 0) + 1) < 40) setTimeout(premioGioco, 1500); return; }
   ls.set(chiave, '1');
-  const bonus = q.get('med') === 'oro' ? 50 : 20;
-  const via = () => setTimeout(() => { const k = TG.Cassone ? TG.Cassone.aggiungi(bonus) : 0; msg(`🎮 +${k} nocchie ne o cassone`, k < bonus ? 'O cassone è pieno: vai a scaricà!' : (bonus > 20 ? '🥇 Co\' l\'oro: ' : '') + 'mo\' scegli dove scaricalle', 4.5); }, 1800);
+  const med = q.get('med'), bonus = ({ oro: 120, argento: 90, bronzo: 70 })[med] || (esito === 'ok' ? 50 : 25);   // 2.1: i giochi pagano bene (anche oltre o cassone)
+  const via = () => setTimeout(() => { const k = TG.Cassone ? TG.Cassone.aggiungi(bonus, true) : 0; msg(`🎮 +${k} nocchie ne o cassone`, (med ? ({ oro: '🥇 ', argento: '🥈 ', bronzo: '🥉 ' })[med] || '' : '') + 'Mo\' vai a comprà: terreni o un mezzo novo', 4.5); }, 1800);
   const preso = false;
   if (document.body.classList.contains('playing')) via(); else new MutationObserver((x, o) => { if (document.body.classList.contains('playing')) { o.disconnect(); via(); } }).observe(document.body, { attributes: true, attributeFilter: ['class'] });
   ev('terre_premio', da, bonus, { med: q.get('med') || null, preso });
