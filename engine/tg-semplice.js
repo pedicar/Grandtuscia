@@ -74,7 +74,7 @@ function prossimo(){
   if (N.dest && (!mia || Math.hypot(N.dest.x - mia.x, N.dest.z - mia.z) > 30)) return;   // un'altra meta (un gioco, un luogo): rispettata
   if (!(C && C.pieno()) || dentro) { if (mia && !scelta) { mia = null; try { D.setDest(null); } catch(e){} } return; }
   let best = null, bd = 1e9;
-  for (const T of W.lista()) { if (W.stato(T.id) === 'nostro') continue; const d = Math.hypot(T.x - c.x, T.z - c.z) - T.rad; if (d < bd) { bd = d; best = T; } }
+  for (const T of W.lista()) { if (W.stato(T.id) === 'nostro' || W.costo(T.id) > C.n) continue; const d = Math.hypot(T.x - c.x, T.z - c.z) - T.rad; if (d < bd) { bd = d; best = T; } }
   if (!best || (mia && mia.id === best.id)) return;
   mia = { id: best.id, x: best.x, z: best.z };
   try { D.setDest({ x: best.x, z: best.z, name: breve(best.nome) }); } catch(e){}
@@ -95,19 +95,18 @@ function obiettivo(){
   const col = W.colore(p), barra = `<div class="b"><i style="width:${Math.max(3, pct)}%;background:${n >= cap ? '#ff8a3c' : col}"></i></div>`;
   const piede = `<div class="r"><span>🌰 Cassone <b style="color:#fff">${n}/${cap}</b></span><span>🗺 tocca pe' a mappa</span></div>`;
   if (dentro) {
-    const l = W.righe(dentro.id).filter(r => r.punti > 0), st = W.stato(dentro.id), mio = W.mio(dentro.id), pd = W.padrone(dentro.id), altro = l.find(r => r.paese !== p), loro = altro ? altro.punti : 0;
+    const st = W.stato(dentro.id), pd = W.padrone(dentro.id), c = W.costo(dentro.id);
     obi.style.borderColor = pd ? W.colore(pd) : '#ff8a3c';
-    const tit = st === 'nostro' ? `✅ ${breve(dentro.nome)} è nostro` : st === 'libero' ? `🚩 ${breve(dentro.nome)}: libero!` : st === 'conteso' ? `⚔ ${breve(dentro.nome)}: conteso` : `⚔ ${breve(dentro.nome)} è de ${corto(pd)}`;
-    const dopo = mio + n, sopra = dopo - loro >= W.SOGLIA;
-    const cosa = n < C.MINIMO ? 'Raccoji qui e nocchie, poi scaricale' : st === 'nostro' ? `Scarica ${n}: o rinforzi (${dopo} a ${loro})` : sopra ? `Scarica ${n}: ${dopo} a ${loro}, <b style="color:#fff">è vostro!</b>` : `Scarica ${n}: ${dopo} a ${loro}, ne mancano ancora ${loro - dopo + W.SOGLIA}`;
-    obi.innerHTML = `<div class="t">${tit}</div><div class="s">${cosa}</div>${l.length ? `<div class="r"><span style="color:${col}">${corto(p)} ${mio}</span><span>${altro ? corto(altro.paese) + ' ' + loro : 'nessun altro'}</span></div>` : ''}${piede}`;
+    const tit = st === 'nostro' ? `✅ ${breve(dentro.nome)} è nostro` : st === 'libero' ? `🚩 ${breve(dentro.nome)}: libero!` : `💰 ${breve(dentro.nome)} è de ${corto(pd)}`;
+    const cosa = st === 'nostro' ? (n >= C.MINIMO ? `Rinforzalo: co' ${Math.min(n, 300)} nocchie costerà ${c + Math.min(n, 300)}` : `Chi o vò deve pagà ${c} nocchie`) : n >= c ? `Costa ${c}: ce l'hai, <b style="color:#fff">compralo!</b>` : `Costa ${c}: te ne mancano ${c - n}`;
+    obi.innerHTML = `<div class="t">${tit}</div><div class="s">${cosa}</div>${barra}${piede}`;
     return;
   }
   obi.style.borderColor = n >= cap ? '#ff8a3c' : col;
   const T = mia && W.lista().find(x => x.id === mia.id);
   if (T) { const d = Math.max(0, Math.hypot(T.x - c.x, T.z - c.z) - T.rad), az = (W.azione(T.id) || '').replace('Vai a ', '').replace(/^(\S+) /, '$1 Vai a '); obi.innerHTML = `<div class="t">${az}</div><div class="s">${breve(T.nome)} · ${d < 950 ? Math.round(d / 10) * 10 + ' m' : (d / 1000).toFixed(1).replace('.', ',') + ' km'}</div>${barra}${piede}`; return; }
-  if (n >= cap) { obi.innerHTML = `<div class="t">Cassone pieno: è ora de fa' guerra!</div><div class="s">Tocca qui e scegli o terreno da attaccà</div>${barra}${piede}`; return; }
-  obi.innerHTML = `<div class="t">🌰 Raccoji e nocchie!</div><div class="s">Passace sopra ne i campi pe' riempì o cassone</div>${barra}${piede}`;
+  if (n >= cap) { obi.innerHTML = `<div class="t">Cassone pieno: vai a comprà!</div><div class="s">Tocca qui e scegli o terreno (o un mezzo novo)</div>${barra}${piede}`; return; }
+  obi.innerHTML = `<div class="t">🌰 Raccoji e nocchie!</div><div class="s">Passace sopra ne i campi: co' e nocchie compri terreni e mezzi</div>${barra}${piede}`;
 }
 /* ---------- la prima volta: come se conquista un campo, in tre righe ---------- */
 function tutorial(){
@@ -119,7 +118,7 @@ function tutorial(){
 }
 
 /* ---------- i mezzi se sbloccano prendendo terreni ---------- */
-const SOGLIE = [[2, 'ape', "L'Ape: più veloce e più stabile"], [6, 'trattore', 'O trattore: passa ovunque tra i filari']];
+const SOGLIE = [];   // 2.1: i mezzi se comprano co' e nocchie (tg-cassone.js, pannello de i mezzi)
 function sblocca(tot){
   try { const L = TG.Contadino.stato(TG.Profile.data); for (const [n, id, cosa] of SOGLIE) if (tot >= n && !L.mezzi[id]) { L.mezzi[id] = Date.now(); TG.Profile.salva && TG.Profile.salva(); setTimeout(() => { try { TG.msg('🚜 Mezzo nuovo!', cosa + ` (${n} terreni presi)`, 4); TG.debug.setVehicle && TG.debug.setVehicle(id); } catch(e){} }, 5600); } } catch(e){}
 }
