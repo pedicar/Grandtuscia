@@ -46,7 +46,7 @@ function terraIn(x, z){
 const CENTRI = { fabrica: [4080, -640], carbognano: [3230, -470], caprarola: [2280, -170], falerii: [5330, 960], ronciglione: [1560, 1620], viterbo: [-750, -3350], pantanacce: [-900, -900] };
 const giornoRoma = () => { try { return new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Rome' }).format(new Date()); } catch(e){ return new Date().toISOString().slice(0, 10); } };
 const hash = s => { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; };
-let accesi = new Set(), giornoAccesi = '';
+let accesi = new Set(), giornoAccesi = '', battaglia = null;
 function calcolaAccesi(){
   const g = giornoRoma(); if (g === giornoAccesi && accesi.size) return; giornoAccesi = g;
   const gruppi = {};
@@ -54,6 +54,8 @@ function calcolaAccesi(){
   const s = new Set(['t:podere']);
   for (const k in gruppi) gruppi[k].sort((a, b) => hash(g + a.id) - hash(g + b.id)).slice(0, 3).forEach(T => s.add(T.id));
   accesi = s; versione++;
+  // a battaglia de o giorno: un terreno acceso dove ogni nocchia vale doppio (o stesso pe' tutti; i post de a sera o annunciano)
+  battaglia = [...s].filter(id => id !== 't:podere').sort((a, b) => hash('battaglia' + g + a) - hash('battaglia' + g + b))[0] || null;
   try { for (const T of TERRE) if (!T.podere) TG.debug.accendi(T.id.slice(2), s.has(T.id)); } catch(e){}
 }
 const acceso = id => accesi.has(id);
@@ -91,6 +93,7 @@ async function invia(){
 function contaGuerra(t, a){
   if (!((t === 'n' || t === 'c') && a > 0 && paese())) return;
   const c = TG.debug.car, T = c && terraIn(c.x, c.z); if (!T || !acceso(T.id)) return;
+  if (T.id === battaglia) a *= 2;   // battaglia de o giorno: vale doppio
   const prima = padrone(T.id); daMandare[T.id] = (daMandare[T.id] || 0) + a; locali[T.id] = locali[T.id] || {};
   const p = paese(), l = righe(T.id), cap = l.find(r => r.paese !== p);
   if (prima !== p && !festeggiati[T.id] && punti(T.id, p) + daMandare[T.id] > (cap ? cap.punti : 0)) { festeggiati[T.id] = 1; setTimeout(() => festa(T, prima, p), 250); }
@@ -240,7 +243,7 @@ function aggiornaBox(){
   const altro = pad && pad.paese !== p ? pad : (l.find(x => x.paese !== p) || null);
   box.style.display = 'block'; box.style.borderColor = pad ? colore(pad.paese) : 'rgba(255,255,255,.3)';
   const riga = (pp, n) => `<span><i style="background:${colore(pp)}"></i>${pp === p ? '<b>' : ''}${corto(pp)} ${n}${pp === p ? '</b>' : ''}</span>`;
-  const consiglio = !acceso(T.id) ? (pad ? 'spento oggi · de ' + corto(pad.paese) : 'spento oggi') : !dentro ? '🔥 entra e raccoi' : (!pad ? 'raccoi: è libero' : pad.paese === p ? 'è vostro' : `ne mancano ${altro.punti - mio + 1}`);
+  const consiglio = (T.id === battaglia ? '⚔ vale doppio · ' : '') + (!acceso(T.id) ? (pad ? 'spento oggi · de ' + corto(pad.paese) : 'spento oggi') : !dentro ? '🔥 entra e raccoi' : (!pad ? 'raccoi: è libero' : pad.paese === p ? 'è vostro' : `ne mancano ${Math.ceil((altro.punti - mio + 1) / (T.id === battaglia ? 2 : 1))}`));
   box.innerHTML = `<div class="n">🌰 ${breve(T.nome)} · <span style="color:#c9bfa8;font-weight:600">${consiglio}</span></div><div class="r">${p ? riga(p, mio) : ''}${altro ? riga(altro.paese, altro.punti) : '<span>nessuno</span>'}</div>`;
   // il compito iniziale («Raccogli 10 nocciole») dice la stessa cosa: quando c'è il blocco, il compito si toglie
   const pr = $('primi'); if (pr) pr.style.visibility = 'hidden';
@@ -250,14 +253,14 @@ function aggiornaBox(){
 const cartelli = {};
 function cartello(T){
   const p = padrone(T.id), testo = (p ? corto(p) : 'Libero'), col = colore(p);
-  const k = testo + col; const old = cartelli[T.id];
+  const k = testo + col + (T.id === battaglia ? 'b' : ''); const old = cartelli[T.id];
   if (old && old.k === k) return;
   if (old) { try { TG.debug.scene.remove(old.s); old.s.material.map.dispose(); } catch(e){} }
   const cv = document.createElement('canvas'); cv.width = 512; cv.height = 128; const c = cv.getContext('2d');
   c.fillStyle = 'rgba(16,22,21,.82)'; c.beginPath(); c.roundRect(6, 6, 500, 116, 28); c.fill();
   c.fillStyle = col; c.beginPath(); c.roundRect(6, 6, 30, 116, [28, 0, 0, 28]); c.fill();
   c.textAlign = 'center'; c.textBaseline = 'middle';
-  c.fillStyle = '#f3e7cb'; c.font = '700 30px Figtree, system-ui, sans-serif'; c.fillText(breve(T.nome).slice(0, 30), 270, 40);
+  c.fillStyle = T.id === battaglia ? '#ff8a3c' : '#f3e7cb'; c.font = '700 30px Figtree, system-ui, sans-serif'; c.fillText((T.id === battaglia ? '⚔ VALE DOPPIO · ' : '') + breve(T.nome).slice(0, 30), 270, 40);
   c.fillStyle = p ? col : '#c9bfa8'; c.font = '800 46px Figtree, system-ui, sans-serif'; c.fillText(testo.slice(0, 18), 270, 88);
   const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(cv), transparent: true, depthWrite: false }));
   s.scale.set(22, 5.5, 1); let y = 0; try { y = TG.debug.world.ground(T.x, T.z); } catch(e){}
@@ -290,9 +293,9 @@ function pannello(){
   let c = { x: 0, z: 0 }; try { c = TG.debug.car; } catch(e){}
   const tot = {}; for (const T of TERRE) { const p = padrone(T.id); if (p) tot[p] = (tot[p] || 0) + 1; }
   const testa = Object.entries(tot).sort((a, b) => b[1] - a[1]).map(([p, n]) => `<b style="color:${colore(p)}">${corto(p)} ${n}</b>`).join(' · ') || 'Ancora tutti liberi';
-  const lista = TERRE.filter(T => acceso(T.id)).map(T => ({ T, d: Math.hypot(T.x - c.x, T.z - c.z), l: righe(T.id) })).sort((a, b) => a.d - b.d);
+  const lista = TERRE.filter(T => acceso(T.id)).map(T => ({ T, d: Math.hypot(T.x - c.x, T.z - c.z), l: righe(T.id) })).sort((a, b) => (b.T.id === battaglia) - (a.T.id === battaglia) || a.d - b.d);
   pan.innerHTML = `<div class="c"><h2>🔥 I terreni accesi oggi <button aria-label="Chiudi">×</button></h2><p>Oggi se combatte su questi: solo qui e nocchie contano. Ogni terreno è de o paese che c'ha raccolto de più; se nun ce torni se raffredda. Domenica vince chi ne tiene de più. ${testa}</p>`
-    + lista.map(({ T, d, l }) => `<div class="row" data-t="${T.id}"><i style="background:${colore(l[0] && l[0].paese)}"></i><div><b>${breve(T.nome)}</b><small>${l.length ? l.slice(0, 2).map(r => corto(r.paese) + ' ' + r.punti).join(' · ') : 'libero'}</small></div><em>${d < 950 ? Math.round(d / 10) * 10 + ' m' : (d / 1000).toFixed(1).replace('.', ',') + ' km'}</em></div>`).join('') + '</div>';
+    + lista.map(({ T, d, l }) => `<div class="row" data-t="${T.id}"><i style="background:${colore(l[0] && l[0].paese)}"></i><div><b>${T.id === battaglia ? "⚔ " : ""}${breve(T.nome)}${T.id === battaglia ? " · vale doppio" : ""}</b><small>${l.length ? l.slice(0, 2).map(r => corto(r.paese) + ' ' + r.punti).join(' · ') : 'libero'}</small></div><em>${d < 950 ? Math.round(d / 10) * 10 + ' m' : (d / 1000).toFixed(1).replace('.', ',') + ' km'}</em></div>`).join('') + '</div>';
   pan.querySelector('h2 button').onclick = () => { pan.hidden = true; };
   pan.querySelectorAll('.row').forEach(r => r.onclick = () => { const T = TERRE.find(x => x.id === r.dataset.t); pan.hidden = true; try { const m = document.querySelector('#mapOv [data-close]'); m && m.click(); TG.debug.setDest({ x: T.x, z: T.z, name: breve(T.nome) }); msg('Segui a freccia: ' + breve(T.nome)); } catch(e){} ev('terra_vai', T.id); });
   pan.hidden = false; ev('terre_aperte', '');
@@ -332,16 +335,17 @@ function mini(){
   c.setTransform(1, 0, 0, 1, 0, 0); c.clearRect(0, 0, W, W); c.beginPath(); c.arc(a, a, a - 1, 0, Math.PI * 2); c.clip();
   c.translate(a, a); c.rotate(rot); c.scale(s, s);
   for (const T of TERRE) { const dx = T.x - d.x, dz = T.z - d.z; if (Math.hypot(dx, dz) > 1000) continue; const p = padrone(T.id);
-    const on = acceso(T.id); c.beginPath(); c.arc(dx, dz, on ? Math.max(T.rad, 7 / s) : Math.max(T.rad * .5, 4 / s), 0, Math.PI * 2); c.fillStyle = colore(p); c.globalAlpha = on ? (p ? .6 : .35) : (p ? .25 : .08); c.fill(); c.globalAlpha = 1; if (on) { c.lineWidth = 3 / s; c.strokeStyle = p === paese() ? '#f2c74e' : '#ff8a3c'; c.stroke(); } }
+    const on = acceso(T.id); c.beginPath(); c.arc(dx, dz, on ? Math.max(T.rad, 7 / s) : Math.max(T.rad * .5, 4 / s), 0, Math.PI * 2); c.fillStyle = colore(p); c.globalAlpha = on ? (p ? .6 : .35) : (p ? .25 : .08); c.fill(); c.globalAlpha = 1; if (on) { c.lineWidth = (T.id === battaglia ? 6 : 3) / s; c.strokeStyle = T.id === battaglia ? '#ff3b2f' : p === paese() ? '#f2c74e' : '#ff8a3c'; c.stroke(); } }
 }
 
 // per la mappa: di chi è il terreno, in una riga
 function descrivi(id){
   const l = righe(id).filter(r => r.punti > 0), p = paese();
+  if (id === battaglia) { const x = 'Battaglia de oggi: ogni nocchia vale doppio. '; l.length; descrivi._b = x; } else descrivi._b = '';
   if (!acceso(id)) { const pd = l[0]; return (pd ? `È de ${'<b style="color:' + colore(pd.paese) + '">' + corto(pd.paese) + '</b>'} (${pd.punti}). ` : '') + 'Oggi è spento: e nocchie qui nun contano. Vai a i terreni 🔥 accesi.'; }
-  if (!l.length) return 'Libero: o primo che ce raccoje se o pija pe\' o paese suo.';
+  if (!l.length) return (descrivi._b || '') + 'Libero: o primo che ce raccoje se o pija pe\' o paese suo.';
   const b = (pp, n) => `<b style="color:${colore(pp)}">${corto(pp)}</b> ${n}`;
-  let t = `È de ${b(l[0].paese, l[0].punti)} nocchie`;
+  let t = (descrivi._b ? '⚔ ' + descrivi._b + '<br>' : '') + `È de ${b(l[0].paese, l[0].punti)} nocchie`;
   if (l[1]) t += ` · ${b(l[1].paese, l[1].punti)}`;
   if (p && l[0].paese !== p) { const mio = punti(id, p); t += `<br>Pe' pijallo a ${corto(p)} ne servono ${l[0].punti - mio + 1}.`; }
   else if (p && l[0].paese === p) t += '<br>È vostro: tenetelo.';
@@ -373,7 +377,7 @@ async function premioGioco(){
   if (document.body.classList.contains('playing')) via(); else new MutationObserver((x, o) => { if (document.body.classList.contains('playing')) { o.disconnect(); via(); } }).observe(document.body, { attributes: true, attributeFilter: ['class'] });
   ev('terre_premio', da, bonus, { med: q.get('med') || null, preso });
 }
-TG.Terre = { colore, padrone, righe, terraIn, aggiorna, pannello, descrivi, puntoGuerra, acceso, accesi: () => accesi, _card: cardImmagine, lista: () => TERRE, _dbg: () => ({ classifica, locali, daMandare }) };
+TG.Terre = { colore, padrone, righe, terraIn, aggiorna, pannello, descrivi, puntoGuerra, acceso, accesi: () => accesi, battaglia: () => battaglia, _card: cardImmagine, lista: () => TERRE, _dbg: () => ({ classifica, locali, daMandare }) };
 // per i moduli che usavano le zone (presenza: colore del paese)
 TG.Zone = TG.Zone || { colore, squadra: false };
 function avvia(){

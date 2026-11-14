@@ -68,6 +68,9 @@ function avvia(){
   if (!TG.Terre || !TG.debug || !TG.debug.car) return setTimeout(avvia, 1000);
   sblocca(+(ls.get('tg-presi') || 0));
   setInterval(alto, 1500); setInterval(prossimo, 2500); alto();
+  // a battaglia de o giorno: detta una volta, quando se comincia a giocà
+  const dici = () => { try { const b = TG.Terre.battaglia(), T = b && TG.Terre.lista().find(x => x.id === b); if (!T || ls.get('tg-battaglia-detta') === oggi() + b) return; if (!document.body.classList.contains('playing')) return setTimeout(dici, 3000); ls.set('tg-battaglia-detta', oggi() + b); setTimeout(() => TG.msg('⚔ Battaglia de oggi', breve(T.nome) + ': ogni nocchia vale doppio', 5), 8000); } catch(e){} };
+  setTimeout(dici, 4000);
 }
 TG.Semplice = { prossimo, alto };
 if (document.readyState === 'complete') setTimeout(avvia, 2000); else addEventListener('load', () => setTimeout(avvia, 2000));
