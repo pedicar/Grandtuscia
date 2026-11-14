@@ -44,7 +44,9 @@ function prossimo(){
   const D = TG.debug, W = TG.Terre; if (!D || !W || !D.car || !document.body.classList.contains('playing')) return;
   const p = paese(); if (!p) return;
   const c = D.car, dentro = W.terraIn(c.x, c.z);
-  document.documentElement.classList.toggle('tg-campo', !!dentro);
+  // nasconde o bottone sopra i campi (IL PODERE), mai quello de un gioco o de un luogo
+  const pn = (document.getElementById('pName') || {}).textContent || '';
+  document.documentElement.classList.toggle('tg-campo', !!dentro && (/podere|tua terra/i.test(pn) || W.lista().some(T => T.nome === pn || breve(T.nome) === pn)));
   const N = D.NAV || {}, dest = N.dest;
   if (dest && dest !== mia && partito) { if (Math.hypot(dest.x - c.x, dest.z - c.z) > 60) return; }   // meta scelta da te: rispettata finché nun ci arrivi
   if (dentro && W.padrone(dentro.id) !== p) { if (mia && mia.id === dentro.id) return; }        // stai a raccoje: lascia stare
