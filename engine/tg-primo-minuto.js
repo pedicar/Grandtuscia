@@ -223,12 +223,13 @@ function tickPunti(){
 }
 addEventListener('pagehide', () => { if (daMandare > 0) { const n = daMandare; daMandare = 0; mandaPunti(n); } });
 
-/* ---------- Ape in regalo ---------- */
+/* ---------- Vespa in regalo (prima era l'Ape) ---------- */
 function regalaApe(){
   try {
     const st = TG.Contadino.stato(TG.Profile.data); st.mezzi = st.mezzi || {};
-    if (!st.mezzi.ape) { st.mezzi.ape = 1; TG.Profile.salva(); ev('ape_regalo', 'primo_minuto'); }
-    if (TG.debug.VEH && TG.debug.VEH.cur && TG.debug.VEH.cur.id === 'piedi') TG.debug.setVehicle('ape');
+    // 2.0 (14/11): si parte in Vespa (cassone 100); l'Ape arriva co' 2 terreni presi, o trattore co' 6 (tg-semplice.js)
+    if (!st.mezzi.vespa) { st.mezzi.vespa = 1; TG.Profile.salva(); ev('vespa_regalo', 'primo_minuto'); }
+    if (TG.debug.VEH && TG.debug.VEH.cur && TG.debug.VEH.cur.id === 'piedi') TG.debug.setVehicle('vespa');
     ls.set(K_APE, '1');
   } catch(e){}
 }
