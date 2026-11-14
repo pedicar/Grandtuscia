@@ -24,7 +24,7 @@ const lun = lunedi(giorno()), dom = piu(lun, 6);
 const sett = Math.round((Date.parse(lun) - Date.parse('2026-11-16')) / 6048e5);
 const P = PROGRAMMA[lun] || ROTA[((sett % ROTA.length) + ROTA.length) % ROTA.length];
 const K = 'tg-sfida-' + lun;
-const spenta = /[?&]sfida=0\b/.test(location.search);
+const spenta = !/[?&]derby=1\b/.test(location.search);   // spento: a rivalità vive solo ne i post de a sera (14/11). ?derby=1 pe' provallo
 const MESI = ['gennaio', 'febbraio', 'marzo', 'aprile', 'maggio', 'giugno', 'luglio', 'agosto', 'settembre', 'ottobre', 'novembre', 'dicembre'];
 const fineTesto = () => { const g = giorno(); if (g === dom) return 'finisce stasera a mezzanotte'; const d = new Date(dom + 'T12:00:00Z'); return 'fino a domenica ' + d.getUTCDate() + ' ' + MESI[d.getUTCMonth()]; };
 const fineCorto = () => giorno() === dom ? '⏳ finisce stanotte' : '⏳ fino a dom. ' + new Date(dom + 'T12:00:00Z').getUTCDate();
