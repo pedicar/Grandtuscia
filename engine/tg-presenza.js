@@ -66,7 +66,7 @@ function fantasma(g){
   const id = TG.Veicoli[g.dati.veh] ? g.dati.veh : 'vespa';
   let m; try { m = TG.Veicoli[id](E.col); } catch(e){ return null; }
   m.group.scale.setScalar(SCALA[id] || 1.3);
-  m.group.traverse(o => { if (o.isMesh && o.material) { o.material = o.material.clone(); o.material.transparent = true; o.material.opacity = .55; o.castShadow = false; } });
+  m.group.traverse(o => { if (o.isMesh && o.material) { o.material = o.material.clone(); o.material.transparent = true; o.material.opacity = g.dati.ombra ? .32 : .55; o.castShadow = false; } });
   const grp = new THREE.Group(); grp.add(m.group); grp.add(etichetta(g.dati.nome || 'Uno de ' + corto(g.dati.paese), colore(g.dati.paese)));
   scene.add(grp); return { grp, m, veh: id };
 }
@@ -78,23 +78,67 @@ function giro(){
   if (!document.body.classList.contains('playing')) return;
   let c, E; try { c = TG.debug.car; E = TG.debug.world; } catch(e){ return; } if (!c || !E) return;
   let squadra = false, p = paese();
-  for (const k in altri) {
-    const g = altri[k], d = g.dati; if (!d) continue;
-    if (Date.now() - g.visto > SPARISCE) { togli(g); continue; }
+  muoviOmbre(c);
+  const tutti = Object.assign({}, ombre, altri);
+  for (const k in tutti) {
+    const g = tutti[k], d = g.dati; if (!d) continue;
+    if (!d.ombra && Date.now() - g.visto > SPARISCE) { togli(g); continue; }
+    if (d.ombra && !g.vicina) { togli(g); continue; }
     if (!g.f || g.f.veh !== (TG.Veicoli[d.veh] ? d.veh : 'vespa')) { togli(g); g.f = fantasma(g); if (!g.f) continue; g.f.grp.position.set(d.x, E.ground(d.x, d.z), d.z); g.f.grp.rotation.y = d.yaw; }
     const G = g.f.grp, k2 = 1 - Math.pow(.02, dt);  // interpolazione morbida verso l'ultima posizione
     G.position.x += (d.x - G.position.x) * k2; G.position.z += (d.z - G.position.z) * k2; G.position.y = E.ground(G.position.x, G.position.z) + .12;
     let dy = d.yaw - G.rotation.y; dy = Math.atan2(Math.sin(dy), Math.cos(dy)); G.rotation.y += dy * k2;
     try { g.f.m.update && g.f.m.update(dt, { speed: d.v || 0, steer: 0, throttle: d.v ? 1 : 0 }); } catch(e){}
-    if (p && d.paese === p && Math.hypot(d.x - c.x, d.z - c.z) < RAGGIO_SQUADRA) squadra = true;
+    if (!d.ombra && p && d.paese === p && Math.hypot(d.x - c.x, d.z - c.z) < RAGGIO_SQUADRA) squadra = true;
   }
   if (TG.Zone) TG.Zone.squadra = squadra;
+}
+
+
+/* ---------- LE OMBRE: chi è passato de recente ----------
+   Con pochi giocatori quasi mai due guidano ne o stesso minuto. Allora ogni telefono registra l'ultimo giro (4 minuti, un punto
+   al secondo) e o manda al server (tg_traccia_salva); ne o mondo girano in loop e ombre de l'ultimi 15 giocatori de i 3 giorni
+   (tg_tracce): mezzo trasparente, colore de o paese, «Marco · 2 ore fa». Vicine (entro 900 m) se disegnano, e altre no. */
+let ombre = {}, buf = [], ultimoPunto = 0, ultimoInvio = 0, vehReg = 'vespa';
+async function rpcP(f, body){ if (!cfg.url) throw 0; const k = cfg.pub || cfg.key; const r = await fetch(cfg.url.replace(/\/$/, '') + '/rest/v1/rpc/' + f, { method: 'POST', headers: { 'Content-Type': 'application/json', apikey: k, Authorization: 'Bearer ' + k }, body: JSON.stringify(body || {}) }); if (!r.ok) throw r.status; return r.json(); }
+const quantoFa = s => s < 3600 ? Math.max(1, Math.round(s / 60)) + ' min fa' : s < 86400 ? Math.round(s / 3600) + (Math.round(s / 3600) === 1 ? ' ora fa' : ' ore fa') : Math.round(s / 86400) === 1 ? 'ieri' : Math.round(s / 86400) + ' giorni fa';
+function registra(){
+  let c; try { c = TG.debug.car; } catch(e){ return; } if (!c || !document.body.classList.contains('playing')) return;
+  const ora = Date.now(); if (ora - ultimoPunto < 1000) return; ultimoPunto = ora;
+  try { vehReg = TG.debug.VEH.cur.id || vehReg; } catch(e){}
+  const u = buf[buf.length - 1]; if (u && Math.hypot(u[0] - c.x, u[1] - c.z) < .8) return;   // fermo: non registra
+  buf.push([Math.round(c.x), Math.round(c.z), Math.round(c.yaw * 100)]); if (buf.length > 240) buf.shift();
+}
+async function salvaTraccia(){
+  const d = dev(), p = paese(); if (!d || !p || buf.length < 30) return;
+  let L = 0; for (let i = 1; i < buf.length; i++) L += Math.hypot(buf[i][0] - buf[i - 1][0], buf[i][1] - buf[i - 1][1]); if (L < 150) return;
+  ultimoInvio = Date.now();
+  try { await rpcP('tg_traccia_salva', { p_dev: d, p_paese: p, p_nome: soprannome().slice(0, 18) || null, p_veh: vehReg, p_traccia: buf.map(q => q.join(',')).join(';') }); } catch(e){}
+}
+async function caricaOmbre(){
+  let l; try { l = await rpcP('tg_tracce'); } catch(e){ return; } if (!Array.isArray(l)) return;
+  const mio = dev(), nuove = {};
+  for (const r of l) { if (!r || r.dev === mio || !r.traccia) continue; const tr = r.traccia.split(';').map(q => q.split(',').map(Number)).filter(q => q.length === 3 && q.every(isFinite)); if (tr.length < 20) continue;
+    const k = 'o:' + r.dev, old = ombre[k]; const nome = (r.nome || 'Uno de ' + corto(r.paese)) + ' · ' + quantoFa(r.fa || 0);
+    if (old && old.dati.nome === nome && old.tr.length === tr.length) { nuove[k] = old; continue; }
+    if (old) togli(old);
+    nuove[k] = { id: k, tr, off: Math.random() * tr.length, dati: { ombra: true, paese: r.paese, veh: r.veh || 'vespa', nome, x: tr[0][0], z: tr[0][1], yaw: tr[0][2] / 100, v: 8 } }; }
+  for (const k in ombre) if (!nuove[k]) togli(ombre[k]);
+  ombre = nuove; aggiornaConteggio();
+}
+function muoviOmbre(c){
+  const t = performance.now() / 1000;
+  for (const k in ombre) { const g = ombre[k], tr = g.tr, n = tr.length; const f = (t + g.off) % n, i = Math.floor(f), a = tr[i], b = tr[(i + 1) % n], u = f - i;
+    if (Math.hypot(b[0] - a[0], b[1] - a[1]) > 80) { g.dati.x = b[0]; g.dati.z = b[1]; if (g.f) { g.f.grp.position.x = b[0]; g.f.grp.position.z = b[1]; } }   // salto (giro finito o teletrasporto)
+    else { g.dati.x = a[0] + (b[0] - a[0]) * u; g.dati.z = a[1] + (b[1] - a[1]) * u; }
+    g.dati.yaw = b[2] / 100; g.dati.v = Math.hypot(b[0] - a[0], b[1] - a[1]);
+    g.vicina = Math.hypot(g.dati.x - c.x, g.dati.z - c.z) < 900; }
 }
 
 /* ---------- minimappa: puntini ---------- */
 let mini = null;
 function puntini(){
-  const m = $('mini'), mo = $('mapOv'); if (!m || !document.body.classList.contains('playing') || (mo && !mo.hidden) || !Object.keys(altri).length) { if (mini) mini.style.display = 'none'; return; }
+  const m = $('mini'), mo = $('mapOv'); if (!m || !document.body.classList.contains('playing') || (mo && !mo.hidden) || !(Object.keys(altri).length + Object.keys(ombre).length)) { if (mini) mini.style.display = 'none'; return; }
   const r = m.getBoundingClientRect(); if (!r.width) return;
   if (!mini) { mini = document.createElement('canvas'); mini.id = 'prMini'; mini.setAttribute('style', 'position:fixed;pointer-events:none;border-radius:50%;z-index:12'); document.body.appendChild(mini); }
   mini.style.display = 'block'; mini.style.left = r.left + 'px'; mini.style.top = r.top + 'px'; mini.style.width = r.width + 'px'; mini.style.height = r.height + 'px';
@@ -103,6 +147,7 @@ function puntini(){
   const c = mini.getContext('2d'), a = W / 2, s = a / 820, rot = -Math.atan2(Math.cos(d.yaw), Math.sin(d.yaw)) - Math.PI / 2;
   c.setTransform(1, 0, 0, 1, 0, 0); c.clearRect(0, 0, W, W); c.beginPath(); c.arc(a, a, a - 1, 0, Math.PI * 2); c.clip();
   c.translate(a, a); c.rotate(rot); c.scale(s, s);
+  for (const k in ombre) { const g = ombre[k].dati; if (!g || g.x == null) continue; const dx = g.x - d.x, dz = g.z - d.z; if (Math.hypot(dx, dz) > 790) continue; c.beginPath(); c.arc(dx, dz, 4 / s, 0, Math.PI * 2); c.globalAlpha = .55; c.fillStyle = colore(g.paese); c.fill(); c.globalAlpha = 1; }
   for (const k in altri) { const g = altri[k].dati; if (!g) continue; const dx = g.x - d.x, dz = g.z - d.z; const dist = Math.hypot(dx, dz); const f = dist > 790 ? 790 / dist : 1;  // oltre il bordo: sul bordo
     c.beginPath(); c.arc(dx * f, dz * f, 6 / s, 0, Math.PI * 2); c.fillStyle = colore(g.paese); c.fill(); c.lineWidth = 2 / s; c.strokeStyle = '#fff'; c.stroke(); }
 }
@@ -113,14 +158,16 @@ function aggiornaConteggio(){
   let el = $('prConta');
   if (!el) { const menu = $('menu'); if (!menu) return; el = document.createElement('div'); el.id = 'prConta'; el.setAttribute('style', 'margin:6px auto 0;max-width:420px;text-align:center;font:700 13px Figtree,"Segoe UI",system-ui,sans-serif;color:#c9bfa8'); const intro = menu.querySelector('.intro'); (intro ? intro.parentNode : menu).insertBefore(el, intro ? intro.nextSibling : menu.firstChild); }
   const n = Object.keys(altri).length;
-  if (!n) { el.innerHTML = '⚪ Nessuno in giro adesso: a Tuscia è tua'; return; }
+  const no = Object.keys(ombre).length, nota = no ? ` · <span style="color:#9aa39c">👻 ${no} passati de recente</span>` : '';
+  if (!n) { el.innerHTML = '⚪ Nessuno in giro adesso' + (nota || ': a Tuscia è tua'); return; }
   const per = {}; for (const k in altri) { const p = altri[k].dati.paese; per[p] = (per[p] || 0) + 1; }
-  el.innerHTML = `🟢 <b style="color:#f3e7cb">${n} in giro</b>: ` + Object.entries(per).sort((a, b) => b[1] - a[1]).map(([p, c]) => `<span style="color:${colore(p)}">${c} ${corto(p)}</span>`).join(', ');
+  el.innerHTML = `🟢 <b style="color:#f3e7cb">${n} in giro</b>: ` + Object.entries(per).sort((a, b) => b[1] - a[1]).map(([p, c]) => `<span style="color:${colore(p)}">${c} ${corto(p)}</span>`).join(', ') + nota;
 }
-TG.Presenza = { invia: d => { try { if (canale && pronto) canale.send({ type: 'broadcast', event: 'guerra', payload: Object.assign({ dev: dev(), t: Date.now() }, d) }); } catch(e){} }, etichetta: (t, c) => etichetta(t, c), altri: () => altri, conteggio: () => Object.keys(altri).length, manda, _dbg: () => ({ me, pronto, altri }) };
+TG.Presenza = { invia: d => { try { if (canale && pronto) canale.send({ type: 'broadcast', event: 'guerra', payload: Object.assign({ dev: dev(), t: Date.now() }, d) }); } catch(e){} }, etichetta: (t, c) => etichetta(t, c), altri: () => altri, conteggio: () => Object.keys(altri).length, ombre: () => ombre, manda, _dbg: () => ({ me, pronto, altri }) };
 function avvia(){
   if (!TG.debug || !TG.PrimoMinuto) return setTimeout(avvia, 1000);
-  collega(); setInterval(() => { if (!canale) collega(); manda(false); }, 1000); giro(); giroMini();
+  collega(); setInterval(() => { if (!canale) collega(); manda(false); registra(); }, 1000); giro(); giroMini();
+  caricaOmbre(); setInterval(caricaOmbre, 300000); setInterval(salvaTraccia, 60000); addEventListener('pagehide', salvaTraccia); addEventListener('visibilitychange', () => { if (document.hidden) salvaTraccia(); });
   addEventListener('pagehide', () => { try { canale && canale.untrack(); } catch(e){} });
 }
 if (document.readyState === 'complete') setTimeout(avvia, 2500); else addEventListener('load', () => setTimeout(avvia, 2500));

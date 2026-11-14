@@ -71,11 +71,24 @@ async function invia(){
   }
 }
 // ogni nocchia raccolta dentro un terreno conta pe' o paese tuo
+function contaGuerra(t, a){
+  if (!((t === 'n' || t === 'c') && a > 0 && paese())) return;
+  const c = TG.debug.car, T = c && terraIn(c.x, c.z); if (!T) return;
+  const prima = padrone(T.id); daMandare[T.id] = (daMandare[T.id] || 0) + a; locali[T.id] = locali[T.id] || {};
+  const p = paese(), l = righe(T.id), cap = l.find(r => r.paese !== p);
+  if (prima !== p && !festeggiati[T.id] && punti(T.id, p) + daMandare[T.id] > (cap ? cap.punti : 0)) { festeggiati[T.id] = 1; setTimeout(() => festa(T, prima, p), 250); }
+}
 function aggancia(){
   const P = TG.Profile; if (!P || !P.harvestAdd || P.harvestAdd._terre) return;
   const o = P.harvestAdd.bind(P);
-  const n = function(t, a){ try { if ((t === 'n' || t === 'c') && a > 0 && paese()) { const c = TG.debug.car, T = c && terraIn(c.x, c.z); if (T) { const prima = padrone(T.id); daMandare[T.id] = (daMandare[T.id] || 0) + a; locali[T.id] = locali[T.id] || {}; const p = paese(), l = righe(T.id), cap = l.find(r => r.paese !== p); if (prima !== p && !festeggiati[T.id] && punti(T.id, p) + daMandare[T.id] > (cap ? cap.punti : 0)) { festeggiati[T.id] = 1; setTimeout(() => festa(T, prima, p), 250); } } } } catch(e){} return o(t, a); };
+  const n = function(t, a){ try { contaGuerra(t, a); } catch(e){} return o(t, a); };
   n._terre = 1; P.harvestAdd = n;
+}
+// cassone pieno: ne i terreni a nocchia conta pe' a guerra anche se nun entra ne o cassone (o dice ogni tanto)
+let avvisoPieno = 0;
+function puntoGuerra(t, a){
+  try { contaGuerra(t, a); } catch(e){}
+  if (Date.now() - avvisoPieno > 45000) { avvisoPieno = Date.now(); msg('Cassone pieno', "E nocchie contano lo stesso pe' a guerra. Pe' le lire, vendile a o podere", 3.5); }
 }
 
 
@@ -342,7 +355,7 @@ async function premioGioco(){
   if (document.body.classList.contains('playing')) via(); else new MutationObserver((x, o) => { if (document.body.classList.contains('playing')) { o.disconnect(); via(); } }).observe(document.body, { attributes: true, attributeFilter: ['class'] });
   ev('terre_premio', da, presi.length, { med: q.get('med') || null });
 }
-TG.Terre = { colore, padrone, righe, terraIn, aggiorna, pannello, descrivi, _card: cardImmagine, lista: () => TERRE, _dbg: () => ({ classifica, locali, daMandare }) };
+TG.Terre = { colore, padrone, righe, terraIn, aggiorna, pannello, descrivi, puntoGuerra, _card: cardImmagine, lista: () => TERRE, _dbg: () => ({ classifica, locali, daMandare }) };
 // per i moduli che usavano le zone (presenza: colore del paese)
 TG.Zone = TG.Zone || { colore, squadra: false };
 function avvia(){
