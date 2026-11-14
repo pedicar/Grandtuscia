@@ -25,8 +25,8 @@ const C = TG.Cassone = {
     if (!(a > 0)) return 0; const c = cap(); if (n >= c && !forza) { C.avvisa(); return 0; }
     const k = forza ? a : Math.min(a, c - n); const era = n; n += k; salva();
     if (prima10 && n >= 10) { prima10 = false; ls.set('tg-cassone-10', '1'); msg('Brau! 10 nocchie ne o cassone', 'Co\' e nocchie se compra: terreni e mezzi', 3.5); }
-    if (era < c * .5 && n >= c * .5 && n < c) { if (!ls.get('tg-primo-scarico')) grande(`Hai già ${n} nocchie!`, "I terreni liberi costano 10: entra in un campo e premi COMPRA", false); else msg('O cassone se sta a riempì', `${n}/${c}: ancora poche e se parte a l'attacco`, 2.5); }
-    if (n >= c && era < c) { ev('cassone_pieno', mezzo(), c); grande('Cassone pieno!', 'Co\' e nocchie compri terreni e mezzi novi: entra in un campo e premi COMPRA, o tocca qui pe\' a mappa', true); avvisoPieno = Date.now(); }
+    if (era < c * .5 && n >= c * .5 && n < c) { if (!ls.get('tg-primo-scarico')) grande(`Hai già ${n} nocchie!`, 'I terreni liberi costano 10: entra in un campo e premi COMPRA'); else msg('O cassone se sta a riempì', `${n}/${c}: ancora poche e se parte a l'attacco`, 2.5); }
+    if (n >= c && era < c) { ev('cassone_pieno', mezzo(), c); grande('Cassone pieno!', 'Entra in un campo e premi COMPRA, o tocca o riquadro pe\' a mappa'); avvisoPieno = Date.now(); }
     return k;
   },
   togli(a){ n = Math.max(0, n - a); salva(); },
@@ -34,12 +34,8 @@ const C = TG.Cassone = {
 };
 
 /* ---------- o messaggio grande in mezzo (cassone pieno, primo attacco): nun blocca, sparisce da solo ---------- */
-function grande(t, s, mappa){
-  let g = $('scGrande'); if (g) g.remove();
-  g = document.createElement('div'); g.id = 'scGrande'; g.innerHTML = `<b>🌰 ${t}</b><span>${s}</span>${mappa ? '<i>🗺 Tocca pe\' a mappa</i>' : ''}`;
-  g.onclick = () => { g.remove(); if (mappa) { const b = $('bMap'); b && b.click(); } };
-  document.body.appendChild(g); setTimeout(() => { g.classList.add('via'); setTimeout(() => g.remove(), 500); }, 6500);
-}
+// niente pannelli in mezzo a o schermo: o messaggio va ne a riga in alto e o riquadro de l'obiettivo lampeggia
+function grande(t, s){ msg('🌰 ' + t, s, 5); const o = $('obi'); if (o) { o.classList.remove('flash'); void o.offsetWidth; o.classList.add('flash'); setTimeout(() => o.classList.remove('flash'), 4200); } }
 
 /* ---------- o bottone SCARICA ---------- */
 const st = document.createElement('style'); st.textContent = `
@@ -52,6 +48,10 @@ body:not(.playing) #scBtn,body:has(#mapOv:not([hidden])) #scBtn,body:has(#trFest
 html.tg-scarica #prompt{display:none!important}
 body:has(#vehOv:not([hidden])) #scBtn,body:has(#vehOv:not([hidden])) #obi,body:has(#vehOv:not([hidden])) #scGrande{display:none!important}
 #scGrande{position:fixed;z-index:36;left:50%;top:42%;transform:translate(-50%,-50%);width:min(330px,86vw);padding:16px 18px 14px;border-radius:20px;background:rgba(16,22,21,.93);border:3px solid #ff8a3c;color:#f3e7cb;text-align:center;font:700 15px/1.3 Figtree,"Segoe UI",system-ui,sans-serif;box-shadow:0 12px 34px rgba(0,0,0,.45);cursor:pointer;animation:scIn .35s cubic-bezier(.2,1.4,.4,1)}#scGrande b{display:block;font:900 26px/1.1 Figtree,sans-serif;color:#fff;margin-bottom:6px}#scGrande span{display:block}#scGrande i{display:inline-block;margin-top:10px;padding:7px 14px;border-radius:999px;background:#ff8a3c;color:#fff;font:900 14px Figtree,sans-serif;font-style:normal}#scGrande.via{opacity:0;transition:opacity .4s}@keyframes scIn{from{transform:translate(-50%,-50%) scale(.6);opacity:0}}body:not(.playing) #scGrande,body:has(#mapOv:not([hidden])) #scGrande{display:none}
+html body.touch #prompt#prompt{left:calc(172px + env(safe-area-inset-left,0px))!important;right:calc(12px + env(safe-area-inset-right,0px))!important;transform:none!important;max-width:none!important}   
+@media (max-width:420px){html body.touch #pMore{display:none!important}}
+#obi.flash{animation:obiFlash .7s ease-in-out 6;border-color:#ff8a3c!important}@keyframes obiFlash{50%{box-shadow:0 0 0 4px rgba(255,138,60,.85),0 6px 18px rgba(0,0,0,.3)}}
+#prompt.tgVinci{box-shadow:0 0 0 3px rgba(242,199,78,.8)}#prompt .tgVinci{display:block!important;color:#f2c74e;font-weight:800;font-size:13px;white-space:nowrap}
 #scVolo{position:fixed;z-index:34;pointer-events:none;font-size:22px;transition:transform .7s cubic-bezier(.3,.6,.4,1),opacity .7s}`;
 document.head.appendChild(st);
 let btn = null, occupato = false;
@@ -131,17 +131,14 @@ function osservaMezzi(){
 }
 
 /* ---------- VICINO A UN GIOCO: «Gioca e vinci fino a 120 nocchie» (una volta ogni 4 minuti pe' gioco) ---------- */
-const visto = {};
 function vicinoGioco(){
-  const pr = $('prompt'), nm = $('pName'); if (!pr || pr.hidden || !nm || !document.body.classList.contains('playing')) return;
+  const pr = $('prompt'), nm = $('pName'), w = $('pWhat'); if (!pr || pr.hidden || !nm || !w) return;
   const nome = (nm.textContent || '').trim(); let A = null;
   try { A = (TG.debug.acts || []).find(a => [a.name, a.nome, a.id].some(x => x && String(x).trim() === nome)); } catch(e){}
-  if (!A || (visto[A.id] && Date.now() - visto[A.id] < 240000) || $('scGrande')) return;
-  visto[A.id] = Date.now(); ev('gioco_popup', A.id);
-  let g = document.createElement('div'); g.id = 'scGrande';
-  g.innerHTML = `<b>🎮 ${nome}</b><span>Gioca e vinci fino a <b style="display:inline;font-size:inherit;color:#f2c74e">120 nocchie</b> pe' comprà terreni e mezzi</span><i>▶ Gioca</i>`;
-  g.onclick = () => { g.remove(); const b = $('pGo'); b && b.click(); ev('gioco_popup_gioca', A.id); };
-  document.body.appendChild(g); setTimeout(() => { if (g.isConnected) { g.classList.add('via'); setTimeout(() => g.remove(), 500); } }, 7000);
+  pr.classList.toggle('tgVinci', !!A);
+  const box = nm.parentNode; if (!A || box.querySelector('.tgVinci')) return;
+  const sp = document.createElement('span'); sp.className = 'tgVinci'; sp.textContent = '🎮 Vinci fino a 120 🌰'; box.appendChild(sp);
+  if (!vicinoGioco[A.id] || Date.now() - vicinoGioco[A.id] > 240000) { vicinoGioco[A.id] = Date.now(); ev('gioco_popup', A.id); }
 }
 
 function avvia(){

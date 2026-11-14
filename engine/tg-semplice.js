@@ -24,11 +24,12 @@ html.tg-campo #prompt{display:none!important}
 #mission .tg-label{font-size:0!important}#mission .tg-label::after{content:"🔥 Terreno acceso";font-size:11px}
 #mChange{display:none!important}
 #trBox{display:none!important}
-#obi{position:fixed;z-index:31;left:calc(10px + env(safe-area-inset-left,0px));top:calc(var(--obiTop,112px) + env(safe-area-inset-top,0px));width:min(250px,60vw);padding:8px 11px 9px;border-radius:14px;background:rgba(16,22,21,.86);border:2px solid #ff8a3c;color:#f3e7cb;font:700 13px/1.3 Figtree,"Segoe UI",system-ui,sans-serif;box-shadow:0 6px 18px rgba(0,0,0,.3);pointer-events:auto;cursor:pointer}
+#obi{position:fixed;z-index:31;left:calc(10px + env(safe-area-inset-left,0px));top:var(--obiTop,112px);width:min(250px,60vw);padding:8px 11px 9px;border-radius:14px;background:rgba(16,22,21,.86);border:2px solid #ff8a3c;color:#f3e7cb;font:700 13px/1.3 Figtree,"Segoe UI",system-ui,sans-serif;box-shadow:0 6px 18px rgba(0,0,0,.3);pointer-events:auto;cursor:pointer}
 #obi .t{font:900 15px/1.2 Figtree,sans-serif;color:#fff}
 #obi .s{margin-top:2px;color:#d9cfb6;font-weight:700}
 #obi .b{position:relative;height:9px;border-radius:5px;background:rgba(255,255,255,.15);margin-top:6px;overflow:hidden}#obi .b i{position:absolute;left:0;top:0;bottom:0;border-radius:5px;transition:width .3s}
 #obi .r{display:flex;justify-content:space-between;margin-top:3px;font-size:12px;color:#c9bfa8}
+@media (max-height:500px){#obi{width:min(230px,34vw);padding:6px 9px 7px;font-size:12px}#obi .t{font-size:13px}#obi .r{display:none}}
 body:not(.playing) #obi,body:has(#mapOv:not([hidden])) #obi,body:has(#trOv:not([hidden])) #obi,body:has(#trFesta) #obi{display:none!important}
 #tuto{position:fixed;inset:0;z-index:97;display:flex;align-items:center;justify-content:center;background:rgba(8,12,10,.7);padding:18px;font-family:Figtree,"Segoe UI",system-ui,sans-serif}
 #tuto .c{width:min(360px,100%);background:#17201f;border:2px solid #ff8a3c;border-radius:20px;padding:18px 18px 14px;color:#f3e7cb}
@@ -89,7 +90,7 @@ function apriMappa(){ try { const b = document.getElementById('bMap') || documen
 function obiettivo(){
   const D = TG.debug, W = TG.Terre, C = TG.Cassone; if (!D || !W || !D.car || !C) return;
   if (!obi) { obi = document.createElement('div'); obi.id = 'obi'; obi.onclick = apriMappa; document.body.appendChild(obi); }
-  const sc = document.getElementById('score'); if (sc) { const r = sc.getBoundingClientRect(); if (r.bottom > 0) document.documentElement.style.setProperty('--obiTop', Math.round(r.bottom + 8) + 'px'); }
+
   const p = paese(), c = D.car, dentro = W.terraIn(c.x, c.z), n = C.n, cap = C.cap(), pct = Math.min(100, n / cap * 100);
   if (!p) { obi.innerHTML = `<div class="t">Scegli o paese tuo</div>`; return; }
   const col = W.colore(p), barra = `<div class="b"><i style="width:${Math.max(3, pct)}%;background:${n >= cap ? '#ff8a3c' : col}"></i></div>`;
@@ -126,6 +127,8 @@ addEventListener('tg-presa', e => { sblocca(e.detail.tot); setTimeout(prossimo, 
 
 function avvia(){
   if (!TG.Terre || !TG.debug || !TG.debug.car) return setTimeout(avvia, 1000);
+  // o riquadro sta sempre sotto a barra in alto, anche quando a barra cresce pe' un messaggio
+  try { const wh = document.querySelector('#hud .where'); let alto = 0, quando = 0; const su = () => { const b = Math.round(wh.getBoundingClientRect().bottom); if (b <= 0) return; const ora = Date.now(); if (b > alto || ora - quando > 4000) { if (b >= alto) quando = ora; alto = b; document.documentElement.style.setProperty('--obiTop', (b + 8) + 'px'); } }; /* scende subito se a barra cresce, risale solo dopo 4 s */ new ResizeObserver(su).observe(wh); let ult = -1; const giro = () => { const b = Math.round(wh.getBoundingClientRect().bottom); if (b !== ult) { ult = b; su(); } requestAnimationFrame(giro); }; requestAnimationFrame(giro); } catch(e){}
   sblocca(+(ls.get('tg-presi') || 0));
   setInterval(alto, 1500); setInterval(prossimo, 2500); setInterval(obiettivo, 500); alto();
   const tt = () => { if (document.body.classList.contains('playing')) setTimeout(tutorial, 2500); else setTimeout(tt, 1500); }; tt();
