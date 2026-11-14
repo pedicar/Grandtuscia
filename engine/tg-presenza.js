@@ -66,7 +66,7 @@ function fantasma(g){
   const id = TG.Veicoli[g.dati.veh] ? g.dati.veh : 'vespa';
   let m; try { m = TG.Veicoli[id](E.col); } catch(e){ return null; }
   m.group.scale.setScalar(SCALA[id] || 1.3);
-  m.group.traverse(o => { if (o.isMesh && o.material) { o.material = o.material.clone(); o.material.transparent = true; o.material.opacity = g.dati.ombra ? .32 : .55; o.castShadow = false; } });
+  m.group.traverse(o => { if (o.isMesh && o.material) { o.material = o.material.clone(); o.castShadow = true; /* solidi come mezzi veri */ } });
   const grp = new THREE.Group(); grp.add(m.group); grp.add(etichetta(g.dati.nome || 'Uno de ' + corto(g.dati.paese), colore(g.dati.paese)));
   scene.add(grp); return { grp, m, veh: id };
 }
@@ -98,7 +98,7 @@ function giro(){
 /* ---------- LE OMBRE: chi è passato de recente ----------
    Con pochi giocatori quasi mai due guidano ne o stesso minuto. Allora ogni telefono registra l'ultimo giro (4 minuti, un punto
    al secondo) e o manda al server (tg_traccia_salva); ne o mondo girano in loop e ombre de l'ultimi 15 giocatori de i 3 giorni
-   (tg_tracce): mezzo trasparente, colore de o paese, «Marco · 2 ore fa». Vicine (entro 900 m) se disegnano, e altre no. */
+   (tg_tracce): mezzi solidi come quelli veri, colore de o paese, solo o nome («Marco»). Vicine (entro 900 m) se disegnano, e altre no. */
 let ombre = {}, buf = [], ultimoPunto = 0, ultimoInvio = 0, vehReg = 'vespa';
 async function rpcP(f, body){ if (!cfg.url) throw 0; const k = cfg.pub || cfg.key; const r = await fetch(cfg.url.replace(/\/$/, '') + '/rest/v1/rpc/' + f, { method: 'POST', headers: { 'Content-Type': 'application/json', apikey: k, Authorization: 'Bearer ' + k }, body: JSON.stringify(body || {}) }); if (!r.ok) throw r.status; return r.json(); }
 const quantoFa = s => s < 3600 ? Math.max(1, Math.round(s / 60)) + ' min fa' : s < 86400 ? Math.round(s / 3600) + (Math.round(s / 3600) === 1 ? ' ora fa' : ' ore fa') : Math.round(s / 86400) === 1 ? 'ieri' : Math.round(s / 86400) + ' giorni fa';
@@ -119,7 +119,7 @@ async function caricaOmbre(){
   let l; try { l = await rpcP('tg_tracce'); } catch(e){ return; } if (!Array.isArray(l)) return;
   const mio = dev(), nuove = {};
   for (const r of l) { if (!r || r.dev === mio || !r.traccia) continue; const tr = r.traccia.split(';').map(q => q.split(',').map(Number)).filter(q => q.length === 3 && q.every(isFinite)); if (tr.length < 20) continue;
-    const k = 'o:' + r.dev, old = ombre[k]; const nome = (r.nome || 'Uno de ' + corto(r.paese)) + ' · ' + quantoFa(r.fa || 0);
+    const k = 'o:' + r.dev, old = ombre[k]; const nome = r.nome || 'Uno de ' + corto(r.paese);
     if (old && old.dati.nome === nome && old.tr.length === tr.length) { nuove[k] = old; continue; }
     if (old) togli(old);
     nuove[k] = { id: k, tr, off: Math.random() * tr.length, dati: { ombra: true, paese: r.paese, veh: r.veh || 'vespa', nome, x: tr[0][0], z: tr[0][1], yaw: tr[0][2] / 100, v: 8 } }; }
@@ -147,7 +147,7 @@ function puntini(){
   const c = mini.getContext('2d'), a = W / 2, s = a / 820, rot = -Math.atan2(Math.cos(d.yaw), Math.sin(d.yaw)) - Math.PI / 2;
   c.setTransform(1, 0, 0, 1, 0, 0); c.clearRect(0, 0, W, W); c.beginPath(); c.arc(a, a, a - 1, 0, Math.PI * 2); c.clip();
   c.translate(a, a); c.rotate(rot); c.scale(s, s);
-  for (const k in ombre) { const g = ombre[k].dati; if (!g || g.x == null) continue; const dx = g.x - d.x, dz = g.z - d.z; if (Math.hypot(dx, dz) > 790) continue; c.beginPath(); c.arc(dx, dz, 4 / s, 0, Math.PI * 2); c.globalAlpha = .55; c.fillStyle = colore(g.paese); c.fill(); c.globalAlpha = 1; }
+  for (const k in ombre) { const g = ombre[k].dati; if (!g || g.x == null) continue; const dx = g.x - d.x, dz = g.z - d.z; if (Math.hypot(dx, dz) > 790) continue; c.beginPath(); c.arc(dx, dz, 6 / s, 0, Math.PI * 2); c.fillStyle = colore(g.paese); c.fill(); c.lineWidth = 2 / s; c.strokeStyle = '#fff'; c.stroke(); }
   for (const k in altri) { const g = altri[k].dati; if (!g) continue; const dx = g.x - d.x, dz = g.z - d.z; const dist = Math.hypot(dx, dz); const f = dist > 790 ? 790 / dist : 1;  // oltre il bordo: sul bordo
     c.beginPath(); c.arc(dx * f, dz * f, 6 / s, 0, Math.PI * 2); c.fillStyle = colore(g.paese); c.fill(); c.lineWidth = 2 / s; c.strokeStyle = '#fff'; c.stroke(); }
 }
@@ -158,8 +158,8 @@ function aggiornaConteggio(){
   let el = $('prConta');
   if (!el) { const menu = $('menu'); if (!menu) return; el = document.createElement('div'); el.id = 'prConta'; el.setAttribute('style', 'margin:6px auto 0;max-width:420px;text-align:center;font:700 13px Figtree,"Segoe UI",system-ui,sans-serif;color:#c9bfa8'); const intro = menu.querySelector('.intro'); (intro ? intro.parentNode : menu).insertBefore(el, intro ? intro.nextSibling : menu.firstChild); }
   const n = Object.keys(altri).length;
-  const no = Object.keys(ombre).length, nota = no ? ` · <span style="color:#9aa39c">👻 ${no} passati de recente</span>` : '';
-  if (!n) { el.innerHTML = '⚪ Nessuno in giro adesso' + (nota || ': a Tuscia è tua'); return; }
+  const nota = '';
+  if (!n) { el.innerHTML = ''; return; }
   const per = {}; for (const k in altri) { const p = altri[k].dati.paese; per[p] = (per[p] || 0) + 1; }
   el.innerHTML = `🟢 <b style="color:#f3e7cb">${n} in giro</b>: ` + Object.entries(per).sort((a, b) => b[1] - a[1]).map(([p, c]) => `<span style="color:${colore(p)}">${c} ${corto(p)}</span>`).join(', ') + nota;
 }
