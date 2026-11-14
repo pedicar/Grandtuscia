@@ -110,6 +110,45 @@ function fuochi(T, col){
     requestAnimationFrame(passo);
   } catch(e){}
 }
+
+/* a card da condivide: un'immagine 1080×1350 co' o colore de o paese, pronta pe' Facebook, Instagram e WhatsApp */
+function cardImmagine(T, prima, p, tot, nome){
+  const W = 1080, H = 1350, cv = document.createElement('canvas'); cv.width = W; cv.height = H; const c = cv.getContext('2d'), col = colore(p);
+  const g = c.createLinearGradient(0, 0, 0, H); g.addColorStop(0, col); g.addColorStop(.55, '#17201f'); g.addColorStop(1, '#0d1110'); c.fillStyle = g; c.fillRect(0, 0, W, H);
+  // raggi
+  c.save(); c.translate(W / 2, 470); c.globalAlpha = .12; c.fillStyle = '#fff'; for (let i = 0; i < 18; i++) { c.rotate(Math.PI / 9); c.beginPath(); c.moveTo(0, 0); c.lineTo(-60, -900); c.lineTo(60, -900); c.closePath(); c.fill(); } c.restore();
+  // nocchie che piovono
+  const nocchia = (x, y, r, a) => { c.save(); c.translate(x, y); c.rotate(a); c.fillStyle = '#7a3e16'; c.beginPath(); c.ellipse(0, r * .15, r * .85, r, 0, 0, Math.PI * 2); c.fill(); c.fillStyle = '#a5592a'; c.beginPath(); c.ellipse(-r * .25, 0, r * .35, r * .6, -.3, 0, Math.PI * 2); c.fill(); c.fillStyle = '#e9d3a8'; c.beginPath(); c.ellipse(0, -r * .85, r * .7, r * .28, 0, 0, Math.PI * 2); c.fill(); c.restore(); };
+  let sd = 7; const rnd = () => (sd = (sd * 9301 + 49297) % 233280) / 233280;
+  for (let i = 0; i < 16; i++) nocchia(40 + rnd() * (W - 80), 30 + rnd() * 200, 18 + rnd() * 24, rnd() * 6); for (let i = 0; i < 10; i++) { const sx = i % 2 ? W - 45 - rnd() * 25 : 45 + rnd() * 25; nocchia(sx, 320 + rnd() * 980, 16 + rnd() * 14, rnd() * 6); }
+  const txt = (t, y, font, fill, sh) => { c.font = font; c.textAlign = 'center'; c.textBaseline = 'middle'; if (sh) { c.fillStyle = 'rgba(0,0,0,.45)'; c.fillText(t, W / 2, y + 6); } c.fillStyle = fill; c.fillText(t, W / 2, y); };
+  const adatta = (t, max, size, peso) => { let s = size; c.font = `${peso} ${s}px Figtree, system-ui, sans-serif`; while (c.measureText(t).width > max && s > 30) { s -= 4; c.font = `${peso} ${s}px Figtree, system-ui, sans-serif`; } return c.font; };
+  txt('🚩 ' + corto(p).toUpperCase(), 330, '900 64px Figtree, system-ui, sans-serif', '#fff', true);
+  txt('TERRENO', 470, '900 150px Figtree, system-ui, sans-serif', '#fff', true);
+  txt('PRESO!', 620, '900 150px Figtree, system-ui, sans-serif', '#fff', true);
+  // riquadro
+  c.fillStyle = 'rgba(14,18,16,.82)'; c.strokeStyle = col; c.lineWidth = 8; c.beginPath(); c.roundRect(90, 730, W - 180, 330, 40); c.fill(); c.stroke();
+  txt(nome, 810, adatta(nome, W - 260, 64, 800), '#f3e7cb');
+  txt(prima ? `L'avemo fregato a ${corto(prima)}` : 'Era libero: mo\' è nostro', 900, adatta('x', W, 46, 700), prima ? colore(prima) : '#d9cfb6');
+  txt(`${corto(p)} mo' tiene ${tot} terren${tot === 1 ? 'o' : 'i'}`, 985, '800 48px Figtree, system-ui, sans-serif', col);
+  txt('A GUERRA DE I TERRENI', 1150, '900 44px Figtree, system-ui, sans-serif', '#e2b765');
+  txt('Venite a difenderlo · grandtuscia.netlify.app', 1225, '700 36px Figtree, system-ui, sans-serif', '#cfd6cc');
+  txt('Il Trono di Nocchie · Tuscia Games', 1285, '600 30px Figtree, system-ui, sans-serif', '#8f9a90');
+  return new Promise(r => cv.toBlob(b => r(b), 'image/jpeg', .9));
+}
+async function condividiCard(T, prima, p, tot, nome){
+  const url = 'https://grandtuscia.netlify.app/?utm_source=condividi&utm_campaign=presa';
+  const testo = `🚩 Ho preso o ${nome} pe' ${corto(p)}!${prima ? ` L'avemo fregato a ${corto(prima)}.` : ''} Venite a difenderlo:`;
+  ev('terra_condivisa', T.id);
+  try {
+    const blob = await cardImmagine(T, prima, p, tot, nome); const file = new File([blob], 'terreno-preso.jpg', { type: 'image/jpeg' });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], text: testo + ' ' + url, title: 'Terreno preso!' }); return; }
+    if (navigator.share) { await navigator.share({ text: testo, url }); return; }
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'terreno-preso.jpg'; document.body.appendChild(a); a.click(); a.remove();
+    try { await navigator.clipboard.writeText(testo + ' ' + url); } catch(e){}
+    msg('Card scaricata!', 'Pubblicala co\' o testo che t\'ho copiato', 3);
+  } catch(e){ if (e && e.name === 'AbortError') return; try { await navigator.clipboard.writeText(testo + ' ' + url); msg('Copiato!', 'Incollalo ne o gruppo de o paese', 2); } catch(x){} }
+}
 function festa(T, prima, p){
   if (!T) return; const col = colore(p), nome = breve(T.nome);
   versione++; try { aggiornaCartelli(); } catch(e){}
@@ -135,12 +174,12 @@ function festa(T, prima, p){
 @keyframes trVia{to{opacity:0;transform:scale(1.04)}}`; document.head.appendChild(st); }
   const old = document.getElementById('trFesta'); if (old) old.remove();
   const d = document.createElement('div'); d.id = 'trFesta'; d.style.setProperty('--c', col);
-  d.innerHTML = `<div class="fl"></div><div class="bx"><div class="k">🚩 ${corto(p)}</div><h2>TERRENO PRESO!</h2><div class="n">${nome}</div><div class="s">${prima ? `L'avete fregato a <b style="color:${colore(prima)}">${corto(prima)}</b>` : 'Era libero: mo\' è vostro'} · <b>${corto(p)}</b> mo' tiene ${tot} terren${tot === 1 ? 'o' : 'i'}</div><button type="button">📣 Dillo a i compaesani</button></div>`;
+  d.innerHTML = `<div class="fl"></div><div class="bx"><div class="k">🚩 ${corto(p)}</div><h2>TERRENO PRESO!</h2><div class="n">${nome}</div><div class="s">${prima ? `L'avete fregato a <b style="color:${colore(prima)}">${corto(prima)}</b>` : 'Era libero: mo\' è vostro'} · <b>${corto(p)}</b> mo' tiene ${tot} terren${tot === 1 ? 'o' : 'i'}</div><button type="button">📣 Condividi a vittoria</button></div>`;
   for (let i = 0; i < 34; i++) { const n = document.createElement('i'); n.className = 'nc'; n.textContent = T.frutto === 'c' ? '🌰' : (i % 5 ? '🌰' : '✨'); n.style.left = Math.random() * 100 + 'vw'; n.style.animationDuration = (1.6 + Math.random() * 1.6) + 's'; n.style.animationDelay = (Math.random() * .6) + 's'; n.style.setProperty('--r', (Math.random() * 720 - 360) + 'deg'); d.appendChild(n); }
   document.body.appendChild(d);
   let chiuso = false; const chiudi = () => { if (chiuso) return; chiuso = true; d.classList.add('via'); setTimeout(() => d.remove(), 360); };
-  d.querySelector('button').onclick = e => { e.stopPropagation(); const url = 'https://grandtuscia.netlify.app/?utm_source=condividi&utm_campaign=presa'; const testo = `Ho preso o ${nome} pe' ${corto(p)}! ${prima ? `L'emo fregato a ${corto(prima)}. ` : ''}Venite a difenderlo:`; try { if (navigator.share) navigator.share({ text: testo, url }).catch(() => {}); else { navigator.clipboard && navigator.clipboard.writeText(testo + ' ' + url); msg('Copiato!', 'Incollalo ne o gruppo de o paese', 2); } } catch(e){} ev('terra_condivisa', T.id); chiudi(); };
-  d.onclick = chiudi; setTimeout(chiudi, 3600);
+  d.querySelector('button').onclick = e => { e.stopPropagation(); condividiCard(T, prima, p, tot, nome); chiudi(); };
+  d.onclick = chiudi; setTimeout(chiudi, 5000);
   ev('terra_festa', T.id, tot, { a: prima });
 }
 /* ---------- il blocco sotto la minimappa: solo quando sei dentro o vicino a un terreno ---------- */
@@ -275,7 +314,7 @@ function descrivi(id){
   else if (p && l[0].paese === p) t += '<br>È vostro: tenetelo.';
   return t;
 }
-TG.Terre = { colore, padrone, righe, terraIn, aggiorna, pannello, descrivi, _festa: festa, lista: () => TERRE, _dbg: () => ({ classifica, locali, daMandare }) };
+TG.Terre = { colore, padrone, righe, terraIn, aggiorna, pannello, descrivi, _card: cardImmagine, lista: () => TERRE, _dbg: () => ({ classifica, locali, daMandare }) };
 // per i moduli che usavano le zone (presenza: colore del paese)
 TG.Zone = TG.Zone || { colore, squadra: false };
 function avvia(){
