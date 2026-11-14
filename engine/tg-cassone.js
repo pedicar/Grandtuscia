@@ -130,11 +130,25 @@ function osservaMezzi(){
   new MutationObserver(() => { if (!o.hidden) setTimeout(bottega, 0); }).observe(o, { attributes: true, attributeFilter: ['hidden'] });
 }
 
+/* ---------- VICINO A UN GIOCO: «Gioca e vinci fino a 120 nocchie» (una volta ogni 4 minuti pe' gioco) ---------- */
+const visto = {};
+function vicinoGioco(){
+  const pr = $('prompt'), nm = $('pName'); if (!pr || pr.hidden || !nm || !document.body.classList.contains('playing')) return;
+  const nome = (nm.textContent || '').trim(); let A = null;
+  try { A = (TG.debug.acts || []).find(a => [a.name, a.nome, a.id].some(x => x && String(x).trim() === nome)); } catch(e){}
+  if (!A || (visto[A.id] && Date.now() - visto[A.id] < 240000) || $('scGrande')) return;
+  visto[A.id] = Date.now(); ev('gioco_popup', A.id);
+  let g = document.createElement('div'); g.id = 'scGrande';
+  g.innerHTML = `<b>🎮 ${nome}</b><span>Gioca e vinci fino a <b style="display:inline;font-size:inherit;color:#f2c74e">120 nocchie</b> pe' comprà terreni e mezzi</span><i>▶ Gioca</i>`;
+  g.onclick = () => { g.remove(); const b = $('pGo'); b && b.click(); ev('gioco_popup_gioca', A.id); };
+  document.body.appendChild(g); setTimeout(() => { if (g.isConnected) { g.classList.add('via'); setTimeout(() => g.remove(), 500); } }, 7000);
+}
+
 function avvia(){
   if (!TG.Terre || !TG.debug || !TG.debug.car) return setTimeout(avvia, 1000);
   // da computer: E o Invio scaricano quanno o bottone c'è
   addEventListener('keydown', e => { if ((e.key === 'e' || e.key === 'E' || e.key === 'Enter') && btn && btn.style.display === 'flex' && !occupato && !/INPUT|TEXTAREA/.test((e.target || {}).tagName || '')) { e.preventDefault(); scarica(); } });
-  setInterval(bottone, 300); setInterval(mappa, 600); osservaMezzi();
+  setInterval(bottone, 300); setInterval(mappa, 600); setInterval(vicinoGioco, 700); osservaMezzi();
 }
 if (document.readyState === 'complete') setTimeout(avvia, 1500); else addEventListener('load', () => setTimeout(avvia, 1500));
 })();
