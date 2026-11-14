@@ -21,7 +21,7 @@ html body #hud .where>#score#score,html body.touch #hud .where>#score#score,html
 #trTop .alt{color:#c9bfa8;font-weight:700}
 #primi,#hOra,#hGoal,#hCal,#ngHud,#pmHud,#pmRiga,#done{display:none!important}
 html.tg-campo #prompt{display:none!important}
-#mission .tg-label{font-size:0!important}#mission .tg-label::after{content:"Prossimo terreno";font-size:11px}
+#mission .tg-label{font-size:0!important}#mission .tg-label::after{content:"🔥 Terreno acceso";font-size:11px}
 #mChange{display:none!important}`;
 document.head.appendChild(st);
 const paese = () => { const p = (TG.PrimoMinuto && TG.PrimoMinuto.paese) || ls.get('tg-paese-dev'); return p && p !== 'nessuno' ? p : null; };
@@ -50,7 +50,7 @@ function prossimo(){
   if (dentro && W.padrone(dentro.id) !== p) { if (mia && mia.id === dentro.id) return; }        // stai a raccoje: lascia stare
   if (mia && W.padrone(mia.id) !== p && dest === mia) return;                                     // ancora da prende
   let best = null, bd = 1e9;
-  for (const T of W.lista()) { if (W.padrone(T.id) === p) continue; const d = Math.hypot(T.x - c.x, T.z - c.z) - T.rad; if (d < bd) { bd = d; best = T; } }
+  for (const T of W.lista()) { if (W.padrone(T.id) === p || (W.acceso && !W.acceso(T.id))) continue; const d = Math.hypot(T.x - c.x, T.z - c.z) - T.rad; if (d < bd) { bd = d; best = T; } }
   if (!best) return;
   mia = { x: best.x, z: best.z, name: breve(best.nome), id: best.id };
   try { D.setDest(mia); mia = (D.NAV && D.NAV.dest) || mia; mia.id = best.id; } catch(e){}

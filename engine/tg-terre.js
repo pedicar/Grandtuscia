@@ -40,6 +40,23 @@ function terraIn(x, z){
   const p = TERRE.find(t => t.podere); if (p && Math.hypot(x - p.x, z - p.z) < p.rad) return p;
   return null;
 }
+
+/* ---------- I TERRENI ACCESI: ogni giorno se ne accendono pochi (3 pe' zona, ~20), uguali pe' tutti (scelti da a data).
+   Solo lì e nocchie contano pe' a guerra; l'altri restano sulla mappa, spenti, co' o colore de chi li tiene. Il Podere è sempre acceso. */
+const CENTRI = { fabrica: [4080, -640], carbognano: [3230, -470], caprarola: [2280, -170], falerii: [5330, 960], ronciglione: [1560, 1620], viterbo: [-750, -3350], pantanacce: [-900, -900] };
+const giornoRoma = () => { try { return new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Rome' }).format(new Date()); } catch(e){ return new Date().toISOString().slice(0, 10); } };
+const hash = s => { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; };
+let accesi = new Set(), giornoAccesi = '';
+function calcolaAccesi(){
+  const g = giornoRoma(); if (g === giornoAccesi && accesi.size) return; giornoAccesi = g;
+  const gruppi = {};
+  for (const T of TERRE) { if (T.podere) continue; let best = 'fabrica', bd = 1e12; for (const k in CENTRI) { const d = Math.hypot(T.x - CENTRI[k][0], T.z - CENTRI[k][1]); if (d < bd) { bd = d; best = k; } } (gruppi[best] = gruppi[best] || []).push(T); }
+  const s = new Set(['t:podere']);
+  for (const k in gruppi) gruppi[k].sort((a, b) => hash(g + a.id) - hash(g + b.id)).slice(0, 3).forEach(T => s.add(T.id));
+  accesi = s; versione++;
+  try { for (const T of TERRE) if (!T.podere) TG.debug.accendi(T.id.slice(2), s.has(T.id)); } catch(e){}
+}
+const acceso = id => accesi.has(id);
 function vicina(x, z, max){ let best = null, bd = max; for (const t of TERRE) { const d = Math.hypot(x - t.x, z - t.z) - t.rad; if (d < bd) { bd = d; best = t; } } return best; }
 // tutti i terreni aperti a tutti: per il gioco del contadino risultano «tuoi» (così si raccoglie dappertutto)
 function apriTutti(){
@@ -73,7 +90,7 @@ async function invia(){
 // ogni nocchia raccolta dentro un terreno conta pe' o paese tuo
 function contaGuerra(t, a){
   if (!((t === 'n' || t === 'c') && a > 0 && paese())) return;
-  const c = TG.debug.car, T = c && terraIn(c.x, c.z); if (!T) return;
+  const c = TG.debug.car, T = c && terraIn(c.x, c.z); if (!T || !acceso(T.id)) return;
   const prima = padrone(T.id); daMandare[T.id] = (daMandare[T.id] || 0) + a; locali[T.id] = locali[T.id] || {};
   const p = paese(), l = righe(T.id), cap = l.find(r => r.paese !== p);
   if (prima !== p && !festeggiati[T.id] && punti(T.id, p) + daMandare[T.id] > (cap ? cap.punti : 0)) { festeggiati[T.id] = 1; setTimeout(() => festa(T, prima, p), 250); }
@@ -223,7 +240,7 @@ function aggiornaBox(){
   const altro = pad && pad.paese !== p ? pad : (l.find(x => x.paese !== p) || null);
   box.style.display = 'block'; box.style.borderColor = pad ? colore(pad.paese) : 'rgba(255,255,255,.3)';
   const riga = (pp, n) => `<span><i style="background:${colore(pp)}"></i>${pp === p ? '<b>' : ''}${corto(pp)} ${n}${pp === p ? '</b>' : ''}</span>`;
-  const consiglio = !dentro ? 'entra e raccoi' : (!pad ? 'raccoi: è libero' : pad.paese === p ? 'è vostro' : `ne mancano ${altro.punti - mio + 1}`);
+  const consiglio = !acceso(T.id) ? (pad ? 'spento oggi · de ' + corto(pad.paese) : 'spento oggi') : !dentro ? '🔥 entra e raccoi' : (!pad ? 'raccoi: è libero' : pad.paese === p ? 'è vostro' : `ne mancano ${altro.punti - mio + 1}`);
   box.innerHTML = `<div class="n">🌰 ${breve(T.nome)} · <span style="color:#c9bfa8;font-weight:600">${consiglio}</span></div><div class="r">${p ? riga(p, mio) : ''}${altro ? riga(altro.paese, altro.punti) : '<span>nessuno</span>'}</div>`;
   // il compito iniziale («Raccogli 10 nocciole») dice la stessa cosa: quando c'è il blocco, il compito si toglie
   const pr = $('primi'); if (pr) pr.style.visibility = 'hidden';
@@ -248,7 +265,7 @@ function cartello(T){
   TG.debug.scene.add(s); cartelli[T.id] = { s, k };
 }
 function nascondiVicini(){ let c; try { c = TG.debug.car; } catch(e){ return; } if (!c) return;
-  for (const T of TERRE) { const k = cartelli[T.id], d = Math.hypot(c.x - T.x, c.z - T.z); if (k) k.s.visible = d > T.rad + 90 && d < 1100; }
+  for (const T of TERRE) { const k = cartelli[T.id], d = Math.hypot(c.x - T.x, c.z - T.z); if (k) k.s.visible = acceso(T.id) && d > T.rad + 90 && d < 1500; }
   // tanti terreni: quelli lontani non si disegnano (piante, cartello de legno, nome, ingressi)
   try { for (const o of TG.debug.campi()) { const cp = o.campo, d = Math.hypot(c.x - cp.cx, c.z - cp.cz) - cp.rad, v = d < 650; if (cp.g) cp.g.visible = v; if (o.g) o.g.visible = d < 450; if (o.label) o.label.visible = d < 450; if (cp.patch) for (const h of cp.patch) h.visible = d < 350; } } catch(e){}
 }
@@ -273,8 +290,8 @@ function pannello(){
   let c = { x: 0, z: 0 }; try { c = TG.debug.car; } catch(e){}
   const tot = {}; for (const T of TERRE) { const p = padrone(T.id); if (p) tot[p] = (tot[p] || 0) + 1; }
   const testa = Object.entries(tot).sort((a, b) => b[1] - a[1]).map(([p, n]) => `<b style="color:${colore(p)}">${corto(p)} ${n}</b>`).join(' · ') || 'Ancora tutti liberi';
-  const lista = TERRE.map(T => ({ T, d: Math.hypot(T.x - c.x, T.z - c.z), l: righe(T.id) })).sort((a, b) => a.d - b.d);
-  pan.innerHTML = `<div class="c"><h2>🌰 I terreni <button aria-label="Chiudi">×</button></h2><p>Ogni terreno è del paese che c'ha raccolto de più questa settimana. Domenica vince chi ne tiene de più. ${testa}</p>`
+  const lista = TERRE.filter(T => acceso(T.id)).map(T => ({ T, d: Math.hypot(T.x - c.x, T.z - c.z), l: righe(T.id) })).sort((a, b) => a.d - b.d);
+  pan.innerHTML = `<div class="c"><h2>🔥 I terreni accesi oggi <button aria-label="Chiudi">×</button></h2><p>Oggi se combatte su questi: solo qui e nocchie contano. Ogni terreno è de o paese che c'ha raccolto de più; se nun ce torni se raffredda. Domenica vince chi ne tiene de più. ${testa}</p>`
     + lista.map(({ T, d, l }) => `<div class="row" data-t="${T.id}"><i style="background:${colore(l[0] && l[0].paese)}"></i><div><b>${breve(T.nome)}</b><small>${l.length ? l.slice(0, 2).map(r => corto(r.paese) + ' ' + r.punti).join(' · ') : 'libero'}</small></div><em>${d < 950 ? Math.round(d / 10) * 10 + ' m' : (d / 1000).toFixed(1).replace('.', ',') + ' km'}</em></div>`).join('') + '</div>';
   pan.querySelector('h2 button').onclick = () => { pan.hidden = true; };
   pan.querySelectorAll('.row').forEach(r => r.onclick = () => { const T = TERRE.find(x => x.id === r.dataset.t); pan.hidden = true; try { const m = document.querySelector('#mapOv [data-close]'); m && m.click(); TG.debug.setDest({ x: T.x, z: T.z, name: breve(T.nome) }); msg('Segui a freccia: ' + breve(T.nome)); } catch(e){} ev('terra_vai', T.id); });
@@ -315,12 +332,13 @@ function mini(){
   c.setTransform(1, 0, 0, 1, 0, 0); c.clearRect(0, 0, W, W); c.beginPath(); c.arc(a, a, a - 1, 0, Math.PI * 2); c.clip();
   c.translate(a, a); c.rotate(rot); c.scale(s, s);
   for (const T of TERRE) { const dx = T.x - d.x, dz = T.z - d.z; if (Math.hypot(dx, dz) > 1000) continue; const p = padrone(T.id);
-    c.beginPath(); c.arc(dx, dz, Math.max(T.rad, 6 / s), 0, Math.PI * 2); c.fillStyle = colore(p); c.globalAlpha = p ? .45 : .2; c.fill(); c.globalAlpha = 1; c.lineWidth = 2 / s; c.strokeStyle = p === paese() ? '#f2c74e' : 'rgba(255,255,255,.7)'; c.stroke(); }
+    const on = acceso(T.id); c.beginPath(); c.arc(dx, dz, on ? Math.max(T.rad, 7 / s) : Math.max(T.rad * .5, 4 / s), 0, Math.PI * 2); c.fillStyle = colore(p); c.globalAlpha = on ? (p ? .6 : .35) : (p ? .25 : .08); c.fill(); c.globalAlpha = 1; if (on) { c.lineWidth = 3 / s; c.strokeStyle = p === paese() ? '#f2c74e' : '#ff8a3c'; c.stroke(); } }
 }
 
 // per la mappa: di chi è il terreno, in una riga
 function descrivi(id){
   const l = righe(id).filter(r => r.punti > 0), p = paese();
+  if (!acceso(id)) { const pd = l[0]; return (pd ? `È de ${'<b style="color:' + colore(pd.paese) + '">' + corto(pd.paese) + '</b>'} (${pd.punti}). ` : '') + 'Oggi è spento: e nocchie qui nun contano. Vai a i terreni 🔥 accesi.'; }
   if (!l.length) return 'Libero: o primo che ce raccoje se o pija pe\' o paese suo.';
   const b = (pp, n) => `<b style="color:${colore(pp)}">${corto(pp)}</b> ${n}`;
   let t = `È de ${b(l[0].paese, l[0].punti)} nocchie`;
@@ -342,27 +360,26 @@ async function premioGioco(){
   let A = null; try { A = (TG.debug.acts || []).find(a => a.id === da); } catch(e){}
   if (!A || !p || !d) { if ((premioGioco.n = (premioGioco.n || 0) + 1) < 40) setTimeout(premioGioco, 1500); return; }
   ls.set(chiave, '1');
-  const quanti = q.get('med') === 'oro' ? 5 : 1;
-  const lista = TERRE.filter(T => padrone(T.id) !== p).map(T => ({ T, d: Math.hypot(T.x - A.x, T.z - A.z) - T.rad })).filter(o => o.d < 2500).sort((a, b) => a.d - b.d);
-  const presi = []; let primaPadrone = null;
-  for (const { T } of lista) {
-    if (presi.length >= quanti) break;
-    const l = righe(T.id), cap = l.find(r => r.paese !== p), serve = (cap ? cap.punti : 0) - punti(T.id, p) + 1;
-    if (serve > 80) continue;   // troppo lontano pe' un premio: se lo devono pijà co' e nocchie
-    try { const r = await rpc('tg_terra_punto', { p_dev: d, p_terra: T.id, p_paese: p, p_punti: Math.max(1, serve) }); if (r && r.aggiunti) { locali[T.id] = locali[T.id] || {}; locali[T.id][p] = (locali[T.id][p] || 0) + r.aggiunti; versione++; if (padrone(T.id) === p) { presi.push(T); if (!primaPadrone && cap) primaPadrone = cap.paese; festeggiati[T.id] = 1; ev('terra_presa', T.id, null, { a: cap && cap.paese, gioco: da }); } } } catch(e){}
-  }
-  if (!presi.length) return;
-  const via = () => setTimeout(() => festa(presi[0], primaPadrone, p, presi.length, quanti > 1 ? '🥇 Premio de l\'oro' : '🎮 Premio de a partita'), 1800);
+  const bonus = q.get('med') === 'oro' ? 60 : 20;
+  const cand = TERRE.filter(T => acceso(T.id)).map(T => ({ T, d: Math.hypot(T.x - A.x, T.z - A.z) - T.rad, mio: padrone(T.id) === p })).sort((a, b) => (a.mio - b.mio) || (a.d - b.d));
+  const T = cand[0] && cand[0].T; if (!T) return;
+  const prima = padrone(T.id), cap = righe(T.id).find(r => r.paese !== p);
+  let preso = false;
+  try { const r = await rpc('tg_terra_punto', { p_dev: d, p_terra: T.id, p_paese: p, p_punti: bonus }); if (r && r.aggiunti) { locali[T.id] = locali[T.id] || {}; locali[T.id][p] = (locali[T.id][p] || 0) + r.aggiunti; versione++; preso = prima !== p && padrone(T.id) === p; if (preso) { festeggiati[T.id] = 1; ev('terra_presa', T.id, null, { a: prima, gioco: da }); } } } catch(e){ return; }
+  const via = () => setTimeout(() => {
+    if (preso) festa(T, cap && cap.paese, p, 1, (bonus > 20 ? '🥇 Oro: +' : '🎮 Partita: +') + bonus + ' nocchie');
+    else { const mio = punti(T.id, p), l = righe(T.id), c2 = l.find(r => r.paese !== p); msg(`🎮 +${bonus} nocchie pe' ${corto(p)}`, padrone(T.id) === p ? `${breve(T.nome)}: è vostro, mo' più sicuro` : `${breve(T.nome)}: ne mancano ${(c2 ? c2.punti : 0) - mio + 1}. Vai a raccoje!`, 4.5); try { TG.debug.setDest({ x: T.x, z: T.z, name: breve(T.nome) }); } catch(e){} }
+  }, 1800);
   if (document.body.classList.contains('playing')) via(); else new MutationObserver((x, o) => { if (document.body.classList.contains('playing')) { o.disconnect(); via(); } }).observe(document.body, { attributes: true, attributeFilter: ['class'] });
-  ev('terre_premio', da, presi.length, { med: q.get('med') || null });
+  ev('terre_premio', da, bonus, { med: q.get('med') || null, preso });
 }
-TG.Terre = { colore, padrone, righe, terraIn, aggiorna, pannello, descrivi, puntoGuerra, _card: cardImmagine, lista: () => TERRE, _dbg: () => ({ classifica, locali, daMandare }) };
+TG.Terre = { colore, padrone, righe, terraIn, aggiorna, pannello, descrivi, puntoGuerra, acceso, accesi: () => accesi, _card: cardImmagine, lista: () => TERRE, _dbg: () => ({ classifica, locali, daMandare }) };
 // per i moduli che usavano le zone (presenza: colore del paese)
 TG.Zone = TG.Zone || { colore, squadra: false };
 function avvia(){
   if (!TG.debug || !TG.debug.campi || !TG.Profile || !TG.Contadino) return setTimeout(avvia, 1000);
   TERRE = costruisci(); if (TERRE.length < 2) return setTimeout(avvia, 1500);
-  apriTutti(); aggancia();
+  apriTutti(); aggancia(); calcolaAccesi(); setInterval(calcolaAccesi, 60000);
   aggiorna().then(controllaPerse).then(premioGioco); setInterval(aggiorna, 60000);
   setInterval(() => { aggiornaBox(); aggiornaCartelli(); nascondiVicini(); bottone(); }, 700);
   setInterval(invia, 5000); addEventListener('pagehide', invia);
