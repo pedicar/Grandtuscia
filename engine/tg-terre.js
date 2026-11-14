@@ -65,7 +65,7 @@ async function invia(){
       const r = await rpc('tg_terra_punto', { p_dev: d, p_terra: id, p_paese: p, p_punti: n });
       if (r && r.aggiunti) {
         locali[id] = locali[id] || {}; locali[id][p] = (locali[id][p] || 0) + r.aggiunti; versione++;
-        if (padrone(id) === p && prima !== p) { const t = TERRE.find(x => x.id === id); msg(`🌰 Presa! ${t ? breve(t.nome) : ''}`, prima ? `L'avete fregato a ${corto(prima)}: mo' è de ${corto(p)}` : `Mo' è de ${corto(p)}`, 5); ev('terra_presa', id, null, { a: prima }); }
+        if (padrone(id) === p && prima !== p) { ev('terra_presa', id, null, { a: prima }); if (!festeggiati[id]) { festeggiati[id] = 1; festa(TERRE.find(x => x.id === id), prima, p); } }
       }
     } catch(e){ daMandare[id] = (daMandare[id] || 0) + n; }
   }
@@ -74,10 +74,75 @@ async function invia(){
 function aggancia(){
   const P = TG.Profile; if (!P || !P.harvestAdd || P.harvestAdd._terre) return;
   const o = P.harvestAdd.bind(P);
-  const n = function(t, a){ try { if ((t === 'n' || t === 'c') && a > 0 && paese()) { const c = TG.debug.car, T = c && terraIn(c.x, c.z); if (T) { daMandare[T.id] = (daMandare[T.id] || 0) + a; locali[T.id] = locali[T.id] || {}; } } } catch(e){} return o(t, a); };
+  const n = function(t, a){ try { if ((t === 'n' || t === 'c') && a > 0 && paese()) { const c = TG.debug.car, T = c && terraIn(c.x, c.z); if (T) { const prima = padrone(T.id); daMandare[T.id] = (daMandare[T.id] || 0) + a; locali[T.id] = locali[T.id] || {}; const p = paese(), l = righe(T.id), cap = l.find(r => r.paese !== p); if (prima !== p && !festeggiati[T.id] && punti(T.id, p) + daMandare[T.id] > (cap ? cap.punti : 0)) { festeggiati[T.id] = 1; setTimeout(() => festa(T, prima, p), 250); } } } } catch(e){} return o(t, a); };
   n._terre = 1; P.harvestAdd = n;
 }
 
+
+/* ---------- A PRESA: il momento in cui un terreno diventa vostro ----------
+   Lampo co' o colore de o paese, «TERRENO PRESO!» che sbatte in mezzo, pioggia de nocchie, fanfara, vibrazione,
+   fuochi e colonna de luce sopra o terreno, e o bottone pe' dillo a i compaesani. Dura 3,5 s, se chiude toccando. */
+const festeggiati = {};
+function fanfara(){
+  try { const A = TG.Audio, c = A && A.init ? A.init() : null; if (!c) return; const out = A.sfx || A.master || c.destination, t0 = c.currentTime + .02;
+    const nota = (f, t, d, tipo, v) => { const o = c.createOscillator(), g = c.createGain(); o.type = tipo; o.frequency.value = f; g.gain.setValueAtTime(0, t0 + t); g.gain.linearRampToValueAtTime(v, t0 + t + .02); g.gain.exponentialRampToValueAtTime(.001, t0 + t + d); o.connect(g); g.connect(out); o.start(t0 + t); o.stop(t0 + t + d + .05); };
+    [[523, 0], [659, .11], [784, .22], [1047, .33]].forEach(([f, t]) => { nota(f, t, .22, 'square', .07); nota(f / 2, t, .22, 'triangle', .09); });
+    [1047, 1319, 1568].forEach(f => nota(f, .48, .9, 'sawtooth', .035)); nota(523, .48, 1, 'triangle', .12);
+    // grancassa
+    const o = c.createOscillator(), g = c.createGain(); o.frequency.setValueAtTime(140, t0 + .46); o.frequency.exponentialRampToValueAtTime(40, t0 + .7); g.gain.setValueAtTime(.5, t0 + .46); g.gain.exponentialRampToValueAtTime(.001, t0 + .8); o.connect(g); g.connect(out); o.start(t0 + .46); o.stop(t0 + .85);
+  } catch(e){}
+}
+function fuochi(T, col){
+  try { const sc = TG.debug.scene, E = TG.debug.world, y0 = E.ground(T.x, T.z), C = new THREE.Color(col), grp = new THREE.Group(); sc.add(grp);
+    // colonna de luce
+    const col3 = new THREE.Mesh(new THREE.CylinderGeometry(3, 5, 120, 12, 1, true), new THREE.MeshBasicMaterial({ color: C, transparent: true, opacity: .45, depthWrite: false, side: THREE.DoubleSide, blending: THREE.AdditiveBlending }));
+    col3.position.set(T.x, y0 + 60, T.z); grp.add(col3);
+    // scoppi
+    const N = 260, pos = new Float32Array(N * 3), vel = [], g = new THREE.BufferGeometry();
+    for (let i = 0; i < N; i++) { const k = i % 3, cx = T.x + (k - 1) * 18, cz = T.z + ((k * 7) % 3 - 1) * 14; pos.set([cx, y0 + 40 + k * 8, cz], i * 3); const a = Math.random() * Math.PI * 2, b = Math.acos(2 * Math.random() - 1), sp = 14 + Math.random() * 10; vel.push([Math.sin(b) * Math.cos(a) * sp, Math.cos(b) * sp, Math.sin(b) * Math.sin(a) * sp]); }
+    g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+    const m = new THREE.PointsMaterial({ color: C, size: 2.6, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }); const pts = new THREE.Points(g, m); grp.add(pts);
+    const m2 = new THREE.PointsMaterial({ color: 0xffe9a8, size: 1.4, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }); const pts2 = new THREE.Points(g, m2); grp.add(pts2);
+    const t0 = performance.now();
+    const passo = () => { const t = (performance.now() - t0) / 1000; if (t > 4) { sc.remove(grp); g.dispose(); m.dispose(); m2.dispose(); col3.geometry.dispose(); col3.material.dispose(); return; }
+      const dt = 1 / 60; for (let i = 0; i < N; i++) { const v = vel[i]; v[1] -= 9 * dt; v[0] *= .985; v[2] *= .985; pos[i * 3] += v[0] * dt; pos[i * 3 + 1] += v[1] * dt; pos[i * 3 + 2] += v[2] * dt; } g.attributes.position.needsUpdate = true;
+      m.opacity = m2.opacity = Math.max(0, 1 - t / 3.2); col3.material.opacity = .45 * Math.max(0, 1 - t / 4); col3.scale.x = col3.scale.z = 1 + Math.sin(t * 6) * .08; requestAnimationFrame(passo); };
+    requestAnimationFrame(passo);
+  } catch(e){}
+}
+function festa(T, prima, p){
+  if (!T) return; const col = colore(p), nome = breve(T.nome);
+  versione++; try { aggiornaCartelli(); } catch(e){}
+  try { navigator.vibrate && navigator.vibrate([70, 50, 70, 50, 180]); } catch(e){}
+  fanfara(); fuochi(T, col);
+  let tot = 0; for (const X of TERRE) if (padrone(X.id) === p || X.id === T.id) tot++;
+  if (!document.getElementById('trFestaCss')) { const st = document.createElement('style'); st.id = 'trFestaCss'; st.textContent = `
+#trFesta{position:fixed;inset:0;z-index:95;display:flex;align-items:center;justify-content:center;pointer-events:auto;font-family:Figtree,"Segoe UI",system-ui,sans-serif;color:#fff;overflow:hidden}
+#trFesta .fl{position:absolute;inset:0;background:radial-gradient(circle at 50% 45%,var(--c) 0,transparent 70%);animation:trFl 1.1s ease-out forwards}
+#trFesta .bx{position:relative;text-align:center;padding:18px 26px 16px;border-radius:22px;background:rgba(14,18,16,.86);border:3px solid var(--c);box-shadow:0 0 0 6px rgba(0,0,0,.25),0 0 60px var(--c);animation:trIn .55s cubic-bezier(.2,1.6,.4,1) both;max-width:88vw}
+#trFesta .k{font:900 13px/1 Figtree,sans-serif;letter-spacing:.24em;color:var(--c);text-transform:uppercase}
+#trFesta h2{margin:8px 0 4px;font:900 clamp(30px,9vw,54px)/1 Figtree,sans-serif;letter-spacing:.02em;text-shadow:0 3px 0 rgba(0,0,0,.45);animation:trPulse .9s .55s ease-in-out 2}
+#trFesta .n{font:800 17px/1.25 Figtree,sans-serif;color:#f3e7cb}
+#trFesta .s{margin-top:6px;font:700 14px/1.3 Figtree,sans-serif;color:#d9cfb6}
+#trFesta .s b{color:var(--c)}
+#trFesta button{margin-top:12px;all:unset;display:inline-block;margin-top:12px;padding:9px 16px;border-radius:999px;background:var(--c);color:#fff;font:800 14px Figtree,sans-serif;cursor:pointer;box-shadow:0 3px 0 rgba(0,0,0,.35)}
+#trFesta i.nc{position:absolute;top:-40px;font-style:normal;font-size:26px;animation:trNc linear forwards;pointer-events:none}
+#trFesta.via{animation:trVia .35s ease-in forwards}
+@keyframes trFl{0%{opacity:0}15%{opacity:.95}100%{opacity:.25}}
+@keyframes trIn{0%{transform:scale(.2) rotate(-8deg);opacity:0}100%{transform:scale(1) rotate(0);opacity:1}}
+@keyframes trPulse{50%{transform:scale(1.08)}}
+@keyframes trNc{to{transform:translateY(110vh) rotate(var(--r))}}
+@keyframes trVia{to{opacity:0;transform:scale(1.04)}}`; document.head.appendChild(st); }
+  const old = document.getElementById('trFesta'); if (old) old.remove();
+  const d = document.createElement('div'); d.id = 'trFesta'; d.style.setProperty('--c', col);
+  d.innerHTML = `<div class="fl"></div><div class="bx"><div class="k">🚩 ${corto(p)}</div><h2>TERRENO PRESO!</h2><div class="n">${nome}</div><div class="s">${prima ? `L'avete fregato a <b style="color:${colore(prima)}">${corto(prima)}</b>` : 'Era libero: mo\' è vostro'} · <b>${corto(p)}</b> mo' tiene ${tot} terren${tot === 1 ? 'o' : 'i'}</div><button type="button">📣 Dillo a i compaesani</button></div>`;
+  for (let i = 0; i < 34; i++) { const n = document.createElement('i'); n.className = 'nc'; n.textContent = T.frutto === 'c' ? '🌰' : (i % 5 ? '🌰' : '✨'); n.style.left = Math.random() * 100 + 'vw'; n.style.animationDuration = (1.6 + Math.random() * 1.6) + 's'; n.style.animationDelay = (Math.random() * .6) + 's'; n.style.setProperty('--r', (Math.random() * 720 - 360) + 'deg'); d.appendChild(n); }
+  document.body.appendChild(d);
+  let chiuso = false; const chiudi = () => { if (chiuso) return; chiuso = true; d.classList.add('via'); setTimeout(() => d.remove(), 360); };
+  d.querySelector('button').onclick = e => { e.stopPropagation(); const url = 'https://grandtuscia.netlify.app/?utm_source=condividi&utm_campaign=presa'; const testo = `Ho preso o ${nome} pe' ${corto(p)}! ${prima ? `L'emo fregato a ${corto(prima)}. ` : ''}Venite a difenderlo:`; try { if (navigator.share) navigator.share({ text: testo, url }).catch(() => {}); else { navigator.clipboard && navigator.clipboard.writeText(testo + ' ' + url); msg('Copiato!', 'Incollalo ne o gruppo de o paese', 2); } } catch(e){} ev('terra_condivisa', T.id); chiudi(); };
+  d.onclick = chiudi; setTimeout(chiudi, 3600);
+  ev('terra_festa', T.id, tot, { a: prima });
+}
 /* ---------- il blocco sotto la minimappa: solo quando sei dentro o vicino a un terreno ---------- */
 let box = null;
 function ui(){
@@ -210,7 +275,7 @@ function descrivi(id){
   else if (p && l[0].paese === p) t += '<br>È vostro: tenetelo.';
   return t;
 }
-TG.Terre = { colore, padrone, righe, terraIn, aggiorna, pannello, descrivi, lista: () => TERRE, _dbg: () => ({ classifica, locali, daMandare }) };
+TG.Terre = { colore, padrone, righe, terraIn, aggiorna, pannello, descrivi, _festa: festa, lista: () => TERRE, _dbg: () => ({ classifica, locali, daMandare }) };
 // per i moduli che usavano le zone (presenza: colore del paese)
 TG.Zone = TG.Zone || { colore, squadra: false };
 function avvia(){
