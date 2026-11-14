@@ -57,11 +57,11 @@ function calcolaAccesi(){
   derby = new Set();
   if (S) { const a = CENTRI[S.p[0]], b = CENTRI[S.p[1]], mx = (a[0] + b[0]) / 2, mz = (a[1] + b[1]) / 2;
     for (const q of S.p) (gruppi[q] || []).sort((u, v) => Math.hypot(u.x - mx, u.z - mz) - Math.hypot(v.x - mx, v.z - mz)).slice(0, 6).forEach(T => derby.add(T.id)); }
-  const s = new Set(['t:podere', ...derby]);
-  for (const k in gruppi) gruppi[k].filter(T => !derby.has(T.id)).sort((a, b) => hash(g + a.id) - hash(g + b.id)).slice(0, 3).forEach(T => s.add(T.id));
+  // 2.0: niente più campi accesi: tutti i terreni so' sempre aperti (si sceglie dove scaricà)
+  const s = new Set(TERRE.map(T => T.id));
   accesi = s; versione++;
   // a battaglia de o giorno: un terreno acceso dove ogni nocchia vale doppio (o stesso pe' tutti; i post de a sera o annunciano)
-  battaglia = S ? null : [...s].filter(id => id !== 't:podere').sort((a, b) => hash('battaglia' + g + a) - hash('battaglia' + g + b))[0] || null;
+  battaglia = null; if (false) [...s].filter(id => id !== 't:podere').sort((a, b) => hash('battaglia' + g + a) - hash('battaglia' + g + b))[0] || null;
   try { for (const T of TERRE) if (!T.podere) TG.debug.accendi(T.id.slice(2), s.has(T.id)); } catch(e){}
 }
 const acceso = id => accesi.has(id);
@@ -79,8 +79,11 @@ function righe(id){
   for (const p in (locali[id] || {})) m[p] = (m[p] || 0) + locali[id][p];
   const S = SF(), d = S && derby.has(id); return Object.entries(m).filter(([q]) => !d || S.p.includes(q)).map(([paese, punti]) => ({ paese, punti })).sort((a, b) => b.punti - a.punti);
 }
-const padrone = id => { const r = righe(id)[0]; return r && r.punti > 0 ? r.paese : null; };
-async function aggiorna(){ try { const n = await rpc('tg_terre'); if (n && typeof n === 'object') { classifica = n; locali = {}; versione++; } } catch(e){} caricato = true; }
+// 2.0: pe' strappà un terreno bisogna stà davanti de almeno SOGLIA nocchie; sotto, è «conteso» (de nessuno)
+const SOGLIA = 10;
+const padrone = id => { const l = righe(id), r = l[0]; if (!r || r.punti <= 0) return null; return !l[1] || r.punti - l[1].punti >= SOGLIA ? r.paese : null; };
+function stato(id){ const l = righe(id).filter(r => r.punti > 0), p = paese(), pd = padrone(id); if (!l.length) return 'libero'; if (!pd) return 'conteso'; return pd === p ? 'nostro' : 'loro'; }
+async function aggiorna(){ try { const n = await rpc('tg_terre_settimana'); if (n && typeof n === 'object') { classifica = n; locali = {}; versione++; } } catch(e){} caricato = true; }
 async function invia(){
   const p = paese(), d = dev(); if (!p || !d) return;
   for (const id of Object.keys(daMandare)) {
@@ -95,15 +98,34 @@ async function invia(){
     } catch(e){ daMandare[id] = (daMandare[id] || 0) + n; }
   }
 }
-// ogni nocchia raccolta dentro un terreno conta pe' o paese tuo
+// 2.0: ogni nocchia raccolta (ovunque) va ne o cassone; i punti arrivano solo scaricando su un terreno (deposita)
 function contaGuerra(t, a){
-  if (!((t === 'n' || t === 'c') && a > 0 && paese())) return;
-  const c = TG.debug.car, T = c && terraIn(c.x, c.z); if (!T || !acceso(T.id)) return;
-  if (derby.has(T.id) && !SF().p.includes(paese())) { if (Date.now() - avvisoDerby > 30000) { avvisoDerby = Date.now(); const S = SF(); msg('⚔ Campo de o derby', `Qui conteno solo ${S.nome(S.p[0])} e ${S.nome(S.p[1])}: segui a freccia pe' i campi tua`, 4); } return; }
-  if (T.id === battaglia) a *= 2;   // battaglia de o giorno: vale doppio
-  const prima = padrone(T.id); daMandare[T.id] = (daMandare[T.id] || 0) + a; locali[T.id] = locali[T.id] || {};
-  const p = paese(), l = righe(T.id), cap = l.find(r => r.paese !== p);
-  if (prima !== p && !festeggiati[T.id] && punti(T.id, p) + daMandare[T.id] > (cap ? cap.punti : 0)) { festeggiati[T.id] = 1; setTimeout(() => festa(T, prima, p), 250); }
+  if (!((t === 'n' || t === 'c') && a > 0)) return;
+  try { TG.Cassone && TG.Cassone.aggiungi(a); } catch(e){}
+}
+/* ---------- O SCARICO: o cassone su un terreno, pe' o paese tuo ---------- */
+async function deposita(T, k){
+  const p = paese(), d = dev(); if (!T || !p || !d || !(k > 0)) return null;
+  const prima = padrone(T.id), l0 = righe(T.id), mio0 = punti(T.id, p);
+  const r = await rpc('tg_terra_deposito', { p_dev: d, p_terra: T.id, p_paese: p, p_punti: Math.round(k) });
+  if (!r || !r.aggiunti) return r;
+  locali[T.id] = locali[T.id] || {}; locali[T.id][p] = (locali[T.id][p] || 0) + r.aggiunti; versione++;
+  const dopo = padrone(T.id), l = righe(T.id), mio = punti(T.id, p), altro = l.find(x => x.paese !== p);
+  ev('deposito', T.id, r.aggiunti, { da: prima, a: dopo, stato0: prima === p ? 'nostro' : prima ? 'loro' : l0.length ? 'conteso' : 'libero' });
+  if (dopo === p && prima !== p) { ev('terra_presa', T.id, null, { a: prima }); festeggiati[T.id] = 1; festa(T, prima, p, 1, `🌰 Hai scaricato ${r.aggiunti} nocchie`); return r; }
+  const sc = `${corto(p)} ${mio}${altro ? ' – ' + corto(altro.paese) + ' ' + altro.punti : ''}`;
+  if (dopo === p) msg(`Bel colpo! ${breve(T.nome)} è più sicuro`, `Hai portato ${r.aggiunti} nocchie · ${sc}`, 4);
+  else if (prima && prima !== p && !dopo) msg(`⚔ ${corto(prima)} nun o tiene più!`, `${breve(T.nome)} è conteso · ${sc} · ne servono ${altro.punti - mio + SOGLIA} pe' prendelo`, 5);
+  else { const serve = (altro ? altro.punti : 0) - mio + SOGLIA; msg(`${corto(p)} avanza! +${r.aggiunti}`, `${sc}${serve > 0 ? ` · ancora ${serve} pe' prendelo` : ''}`, 4.5); }
+  return r;
+}
+// come sta o paese tuo (pe' a mappa)
+function situazione(){
+  const p = paese(); if (!p) return null; const tot = {}; let contesi = 0;
+  for (const T of TERRE) { const pd = padrone(T.id); if (pd) tot[pd] = (tot[pd] || 0) + 1; else if (righe(T.id).some(r => r.paese === p && r.punti > 0)) contesi++; }
+  for (const T of TERRE) { const pd = padrone(T.id); if (pd && pd !== p && punti(T.id, p) > 0) contesi++; }
+  const cl = Object.entries(tot).sort((a, b) => b[1] - a[1]), pos = cl.findIndex(r => r[0] === p) + 1;
+  return { paese: p, nome: nomeP(p), colore: colore(p), terreni: tot[p] || 0, contesi, pos };
 }
 function aggancia(){
   const P = TG.Profile; if (!P || !P.harvestAdd || P.harvestAdd._terre) return;
@@ -275,7 +297,7 @@ function cartello(T){
   TG.debug.scene.add(s); cartelli[T.id] = { s, k };
 }
 function nascondiVicini(){ let c; try { c = TG.debug.car; } catch(e){ return; } if (!c) return;
-  for (const T of TERRE) { const k = cartelli[T.id], d = Math.hypot(c.x - T.x, c.z - T.z); if (k) k.s.visible = acceso(T.id) && d > T.rad + 90 && d < 1500; }
+  for (const T of TERRE) { const k = cartelli[T.id], d = Math.hypot(c.x - T.x, c.z - T.z); if (k) k.s.visible = d > T.rad + 60 && d < 800; }
   // tanti terreni: quelli lontani non si disegnano (piante, cartello de legno, nome, ingressi)
   try { for (const o of TG.debug.campi()) { const cp = o.campo, d = Math.hypot(c.x - cp.cx, c.z - cp.cz) - cp.rad, v = d < 650; if (cp.g) cp.g.visible = v; if (o.g) o.g.visible = d < 450; if (o.label) o.label.visible = d < 450; if (cp.patch) for (const h of cp.patch) h.visible = d < 350; } } catch(e){}
 }
@@ -286,12 +308,22 @@ function aggiornaCartelli(){ if (vCart === versione || !window.THREE) return; vC
 /* ---------- I CAMPI DA PRENDE SE VEDONO DA LONTANO: sopra ogni campo acceso una colonna de luce (arancione se è libero o de
    l'altri, co' o colore vostro se è vostro, rossa e più alta pe' a battaglia) e o bordo de o campo acceso che brilla pe' terra. ---------- */
 let fariGrp = null, fariVer = -1; const fari = {};
-function coloreFaro(T){ const p = padrone(T.id), mio = paese(); if (derby.has(T.id)) return p ? colore(p) : '#ff6a00'; if (T.id === battaglia) return '#ff3b2f'; if (p && p === mio) return colore(p); return '#ff6a00'; }
+function coloreFaro(T){ const p = padrone(T.id), mio = paese(); if (fariSet().att.has(T.id)) return '#ff3b2f'; if (bersaglio() === T.id) return '#ff6a00'; if (derby.has(T.id)) return p ? colore(p) : '#ff6a00'; if (T.id === battaglia) return '#ff3b2f'; if (p && p === mio) return colore(p); return '#ff6a00'; }
+// 2.0: colonne solo sopra o terreno scelto (arancione) e sopra i vostri sotto attacco (rossa), i 6 più vicini
+function bersaglio(){ try { return TG.Semplice && TG.Semplice.bersaglio ? TG.Semplice.bersaglio() : null; } catch(e){ return null; } }
+let fsCache = null, fsT = 0;
+function fariSet(){
+  if (fsCache && Date.now() - fsT < 1500) return fsCache;
+  const p = paese(), b = bersaglio(), all = new Set(), att = new Set(); let c = { x: 0, z: 0 }; try { c = TG.debug.car; } catch(e){}
+  if (b) all.add(b);
+  if (p) TERRE.filter(T => { const pd = padrone(T.id); return punti(T.id, p) > 0 && pd !== p; }).sort((u, v) => Math.hypot(u.x - c.x, u.z - c.z) - Math.hypot(v.x - c.x, v.z - c.z)).slice(0, 6).forEach(T => { all.add(T.id); att.add(T.id); });
+  fsCache = { all, att }; fsT = Date.now(); return fsCache;
+}
 function costruisciFari(){
   if (!window.THREE) return; let sc, E; try { sc = TG.debug.scene; E = TG.debug.world; } catch(e){ return; } if (!sc || !E) return;
   if (!fariGrp) { fariGrp = new THREE.Group(); sc.add(fariGrp); }
-  for (const id in fari) if (!accesi.has(id)) { fariGrp.remove(fari[id].g); fari[id].g.traverse(o => { o.geometry && o.geometry.dispose(); o.material && o.material.dispose(); }); delete fari[id]; }
-  for (const T of TERRE) { if (!accesi.has(T.id)) continue; const col = new THREE.Color(coloreFaro(T)), alto = T.id === battaglia || derby.has(T.id) ? 230 : 150;
+  const FS = fariSet().all; for (const id in fari) if (!FS.has(id)) { fariGrp.remove(fari[id].g); fari[id].g.traverse(o => { o.geometry && o.geometry.dispose(); o.material && o.material.dispose(); }); delete fari[id]; }
+  for (const T of TERRE) { if (!FS.has(T.id)) continue; const col = new THREE.Color(coloreFaro(T)), alto = fariSet().att.has(T.id) ? 230 : 180;
     let f = fari[T.id];
     if (!f) { const g = new THREE.Group(), y0 = E.ground(T.x, T.z);
       const raggio = new THREE.Mesh(new THREE.CylinderGeometry(2.2, 4.5, alto, 10, 1, true), new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: .55, depthWrite: false, side: THREE.DoubleSide, fog: false }));
@@ -336,9 +368,9 @@ function pannello(){
   let c = { x: 0, z: 0 }; try { c = TG.debug.car; } catch(e){}
   const S = SF(), tot = {}, dt = {}; for (const T of TERRE) { const p = padrone(T.id); if (p && derby.has(T.id)) dt[p] = (dt[p] || 0) + 1; if (p) tot[p] = (tot[p] || 0) + 1; }
   const testa = Object.entries(tot).sort((a, b) => b[1] - a[1]).map(([p, n]) => `<b style="color:${colore(p)}">${corto(p)} ${n}</b>`).join(' · ') || 'Ancora tutti liberi';
-  const lista = TERRE.filter(T => acceso(T.id)).map(T => ({ T, d: Math.hypot(T.x - c.x, T.z - c.z), l: righe(T.id) })).sort((a, b) => (b.T.id === battaglia) - (a.T.id === battaglia) || (derby.has(b.T.id) - derby.has(a.T.id)) * (S && S.p.includes(paese()) ? 1 : -1) || a.d - b.d);
-  pan.innerHTML = `<div class="c"><h2>🔥 I terreni accesi oggi <button aria-label="Chiudi">×</button></h2>` + (S ? `<p><b>⚔ Derby: <span style="color:${colore(S.p[0])}">${S.nome(S.p[0])} ${dt[S.p[0]] || 0}</span> – <span style="color:${colore(S.p[1])}">${dt[S.p[1]] || 0} ${S.nome(S.p[1])}</span></b> · ${S.fineTesto()}</p>` : '') + `<p>Solo ne i campi accesi e nocchie contano. Ogni terreno è de o paese che c'ha raccolto de più; se nun ce torni se raffredda. Domenica o Trono va a chi ne tiene de più. ${testa}</p>`
-    + lista.map(({ T, d, l }) => `<div class="row" data-t="${T.id}"><i style="background:${colore(l[0] && l[0].paese)}"></i><div><b>${T.id === battaglia || derby.has(T.id) ? "⚔ " : ""}${breve(T.nome)}${derby.has(T.id) ? ' · derby' : ''}${T.id === battaglia ? " · vale doppio" : ""}</b><small>${l.length ? l.slice(0, 2).map(r => corto(r.paese) + ' ' + r.punti).join(' · ') : 'libero'}</small></div><em>${d < 950 ? Math.round(d / 10) * 10 + ' m' : (d / 1000).toFixed(1).replace('.', ',') + ' km'}</em></div>`).join('') + '</div>';
+  const lista = TERRE.map(T => ({ T, d: Math.hypot(T.x - c.x, T.z - c.z), l: righe(T.id) })).sort((a, b) => (b.T.id === battaglia) - (a.T.id === battaglia) || (derby.has(b.T.id) - derby.has(a.T.id)) * (S && S.p.includes(paese()) ? 1 : -1) || a.d - b.d);
+  pan.innerHTML = `<div class="c"><h2>🌰 I terreni <button aria-label="Chiudi">×</button></h2>` + (S ? `<p><b>⚔ Derby: <span style="color:${colore(S.p[0])}">${S.nome(S.p[0])} ${dt[S.p[0]] || 0}</span> – <span style="color:${colore(S.p[1])}">${dt[S.p[1]] || 0} ${S.nome(S.p[1])}</span></b> · ${S.fineTesto()}</p>` : '') + `<p>Raccoji ovunque, poi scarica o cassone su un terreno: è de o paese che c'ha scaricato de più (co' almeno ${SOGLIA} de vantaggio). Domenica o Trono va a chi ne tiene de più. ${testa}</p>`
+    + lista.slice(0, 30).map(({ T, d, l }) => `<div class="row" data-t="${T.id}"><i style="background:${colore(l[0] && l[0].paese)}"></i><div><b>${T.id === battaglia || derby.has(T.id) ? "⚔ " : ""}${breve(T.nome)}${derby.has(T.id) ? ' · derby' : ''}${T.id === battaglia ? " · vale doppio" : ""}</b><small>${l.length ? l.slice(0, 2).map(r => corto(r.paese) + ' ' + r.punti).join(' · ') : 'libero'}</small></div><em>${d < 950 ? Math.round(d / 10) * 10 + ' m' : (d / 1000).toFixed(1).replace('.', ',') + ' km'}</em></div>`).join('') + '</div>';
   pan.querySelector('h2 button').onclick = () => { pan.hidden = true; };
   pan.querySelectorAll('.row').forEach(r => r.onclick = () => { const T = TERRE.find(x => x.id === r.dataset.t); pan.hidden = true; try { const m = document.querySelector('#mapOv [data-close]'); m && m.click(); TG.debug.setDest({ x: T.x, z: T.z, name: breve(T.nome) }); msg('Segui a freccia: ' + breve(T.nome)); } catch(e){} ev('terra_vai', T.id); });
   pan.hidden = false; ev('terre_aperte', '');
@@ -378,22 +410,22 @@ function mini(){
   c.setTransform(1, 0, 0, 1, 0, 0); c.clearRect(0, 0, W, W); c.beginPath(); c.arc(a, a, a - 1, 0, Math.PI * 2); c.clip();
   c.translate(a, a); c.rotate(rot); c.scale(s, s);
   for (const T of TERRE) { const dx = T.x - d.x, dz = T.z - d.z; if (Math.hypot(dx, dz) > 1000) continue; const p = padrone(T.id);
-    const on = acceso(T.id); c.beginPath(); c.arc(dx, dz, on ? Math.max(T.rad, 7 / s) : Math.max(T.rad * .5, 4 / s), 0, Math.PI * 2); c.fillStyle = colore(p); c.globalAlpha = on ? (p ? .6 : .35) : (p ? .25 : .08); c.fill(); c.globalAlpha = 1; if (on) { c.lineWidth = (T.id === battaglia ? 6 : 3) / s; c.strokeStyle = T.id === battaglia ? '#ff3b2f' : p === paese() ? '#f2c74e' : '#ff8a3c'; c.stroke(); } }
+    const on = acceso(T.id); c.beginPath(); c.arc(dx, dz, on ? Math.max(T.rad, 7 / s) : Math.max(T.rad * .5, 4 / s), 0, Math.PI * 2); c.fillStyle = colore(p); c.globalAlpha = on ? (p ? .6 : .35) : (p ? .25 : .08); c.fill(); c.globalAlpha = 1; if (p === paese() || bersaglio() === T.id) { c.lineWidth = 3 / s; c.strokeStyle = bersaglio() === T.id ? '#ff8a3c' : '#f2c74e'; c.stroke(); } }
 }
 
-// per la mappa: di chi è il terreno, in una riga
+// per la mappa: di chi è il terreno e cosa ce poi fà
 function descrivi(id){
-  const l = righe(id).filter(r => r.punti > 0), p = paese();
-  if (id === battaglia) { const x = 'Battaglia de oggi: ogni nocchia vale doppio. '; l.length; descrivi._b = x; } else descrivi._b = '';
-  if (!acceso(id)) { const pd = l[0]; return (pd ? `È de ${'<b style="color:' + colore(pd.paese) + '">' + corto(pd.paese) + '</b>'} (${pd.punti}). ` : '') + 'Oggi è spento: e nocchie qui nun contano. Vai a i terreni 🔥 accesi.'; }
-  if (!l.length) return (descrivi._b || '') + 'Libero: o primo che ce raccoje se o pija pe\' o paese suo.';
+  const l = righe(id).filter(r => r.punti > 0), p = paese(), st = stato(id);
   const b = (pp, n) => `<b style="color:${colore(pp)}">${corto(pp)}</b> ${n}`;
-  let t = (descrivi._b ? '⚔ ' + descrivi._b + '<br>' : '') + `È de ${b(l[0].paese, l[0].punti)} nocchie`;
-  if (l[1]) t += ` · ${b(l[1].paese, l[1].punti)}`;
-  if (p && l[0].paese !== p) { const mio = punti(id, p); t += `<br>Pe' pijallo a ${corto(p)} ne servono ${l[0].punti - mio + 1}.`; }
-  else if (p && l[0].paese === p) t += '<br>È vostro: tenetelo.';
-  return t;
+  const sc = l.slice(0, 3).map(r => b(r.paese, r.punti)).join(' · ');
+  if (st === 'libero') return "Terreno libero! Chi se o pija? Scarica almeno 10 nocchie e è de " + (p ? corto(p) : "o paese tuo") + '.';
+  if (st === 'nostro') return `Sto terreno è nostro! ${sc}<br>Scaricace pe' rinforzallo.`;
+  if (st === 'conteso') return `Conteso: nessuno sta davanti de ${SOGLIA}. ${sc}<br>Scarica e pijatelo.`;
+  const pd = padrone(id), mio = p ? punti(id, p) : 0, serve = (l[0] ? l[0].punti : 0) - mio + SOGLIA;
+  return `Sto terreno è de ${b(pd, l[0].punti)}${l[1] ? ' · ' + b(l[1].paese, l[1].punti) : ''}<br>Attacca: ne servono ${serve} pe' portallo a ${p ? corto(p) : 'o paese tuo'}.`;
 }
+const azione = id => ({ nostro: '🛡 Vai a difende', libero: '🚩 Vai a prendelo', conteso: '⚔ Vai a attaccà', loro: '⚔ Vai a attaccà' })[stato(id)];
+const etichetta = id => { const st = stato(id), pd = padrone(id); return st === 'nostro' ? 'Nostro' : st === 'libero' ? 'Libero' : st === 'conteso' ? 'Conteso' : 'De ' + corto(pd); };
 
 /* ---------- IL PREMIO DE I GIOCHI: ogni partita a un gioco vicino ai terreni vince o terreno più vicino pe' o paese tuo,
    co' l'oro ne vince 5. Si legge dal ritorno ne o mondo (?da=<gioco>&esito=…&med=…); una volta sola pe' partita. ---------- */
@@ -405,22 +437,15 @@ async function premioGioco(){
   if (ls.get(chiave)) return;
   const p = paese(), d = dev();
   let A = null; try { A = (TG.debug.acts || []).find(a => a.id === da); } catch(e){}
-  if (!A || !p || !d) { if ((premioGioco.n = (premioGioco.n || 0) + 1) < 40) setTimeout(premioGioco, 1500); return; }
+  if (!A || !TG.Cassone) { if ((premioGioco.n = (premioGioco.n || 0) + 1) < 40) setTimeout(premioGioco, 1500); return; }
   ls.set(chiave, '1');
-  const bonus = q.get('med') === 'oro' ? 60 : 20;
-  const cand = TERRE.filter(T => acceso(T.id)).map(T => ({ T, d: Math.hypot(T.x - A.x, T.z - A.z) - T.rad, mio: padrone(T.id) === p })).sort((a, b) => (a.mio - b.mio) || (a.d - b.d));
-  const T = cand[0] && cand[0].T; if (!T) return;
-  const prima = padrone(T.id), cap = righe(T.id).find(r => r.paese !== p);
-  let preso = false;
-  try { const r = await rpc('tg_terra_punto', { p_dev: d, p_terra: T.id, p_paese: p, p_punti: bonus }); if (r && r.aggiunti) { locali[T.id] = locali[T.id] || {}; locali[T.id][p] = (locali[T.id][p] || 0) + r.aggiunti; versione++; preso = prima !== p && padrone(T.id) === p; if (preso) { festeggiati[T.id] = 1; ev('terra_presa', T.id, null, { a: prima, gioco: da }); } } } catch(e){ return; }
-  const via = () => setTimeout(() => {
-    if (preso) festa(T, cap && cap.paese, p, 1, (bonus > 20 ? '🥇 Oro: +' : '🎮 Partita: +') + bonus + ' nocchie');
-    else { const mio = punti(T.id, p), l = righe(T.id), c2 = l.find(r => r.paese !== p); msg(`🎮 +${bonus} nocchie pe' ${corto(p)}`, padrone(T.id) === p ? `${breve(T.nome)}: è vostro, mo' più sicuro` : `${breve(T.nome)}: ne mancano ${(c2 ? c2.punti : 0) - mio + 1}. Vai a raccoje!`, 4.5); try { TG.debug.setDest({ x: T.x, z: T.z, name: breve(T.nome) }); } catch(e){} }
-  }, 1800);
+  const bonus = q.get('med') === 'oro' ? 50 : 20;
+  const via = () => setTimeout(() => { const k = TG.Cassone ? TG.Cassone.aggiungi(bonus) : 0; msg(`🎮 +${k} nocchie ne o cassone`, k < bonus ? 'O cassone è pieno: vai a scaricà!' : (bonus > 20 ? '🥇 Co\' l\'oro: ' : '') + 'mo\' scegli dove scaricalle', 4.5); }, 1800);
+  const preso = false;
   if (document.body.classList.contains('playing')) via(); else new MutationObserver((x, o) => { if (document.body.classList.contains('playing')) { o.disconnect(); via(); } }).observe(document.body, { attributes: true, attributeFilter: ['class'] });
   ev('terre_premio', da, bonus, { med: q.get('med') || null, preso });
 }
-TG.Terre = { colore, padrone, righe, terraIn, aggiorna, pannello, descrivi, puntoGuerra, mio: id => punti(id, paese()) + (daMandare[id] || 0), acceso, accesi: () => accesi, battaglia: () => battaglia, _card: cardImmagine, lista: () => TERRE, sfida: SF, derby: inDerby, _dbg: () => ({ classifica, locali, daMandare }) };
+TG.Terre = { colore, padrone, righe, terraIn, aggiorna, pannello, descrivi, puntoGuerra, mio: id => punti(id, paese()) + (daMandare[id] || 0), acceso, accesi: () => accesi, battaglia: () => battaglia, _card: cardImmagine, lista: () => TERRE, sfida: SF, derby: inDerby, stato, deposita, situazione, azione, etichetta, paeseMio: paese, SOGLIA, _dbg: () => ({ classifica, locali, daMandare }) };
 // per i moduli che usavano le zone (presenza: colore del paese)
 TG.Zone = TG.Zone || { colore, squadra: false };
 function avvia(){

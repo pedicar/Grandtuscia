@@ -54,59 +54,64 @@ function alto(){
   el.innerHTML = p ? `<span>🌰 <i style="background:${TG.Terre.colore(p)}"></i> ${corto(p)} <b>${mio}</b></span>` + (pos ? `<span class="alt">${pos}°</span>` : '') + (capo ? `<span class="alt">· ${corto(capo[0])} ${capo[1]}</span>` : '') : `🌰 ${tot} terreni da prende`;
 }
 
-/* ---------- a freccia: o prossimo terreno da prende ---------- */
-let mia = null, partito = false;
+/* ---------- 2.0: O TERRENO SCELTO e a freccia ----------
+   - Scegli tu dalla mappa (TG.Semplice.scelto, chiamato da app.js) → freccia e colonna arancione fin là.
+   - Se nun hai scelto: cassone pieno → freccia a o terreno più vicino da prende; sennò nessuna freccia (raccoji dove te pare). */
+let mia = null, scelta = null, sceltaT = 0;
+function scelto(id){ scelta = id; sceltaT = Date.now(); const T = TG.Terre.lista().find(x => x.id === id); mia = T ? { id, x: T.x, z: T.z } : null; try { TG.Stats && TG.Stats.ev('mappa_terreno', id, null, { stato: TG.Terre.stato(id) }); } catch(e){} }
+const bersaglio = () => (mia && mia.id) || null;
+function libera(){ scelta = null; mia = null; }
 function prossimo(){
   const D = TG.debug, W = TG.Terre; if (!D || !W || !D.car || !document.body.classList.contains('playing')) return;
-  const p = paese(); if (!p) return;
-  const c = D.car, dentro = W.terraIn(c.x, c.z);
-  // nasconde o bottone sopra i campi (IL PODERE), mai quello de un gioco o de un luogo
+  const p = paese(), c = D.car, dentro = W.terraIn(c.x, c.z), C = TG.Cassone;
   const pn = (document.getElementById('pName') || {}).textContent || '';
   document.documentElement.classList.toggle('tg-campo', !!dentro && (/podere|tua terra/i.test(pn) || W.lista().some(T => T.nome === pn || breve(T.nome) === pn)));
-  const N = D.NAV || {}, dest = N.dest;
-  if (dest && dest !== mia && partito) { if (Math.hypot(dest.x - c.x, dest.z - c.z) > 60) return; }   // meta scelta da te: rispettata finché nun ci arrivi
-  if (dentro && W.padrone(dentro.id) !== p) { if (mia && mia.id === dentro.id) return; }        // stai a raccoje: lascia stare
-  if (mia && W.padrone(mia.id) !== p && dest === mia) return;                                     // ancora da prende
+  if (!p) return;
+  // arrivato a o terreno scelto: a freccia se spegne, resta o bottone SCARICA
+  if (mia && dentro && dentro.id === mia.id) { try { if (D.NAV && D.NAV.dest) D.setDest(null); } catch(e){} return; }
+  if (scelta) return;   // meta scelta da te: nun se tocca
+  const N = D.NAV || {};
+  if (N.dest && (!mia || Math.hypot(N.dest.x - mia.x, N.dest.z - mia.z) > 30)) return;   // un'altra meta (un gioco, un luogo): rispettata
+  if (!(C && C.pieno()) || dentro) { if (mia && !scelta) { mia = null; try { D.setDest(null); } catch(e){} } return; }
   let best = null, bd = 1e9;
-  const S = W.sfida && W.sfida(), noi = S && S.p.includes(p);
-  for (const T of W.lista()) { if (W.padrone(T.id) === p || (W.acceso && !W.acceso(T.id))) continue; const dd = S && W.derby(T.id); if (dd && !noi) continue;
-    const d = Math.hypot(T.x - c.x, T.z - c.z) - T.rad - (dd && noi ? 3000 : 0); if (d < bd) { bd = d; best = T; } }
-  if (!best) return;
-  mia = { x: best.x, z: best.z, name: breve(best.nome), id: best.id };
-  try { D.setDest(mia); mia = (D.NAV && D.NAV.dest) || mia; mia.id = best.id; } catch(e){}
-  partito = true;
+  for (const T of W.lista()) { if (W.stato(T.id) === 'nostro') continue; const d = Math.hypot(T.x - c.x, T.z - c.z) - T.rad; if (d < bd) { bd = d; best = T; } }
+  if (!best || (mia && mia.id === best.id)) return;
+  mia = { id: best.id, x: best.x, z: best.z };
+  try { D.setDest({ x: best.x, z: best.z, name: breve(best.nome) }); } catch(e){}
 }
+addEventListener('tg-presa', () => { scelta = null; });
 
-
-/* ---------- IL RIQUADRO DE L'OBIETTIVO: sempre visibile, dice cosa fa e quanto manca ----------
-   fuori: «➜ Vai a o campo 🔥 Noccioleto X · 320 m»; dentro: «Raccoji ancora 9 nocchie» + barra; vostro: «✅ È vostro»; spento: «segui a freccia». */
+/* ---------- IL RIQUADRO: o cassone e cosa fà mo' ----------
+   fuori: «🌰 Cassone 45/100» + barra + consiglio; cassone pieno: «scegli dove attaccà» (tocca → mappa);
+   verso o scelto: «⚔ Vai a attaccà X · 320 m»; dentro un terreno: chi o tiene e cosa succede se scarichi. */
 let obi = null;
+function apriMappa(){ try { const b = document.getElementById('bMap') || document.querySelector('[data-open="map"],#mapBtn,#btnMap'); if (b) { b.click(); return; } } catch(e){} try { TG.Terre.pannello(); } catch(e){} }
 function obiettivo(){
-  const D = TG.debug, W = TG.Terre; if (!D || !W || !D.car) return;
-  if (!obi) { obi = document.createElement('div'); obi.id = 'obi'; obi.onclick = () => { try { W.pannello(); } catch(e){} }; document.body.appendChild(obi); }
+  const D = TG.debug, W = TG.Terre, C = TG.Cassone; if (!D || !W || !D.car || !C) return;
+  if (!obi) { obi = document.createElement('div'); obi.id = 'obi'; obi.onclick = apriMappa; document.body.appendChild(obi); }
   const sc = document.getElementById('score'); if (sc) { const r = sc.getBoundingClientRect(); if (r.bottom > 0) document.documentElement.style.setProperty('--obiTop', Math.round(r.bottom + 8) + 'px'); }
-  const p = paese(), c = D.car, dentro = W.terraIn(c.x, c.z), presi = +(ls.get('tg-presi') || 0);
-  const S = SF(), piede = S && S.p.includes(p) ? `<div class="r"><span>🏅 Presi da te: <b style="color:#fff">${presi}</b></span><span>⚔ derby ${S.fineCorto().replace('⏳ ', '')}</span></div>` : `<div class="r"><span>🏅 Presi da te: <b style="color:#fff">${presi}</b></span><span>${presi < 2 ? 'Ape a 2' : presi < 6 ? 'trattore a 6' : 'tutti i mezzi'}</span></div>`;
+  const p = paese(), c = D.car, dentro = W.terraIn(c.x, c.z), n = C.n, cap = C.cap(), pct = Math.min(100, n / cap * 100);
   if (!p) { obi.innerHTML = `<div class="t">Scegli o paese tuo</div>`; return; }
-  const col = W.colore(p);
-  if (dentro && S && W.derby(dentro.id) && !S.p.includes(p)) { obi.style.borderColor = '#ff8a3c'; obi.innerHTML = `<div class="t">⚔ Campo de o derby</div><div class="s">Qui conteno solo ${S.nome(S.p[0])} e ${S.nome(S.p[1])}. Segui a freccia pe' i campi tua</div>${piede}`; return; }
-  if (dentro && W.acceso(dentro.id)) {
-    const l = W.righe(dentro.id), pad = W.padrone(dentro.id), mio = W.mio(dentro.id), cap = l.find(r => r.paese !== p), loro = cap ? cap.punti : 0, doppio = W.battaglia && W.battaglia() === dentro.id;
-    obi.style.borderColor = col;
-    if (pad === p) { const marg = mio - loro; obi.innerHTML = `<div class="t">✅ ${breve(dentro.nome)} è vostro!</div><div class="s">${cap ? `${corto(cap.paese)} sta a ${marg} nocchie: raccoji pe' tenello` : 'Nessuno ve o contende'}</div><div class="b"><i style="width:100%;background:${col}"></i></div>${piede}`; return; }
-    const serve = loro - mio + 1, n = Math.ceil(serve / (doppio ? 2 : 1)), pct = Math.max(4, Math.min(100, mio / (loro + 1) * 100));
-    obi.innerHTML = `<div class="t">🌰 Raccoji ancora ${n} nocchi${n === 1 ? 'a' : 'e'}${doppio ? ' (valgono doppio!)' : ''}</div><div class="s">pe' prende ${breve(dentro.nome)}${cap ? ' a ' + corto(cap.paese) : ''}</div><div class="b"><i style="width:${pct}%;background:${col}"></i></div><div class="r"><span style="color:${col}">${corto(p)} ${mio}</span><span>${cap ? corto(cap.paese) + ' ' + loro : 'libero'}</span></div>${piede}`;
+  const col = W.colore(p), barra = `<div class="b"><i style="width:${Math.max(3, pct)}%;background:${n >= cap ? '#ff8a3c' : col}"></i></div>`;
+  const piede = `<div class="r"><span>🌰 Cassone <b style="color:#fff">${n}/${cap}</b></span><span>🗺 tocca pe' a mappa</span></div>`;
+  if (dentro) {
+    const l = W.righe(dentro.id).filter(r => r.punti > 0), st = W.stato(dentro.id), mio = W.mio(dentro.id), pd = W.padrone(dentro.id), altro = l.find(r => r.paese !== p), loro = altro ? altro.punti : 0;
+    obi.style.borderColor = pd ? W.colore(pd) : '#ff8a3c';
+    const tit = st === 'nostro' ? `✅ ${breve(dentro.nome)} è nostro` : st === 'libero' ? `🚩 ${breve(dentro.nome)}: libero!` : st === 'conteso' ? `⚔ ${breve(dentro.nome)}: conteso` : `⚔ ${breve(dentro.nome)} è de ${corto(pd)}`;
+    const dopo = mio + n, sopra = dopo - loro >= W.SOGLIA;
+    const cosa = n < C.MINIMO ? 'Raccoji qui e nocchie, poi scaricale' : st === 'nostro' ? `Scarica ${n}: o rinforzi (${dopo} a ${loro})` : sopra ? `Scarica ${n}: ${dopo} a ${loro}, <b style="color:#fff">è vostro!</b>` : `Scarica ${n}: ${dopo} a ${loro}, ne mancano ancora ${loro - dopo + W.SOGLIA}`;
+    obi.innerHTML = `<div class="t">${tit}</div><div class="s">${cosa}</div>${l.length ? `<div class="r"><span style="color:${col}">${corto(p)} ${mio}</span><span>${altro ? corto(altro.paese) + ' ' + loro : 'nessun altro'}</span></div>` : ''}${piede}`;
     return;
   }
-  obi.style.borderColor = '#ff8a3c';
-  const N = D.NAV || {}, dest = N.dest, T = mia && W.lista().find(x => x.id === mia.id);
-  if (dentro && !W.acceso(dentro.id)) { obi.innerHTML = `<div class="t">Questo campo oggi è spento</div><div class="s">Segui a freccia fino a un campo 🔥 acceso</div>${piede}`; return; }
-  if (T) { const d = Math.max(0, Math.hypot(T.x - c.x, T.z - c.z) - T.rad); obi.innerHTML = `<div class="t">➜ Vai a o campo ${S && W.derby(T.id) ? '⚔ de o derby' : '🔥'}</div><div class="s">${breve(T.nome)} · ${d < 950 ? Math.round(d / 10) * 10 + ' m' : (d / 1000).toFixed(1).replace('.', ',') + ' km'}</div>${piede}`; return; }
-  obi.innerHTML = `<div class="t">🔥 Tutti i campi accesi so' vostri!</div><div class="s">Difendeli: tornaci a raccoje</div>${piede}`;
+  obi.style.borderColor = n >= cap ? '#ff8a3c' : col;
+  const T = mia && W.lista().find(x => x.id === mia.id);
+  if (T) { const d = Math.max(0, Math.hypot(T.x - c.x, T.z - c.z) - T.rad), az = (W.azione(T.id) || '').replace('Vai a ', '').replace(/^(\S+) /, '$1 Vai a '); obi.innerHTML = `<div class="t">${az}</div><div class="s">${breve(T.nome)} · ${d < 950 ? Math.round(d / 10) * 10 + ' m' : (d / 1000).toFixed(1).replace('.', ',') + ' km'}</div>${barra}${piede}`; return; }
+  if (n >= cap) { obi.innerHTML = `<div class="t">Cassone pieno: è ora de fa' guerra!</div><div class="s">Tocca qui e scegli o terreno da attaccà</div>${barra}${piede}`; return; }
+  obi.innerHTML = `<div class="t">🌰 Raccoji e nocchie!</div><div class="s">Passace sopra ne i campi pe' riempì o cassone</div>${barra}${piede}`;
 }
 /* ---------- la prima volta: come se conquista un campo, in tre righe ---------- */
 function tutorial(){
-  if (ls.get('tg-tuto-terreni') || !document.body.classList.contains('playing')) return;
+  if (true || ls.get('tg-tuto-terreni') || !document.body.classList.contains('playing')) return;   // 2.0: sostituito da i messaggi de o cassone
   ls.set('tg-tuto-terreni', '1');
   const d = document.createElement('div'); d.id = 'tuto';
   d.innerHTML = `<div class="c"><h2>Come se prende un campo</h2><ol><li><b>➜</b><span>Segui a <b style="font-size:15px;color:#ff8a3c">freccia</b> fino a o campo 🔥 acceso</span></li><li><b>🌰</b><span>Passa sopra e nocchie tra i filari: ogni nocchia è un punto pe' o paese tuo</span></li><li><b>🚩</b><span>Quanno ne hai più de l'altri paesi, o campo è vostro</span></li><li><b>👑</b><span>Domenica vince o paese che tiene più campi</span></li></ol><button type="button">Ho capito, vado!</button></div>`;
@@ -129,6 +134,6 @@ function avvia(){
   const dici = () => { try { const b = TG.Terre.battaglia(), T = b && TG.Terre.lista().find(x => x.id === b); if (!T || ls.get('tg-battaglia-detta') === oggi() + b) return; if (!document.body.classList.contains('playing')) return setTimeout(dici, 3000); ls.set('tg-battaglia-detta', oggi() + b); setTimeout(() => TG.msg('⚔ Battaglia de oggi', breve(T.nome) + ': ogni nocchia vale doppio', 5), 8000); } catch(e){} };
   setTimeout(dici, 4000);
 }
-TG.Semplice = { prossimo, alto };
+TG.Semplice = { prossimo, alto, scelto, bersaglio, libera };
 if (document.readyState === 'complete') setTimeout(avvia, 2000); else addEventListener('load', () => setTimeout(avvia, 2000));
 })();
