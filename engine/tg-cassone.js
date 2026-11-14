@@ -46,14 +46,14 @@ document.head.appendChild(st);
 let btn = null, occupato = false;
 function bottone(){
   const W = TG.Terre, D = TG.debug; if (!W || !D || !D.car) return;
-  if (!btn) { btn = document.createElement('button'); btn.id = 'scBtn'; btn.type = 'button'; btn.onclick = scarica; document.body.appendChild(btn); }
+  if (!btn) { btn = document.createElement('button'); btn.id = 'scBtn'; btn.type = 'button'; btn.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); scarica(); }); btn.onclick = e => { e.stopPropagation(); }; /* pointerdown: parte subito, nun se perde */ document.body.appendChild(btn); }
   const c = D.car, T = W.terraIn(c.x, c.z), p = W.paeseMio && W.paeseMio();
   const ok = T && p && n >= MINIMO && !(W.derby && W.derby(T.id) && !(W.sfida() || { p: [] }).p.includes(p));
   document.documentElement.classList.toggle('tg-scarica', !!ok);
   if (!ok || occupato) { btn.style.display = occupato ? 'flex' : 'none'; return; }
   btn.style.display = 'flex';
   const s = W.stato(T.id), verbo = s === 'nostro' ? '🛡 RINFORZA' : s === 'libero' ? '🚩 PRENDI' : '⚔ ATTACCA';
-  const h = `${verbo}<small>scarica ${n} nocchie</small>`; if (btn._h !== h) { btn._h = h; btn.innerHTML = h; }   // riscritto solo se cambia: sennò Safari perde o clic
+  const h = `${verbo}<small>scarica ${n} nocchie${matchMedia('(pointer:fine)').matches ? ' · tasto E' : ''}</small>`; if (btn._h !== h) { btn._h = h; btn.innerHTML = h; }   // riscritto solo se cambia: sennò Safari perde o clic
   btn.classList.toggle('go', C.pieno());
 }
 async function scarica(){
@@ -83,6 +83,8 @@ function mappa(){
 
 function avvia(){
   if (!TG.Terre || !TG.debug || !TG.debug.car) return setTimeout(avvia, 1000);
+  // da computer: E o Invio scaricano quanno o bottone c'è
+  addEventListener('keydown', e => { if ((e.key === 'e' || e.key === 'E' || e.key === 'Enter') && btn && btn.style.display === 'flex' && !occupato && !/INPUT|TEXTAREA/.test((e.target || {}).tagName || '')) { e.preventDefault(); scarica(); } });
   setInterval(bottone, 300); setInterval(mappa, 600);
 }
 if (document.readyState === 'complete') setTimeout(avvia, 1500); else addEventListener('load', () => setTimeout(avvia, 1500));
