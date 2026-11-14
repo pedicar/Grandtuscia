@@ -22,7 +22,18 @@ html body #hud .where>#score#score,html body.touch #hud .where>#score#score,html
 #primi,#hOra,#hGoal,#hCal,#ngHud,#pmHud,#pmRiga,#done{display:none!important}
 html.tg-campo #prompt{display:none!important}
 #mission .tg-label{font-size:0!important}#mission .tg-label::after{content:"🔥 Terreno acceso";font-size:11px}
-#mChange{display:none!important}`;
+#mChange{display:none!important}
+#trBox{display:none!important}
+#obi{position:fixed;z-index:31;left:calc(10px + env(safe-area-inset-left,0px));top:calc(var(--obiTop,112px) + env(safe-area-inset-top,0px));width:min(250px,60vw);padding:8px 11px 9px;border-radius:14px;background:rgba(16,22,21,.86);border:2px solid #ff8a3c;color:#f3e7cb;font:700 13px/1.3 Figtree,"Segoe UI",system-ui,sans-serif;box-shadow:0 6px 18px rgba(0,0,0,.3);pointer-events:auto;cursor:pointer}
+#obi .t{font:900 15px/1.2 Figtree,sans-serif;color:#fff}
+#obi .s{margin-top:2px;color:#d9cfb6;font-weight:700}
+#obi .b{position:relative;height:9px;border-radius:5px;background:rgba(255,255,255,.15);margin-top:6px;overflow:hidden}#obi .b i{position:absolute;left:0;top:0;bottom:0;border-radius:5px;transition:width .3s}
+#obi .r{display:flex;justify-content:space-between;margin-top:3px;font-size:12px;color:#c9bfa8}
+body:not(.playing) #obi,body:has(#mapOv:not([hidden])) #obi,body:has(#trOv:not([hidden])) #obi,body:has(#trFesta) #obi{display:none!important}
+#tuto{position:fixed;inset:0;z-index:97;display:flex;align-items:center;justify-content:center;background:rgba(8,12,10,.7);padding:18px;font-family:Figtree,"Segoe UI",system-ui,sans-serif}
+#tuto .c{width:min(360px,100%);background:#17201f;border:2px solid #ff8a3c;border-radius:20px;padding:18px 18px 14px;color:#f3e7cb}
+#tuto h2{margin:0 0 10px;font:900 22px Figtree,sans-serif;color:#fff}#tuto ol{margin:0;padding-left:0;list-style:none;display:grid;gap:10px}#tuto li{display:grid;grid-template-columns:34px 1fr;gap:8px;align-items:center;font:700 15px/1.3 Figtree,sans-serif}#tuto li b{font-size:24px;text-align:center}
+#tuto button{margin-top:14px;width:100%;padding:12px;border:0;border-radius:999px;background:#ff8a3c;color:#fff;font:900 16px Figtree,sans-serif;cursor:pointer}`;
 document.head.appendChild(st);
 const paese = () => { const p = (TG.PrimoMinuto && TG.PrimoMinuto.paese) || ls.get('tg-paese-dev'); return p && p !== 'nessuno' ? p : null; };
 const corto = p => { let n = p; try { n = (TG.PrimoMinuto && TG.PrimoMinuto.nomeComune(p)) || p; } catch(e){} return (n || '').replace(/ (di|in|sul|al|nel) .*$/i, ''); };
@@ -59,6 +70,41 @@ function prossimo(){
   partito = true;
 }
 
+
+/* ---------- IL RIQUADRO DE L'OBIETTIVO: sempre visibile, dice cosa fa e quanto manca ----------
+   fuori: «➜ Vai a o campo 🔥 Noccioleto X · 320 m»; dentro: «Raccoji ancora 9 nocchie» + barra; vostro: «✅ È vostro»; spento: «segui a freccia». */
+let obi = null;
+function obiettivo(){
+  const D = TG.debug, W = TG.Terre; if (!D || !W || !D.car) return;
+  if (!obi) { obi = document.createElement('div'); obi.id = 'obi'; obi.onclick = () => { try { W.pannello(); } catch(e){} }; document.body.appendChild(obi); }
+  const sc = document.getElementById('score'); if (sc) { const r = sc.getBoundingClientRect(); if (r.bottom > 0) document.documentElement.style.setProperty('--obiTop', Math.round(r.bottom + 8) + 'px'); }
+  const p = paese(), c = D.car, dentro = W.terraIn(c.x, c.z), presi = +(ls.get('tg-presi') || 0);
+  const piede = `<div class="r"><span>🏅 Presi da te: <b style="color:#fff">${presi}</b></span><span>${presi < 2 ? 'Ape a 2' : presi < 6 ? 'trattore a 6' : 'tutti i mezzi'}</span></div>`;
+  if (!p) { obi.innerHTML = `<div class="t">Scegli o paese tuo</div>`; return; }
+  const col = W.colore(p);
+  if (dentro && W.acceso(dentro.id)) {
+    const l = W.righe(dentro.id), pad = W.padrone(dentro.id), mio = W.mio(dentro.id), cap = l.find(r => r.paese !== p), loro = cap ? cap.punti : 0, doppio = W.battaglia && W.battaglia() === dentro.id;
+    obi.style.borderColor = col;
+    if (pad === p) { const marg = mio - loro; obi.innerHTML = `<div class="t">✅ ${breve(dentro.nome)} è vostro!</div><div class="s">${cap ? `${corto(cap.paese)} sta a ${marg} nocchie: raccoji pe' tenello` : 'Nessuno ve o contende'}</div><div class="b"><i style="width:100%;background:${col}"></i></div>${piede}`; return; }
+    const serve = loro - mio + 1, n = Math.ceil(serve / (doppio ? 2 : 1)), pct = Math.max(4, Math.min(100, mio / (loro + 1) * 100));
+    obi.innerHTML = `<div class="t">🌰 Raccoji ancora ${n} nocchi${n === 1 ? 'a' : 'e'}${doppio ? ' (valgono doppio!)' : ''}</div><div class="s">pe' prende ${breve(dentro.nome)}${cap ? ' a ' + corto(cap.paese) : ''}</div><div class="b"><i style="width:${pct}%;background:${col}"></i></div><div class="r"><span style="color:${col}">${corto(p)} ${mio}</span><span>${cap ? corto(cap.paese) + ' ' + loro : 'libero'}</span></div>${piede}`;
+    return;
+  }
+  obi.style.borderColor = '#ff8a3c';
+  const N = D.NAV || {}, dest = N.dest, T = mia && W.lista().find(x => x.id === mia.id);
+  if (dentro && !W.acceso(dentro.id)) { obi.innerHTML = `<div class="t">Questo campo oggi è spento</div><div class="s">Segui a freccia fino a un campo 🔥 acceso</div>${piede}`; return; }
+  if (T) { const d = Math.max(0, Math.hypot(T.x - c.x, T.z - c.z) - T.rad); obi.innerHTML = `<div class="t">➜ Vai a o campo 🔥</div><div class="s">${breve(T.nome)} · ${d < 950 ? Math.round(d / 10) * 10 + ' m' : (d / 1000).toFixed(1).replace('.', ',') + ' km'}</div>${piede}`; return; }
+  obi.innerHTML = `<div class="t">🔥 Tutti i campi accesi so' vostri!</div><div class="s">Difendeli: tornaci a raccoje</div>${piede}`;
+}
+/* ---------- la prima volta: come se conquista un campo, in tre righe ---------- */
+function tutorial(){
+  if (ls.get('tg-tuto-terreni') || !document.body.classList.contains('playing')) return;
+  ls.set('tg-tuto-terreni', '1');
+  const d = document.createElement('div'); d.id = 'tuto';
+  d.innerHTML = `<div class="c"><h2>Come se prende un campo</h2><ol><li><b>➜</b><span>Segui a <b style="font-size:15px;color:#ff8a3c">freccia</b> fino a o campo 🔥 acceso</span></li><li><b>🌰</b><span>Passa sopra e nocchie tra i filari: ogni nocchia è un punto pe' o paese tuo</span></li><li><b>🚩</b><span>Quanno ne hai più de l'altri paesi, o campo è vostro</span></li><li><b>👑</b><span>Domenica vince o paese che tiene più campi</span></li></ol><button type="button">Ho capito, vado!</button></div>`;
+  d.onclick = () => d.remove(); document.body.appendChild(d);
+}
+
 /* ---------- i mezzi se sbloccano prendendo terreni ---------- */
 const SOGLIE = [[2, 'ape', "L'Ape: più veloce e più stabile"], [6, 'trattore', 'O trattore: passa ovunque tra i filari']];
 function sblocca(tot){
@@ -69,7 +115,8 @@ addEventListener('tg-presa', e => { sblocca(e.detail.tot); setTimeout(prossimo, 
 function avvia(){
   if (!TG.Terre || !TG.debug || !TG.debug.car) return setTimeout(avvia, 1000);
   sblocca(+(ls.get('tg-presi') || 0));
-  setInterval(alto, 1500); setInterval(prossimo, 2500); alto();
+  setInterval(alto, 1500); setInterval(prossimo, 2500); setInterval(obiettivo, 500); alto();
+  const tt = () => { if (document.body.classList.contains('playing')) setTimeout(tutorial, 2500); else setTimeout(tt, 1500); }; tt();
   // a battaglia de o giorno: detta una volta, quando se comincia a giocà
   const dici = () => { try { const b = TG.Terre.battaglia(), T = b && TG.Terre.lista().find(x => x.id === b); if (!T || ls.get('tg-battaglia-detta') === oggi() + b) return; if (!document.body.classList.contains('playing')) return setTimeout(dici, 3000); ls.set('tg-battaglia-detta', oggi() + b); setTimeout(() => TG.msg('⚔ Battaglia de oggi', breve(T.nome) + ': ogni nocchia vale doppio', 5), 8000); } catch(e){} };
   setTimeout(dici, 4000);
