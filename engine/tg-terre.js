@@ -199,7 +199,18 @@ function mini(){
     c.beginPath(); c.arc(dx, dz, Math.max(T.rad, 6 / s), 0, Math.PI * 2); c.fillStyle = colore(p); c.globalAlpha = p ? .45 : .2; c.fill(); c.globalAlpha = 1; c.lineWidth = 2 / s; c.strokeStyle = p === paese() ? '#f2c74e' : 'rgba(255,255,255,.7)'; c.stroke(); }
 }
 
-TG.Terre = { colore, padrone, righe, terraIn, aggiorna, pannello, lista: () => TERRE, _dbg: () => ({ classifica, locali, daMandare }) };
+// per la mappa: di chi è il terreno, in una riga
+function descrivi(id){
+  const l = righe(id).filter(r => r.punti > 0), p = paese();
+  if (!l.length) return 'Libero: o primo che ce raccoje se o pija pe\' o paese suo.';
+  const b = (pp, n) => `<b style="color:${colore(pp)}">${corto(pp)}</b> ${n}`;
+  let t = `È de ${b(l[0].paese, l[0].punti)} nocchie`;
+  if (l[1]) t += ` · ${b(l[1].paese, l[1].punti)}`;
+  if (p && l[0].paese !== p) { const mio = punti(id, p); t += `<br>Pe' pijallo a ${corto(p)} ne servono ${l[0].punti - mio + 1}.`; }
+  else if (p && l[0].paese === p) t += '<br>È vostro: tenetelo.';
+  return t;
+}
+TG.Terre = { colore, padrone, righe, terraIn, aggiorna, pannello, descrivi, lista: () => TERRE, _dbg: () => ({ classifica, locali, daMandare }) };
 // per i moduli che usavano le zone (presenza: colore del paese)
 TG.Zone = TG.Zone || { colore, squadra: false };
 function avvia(){
