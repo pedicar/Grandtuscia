@@ -273,7 +273,43 @@ function nascondiVicini(){ let c; try { c = TG.debug.car; } catch(e){ return; } 
   try { for (const o of TG.debug.campi()) { const cp = o.campo, d = Math.hypot(c.x - cp.cx, c.z - cp.cz) - cp.rad, v = d < 650; if (cp.g) cp.g.visible = v; if (o.g) o.g.visible = d < 450; if (o.label) o.label.visible = d < 450; if (cp.patch) for (const h of cp.patch) h.visible = d < 350; } } catch(e){}
 }
 let vCart = -1;
-function aggiornaCartelli(){ if (vCart === versione || !window.THREE) return; vCart = versione; for (const T of TERRE) try { cartello(T); } catch(e){} }
+function aggiornaCartelli(){ if (vCart === versione || !window.THREE) return; vCart = versione; for (const T of TERRE) try { cartello(T); } catch(e){} try { costruisciFari(); } catch(e){} }
+
+
+/* ---------- I CAMPI DA PRENDE SE VEDONO DA LONTANO: sopra ogni campo acceso una colonna de luce (arancione se è libero o de
+   l'altri, co' o colore vostro se è vostro, rossa e più alta pe' a battaglia) e o bordo de o campo acceso che brilla pe' terra. ---------- */
+let fariGrp = null, fariVer = -1; const fari = {};
+function coloreFaro(T){ const p = padrone(T.id), mio = paese(); if (T.id === battaglia) return '#ff3b2f'; if (p && p === mio) return colore(p); return '#ff6a00'; }
+function costruisciFari(){
+  if (!window.THREE) return; let sc, E; try { sc = TG.debug.scene; E = TG.debug.world; } catch(e){ return; } if (!sc || !E) return;
+  if (!fariGrp) { fariGrp = new THREE.Group(); sc.add(fariGrp); }
+  for (const id in fari) if (!accesi.has(id)) { fariGrp.remove(fari[id].g); fari[id].g.traverse(o => { o.geometry && o.geometry.dispose(); o.material && o.material.dispose(); }); delete fari[id]; }
+  for (const T of TERRE) { if (!accesi.has(T.id)) continue; const col = new THREE.Color(coloreFaro(T)), alto = T.id === battaglia ? 220 : 150;
+    let f = fari[T.id];
+    if (!f) { const g = new THREE.Group(), y0 = E.ground(T.x, T.z);
+      const raggio = new THREE.Mesh(new THREE.CylinderGeometry(2.2, 4.5, alto, 10, 1, true), new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: .55, depthWrite: false, side: THREE.DoubleSide, fog: false }));
+      raggio.position.set(T.x, y0 + alto / 2, T.z); g.add(raggio);
+      // il bordo che brilla
+      let bordo = null; const P = T.o && T.o.campo && T.o.campo.P;
+      if (P && P.length > 2) { const pos = []; for (let i = 0; i < P.length; i++) { const a = P[i], b = P[(i + 1) % P.length], dx = b[0] - a[0], dz = b[1] - a[1], L = Math.hypot(dx, dz) || 1, nx = -dz / L * 1.2, nz = dx / L * 1.2, n = Math.max(1, Math.round(L / 8));
+          for (let k = 0; k < n; k++) { const t0 = k / n, t1 = (k + 1) / n, x0 = a[0] + dx * t0, z0 = a[1] + dz * t0, x1 = a[0] + dx * t1, z1 = a[1] + dz * t1, h0 = E.ground(x0, z0) + .35, h1 = E.ground(x1, z1) + .35;
+            pos.push(x0 - nx, h0, z0 - nz, x0 + nx, h0, z0 + nz, x1 + nx, h1, z1 + nz, x0 - nx, h0, z0 - nz, x1 + nx, h1, z1 + nz, x1 - nx, h1, z1 - nz); } }
+        const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+        bordo = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: .85, depthWrite: false, side: THREE.DoubleSide, fog: false })); g.add(bordo); }
+      fariGrp.add(g); f = fari[T.id] = { g, raggio, bordo, T };
+    }
+    f.raggio.material.color.copy(col); if (f.bordo) f.bordo.material.color.copy(col);
+  }
+}
+function pulsaFari(){
+  requestAnimationFrame(pulsaFari); if (!fariGrp) return;
+  const t = performance.now() / 1000; let c; try { c = TG.debug.car; } catch(e){}
+  for (const id in fari) { const f = fari[id], d = c ? Math.hypot(f.T.x - c.x, f.T.z - c.z) : 0;
+    f.raggio.material.opacity = (id === battaglia ? .88 : .78) + Math.sin(t * 2.4 + f.T.x) * .1;
+    f.raggio.visible = d > f.T.rad * .6;   // dentro o campo a colonna nun serve
+    const w = 1 + Math.min(4, d / 400); f.raggio.scale.set(w, 1, w);   // più larga da lontano, così se vede
+    if (f.bordo) { f.bordo.visible = d < 1400; f.bordo.material.opacity = .6 + Math.sin(t * 3) * .25; } }
+}
 
 /* ---------- pannello: tutti i terreni ---------- */
 let pan = null;
@@ -386,7 +422,7 @@ function avvia(){
   apriTutti(); aggancia(); calcolaAccesi(); setInterval(calcolaAccesi, 60000);
   aggiorna().then(controllaPerse).then(premioGioco); setInterval(aggiorna, 60000);
   setInterval(() => { aggiornaBox(); aggiornaCartelli(); nascondiVicini(); bottone(); }, 700);
-  setInterval(invia, 5000); addEventListener('pagehide', invia);
+  setInterval(invia, 5000); addEventListener('pagehide', invia); requestAnimationFrame(pulsaFari);
   requestAnimationFrame(mini);
 }
 if (document.readyState === 'complete') setTimeout(avvia, 1500); else addEventListener('load', () => setTimeout(avvia, 1500));
