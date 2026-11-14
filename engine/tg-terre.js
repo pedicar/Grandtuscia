@@ -164,7 +164,8 @@ async function condividiCard(T, prima, p, tot, nome){
   } catch(e){ if (e && e.name === 'AbortError') return; try { await navigator.clipboard.writeText(testo + ' ' + url); msg('Copiato!', 'Incollalo ne o gruppo de o paese', 2); } catch(x){} }
 }
 function festa(T, prima, p, quanti, sottotitolo){
-  if (!T) return; const col = colore(p), nome = quanti > 1 ? `${breve(T.nome)} e altri ${quanti - 1}` : breve(T.nome);
+  if (!T) return; try { const tot0 = +(ls.get('tg-presi') || 0) + (quanti || 1); ls.set('tg-presi', String(tot0)); dispatchEvent(new CustomEvent('tg-presa', { detail: { quanti: quanti || 1, tot: tot0 } })); } catch(e){}
+  const col = colore(p), nome = quanti > 1 ? `${breve(T.nome)} e altri ${quanti - 1}` : breve(T.nome);
   versione++; try { aggiornaCartelli(); } catch(e){}
   try { navigator.vibrate && navigator.vibrate([70, 50, 70, 50, 180]); } catch(e){}
   fanfara(); fuochi(T, col);
