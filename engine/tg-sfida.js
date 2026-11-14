@@ -1,9 +1,8 @@
-/* A SFIDA DE A SETTIMANA — due paesi, una zona, una settimana.
+/* O DERBY DE A SETTIMANA — ognuno gioca pe' o paese suo; in più, ogni settimana, due paesi se sfidano su 12 campi de confine.
    - Ogni settimana (lunedì → domenica, ora de Roma) se sfidano DUE paesi: PROGRAMMA dice chi, sennò gira ROTA.
-   - Chi entra sceglie pe' chi gioca (due bottoni). Se o paese suo è uno de i due, entra da solo ne a squadra sua.
-     A scelta vale tutta a settimana; lunedì se riparte.
-   - Contano solo i 12 campi de a sfida (6 pe' paese, quelli più vicini a o confine): tg-terre.js li accende e filtra i punteggi.
-   - In alto: «⚔ Fabrica 6 – 4 Carbognano». Domenica sera vince chi tiene più campi.
+   - I 12 campi de o derby (6 pe' paese, i più vicini a o confine) so' sempre accesi, co' a colonna più alta; lì conteno solo i due paesi.
+   - Tutti l'altri giocano a guerra de sempre (campi accesi ogni giorno in ogni zona) pe' o paese loro.
+   - Una schermata a settimana spiega o derby (dopo che o paese è scelto). In alto o punteggio de o derby (tg-semplice.js).
    - ?sfida=0 spegne tutto e torna a a guerra de tutti i paesi.
    Esterno: TG.PrimoMinuto (paese), TG.Stats, TG.Terre (dopo). Va caricato PRIMA de tg-terre.js. */
 (function(){
@@ -33,16 +32,12 @@ const mioPaese = () => { const p = (TG.PrimoMinuto && TG.PrimoMinuto.paese) || l
 
 const S = TG.Sfida = {
   attiva: !spenta, id: lun, p: P, fine: dom, nome: q => NOMI[q] || q, colore: q => COLORI[q] || '#ff8a3c', fineTesto, fineCorto,
-  squadra(){ const s = ls.get(K); if (s && P.includes(s)) return s; const m = mioPaese(); if (m && P.includes(m)) { ls.set(K, m); return m; } return null; },
-  scegli(q){
-    if (!P.includes(q)) return; ls.set(K, q); ev('sfida_squadra', q, null, { sfida: lun, paese: mioPaese() });
-    if (!mioPaese()) { ls.set('tg-paese-dev', q); try { if (TG.PrimoMinuto) TG.PrimoMinuto.paese = q; } catch(e){} }
-  }
+  mio: () => P.includes(mioPaese()), paese: mioPaese
 };
 if (!S.attiva) return;
-ls.set('tg-tuto-terreni', '1');   // o tutorial vecchio lo sostituisce a schermata de a sfida
+ls.set('tg-tuto-terreni', '1');   // a schermata de o derby fa anche da tutorial
 
-/* ---------- a schermata d'ingresso: scegli a squadra (o te dice qual è) + 4 righe de regole ---------- */
+/* ---------- a schermata de o derby: una volta a settimana, dopo o paese ---------- */
 const st = document.createElement('style'); st.textContent = `
 #sfOv{position:fixed;inset:0;z-index:98;display:flex;align-items:center;justify-content:center;background:rgba(8,12,10,.78);padding:16px;font-family:Figtree,"Segoe UI",system-ui,sans-serif}
 #sfOv .c{width:min(370px,100%);background:#17201f;border:2px solid #ff8a3c;border-radius:22px;padding:18px 18px 16px;color:#f3e7cb;text-align:center}
@@ -56,21 +51,19 @@ const st = document.createElement('style'); st.textContent = `
 #sfOv ol{margin:12px 0 0;padding:0;list-style:none;display:grid;gap:8px;text-align:left}#sfOv li{display:grid;grid-template-columns:30px 1fr;gap:6px;align-items:center;font:700 14px/1.3 Figtree,sans-serif}#sfOv li b{font-size:21px;text-align:center}
 #sfOv .go{margin-top:14px;background:#ff8a3c}`;
 document.head.appendChild(st);
-const REGOLE = `<ol><li><b>➜</b><span>Segui a <b style="color:#ff8a3c">colonna de luce</b> fino a un campo de a sfida</span></li><li><b>🌰</b><span>Raccoji e nocchie tra i filari: ogni nocchia è un punto pe' a squadra tua</span></li><li><b>🚩</b><span>Chi ne raccoje de più se prende o campo</span></li><li><b>🏆</b><span>Domenica sera vince chi tiene più campi</span></li></ol>`;
+const REGOLE = `<ol><li><b>🌰</b><span>Raccoji e nocchie ne i campi <b style="color:#ff8a3c">accesi</b> (colonna de luce): ogni nocchia è un punto pe' o paese tuo</span></li><li><b>🚩</b><span>Chi ne raccoje de più se prende o campo</span></li><li><b>🏆</b><span>Domenica vince o derby chi tiene più campi suoi, e o Trono va a o paese che tiene più terreni in tutta a Tuscia</span></li></ol>`;
 function schermata(){
-  if (document.getElementById('sfOv')) return;
-  const sq = S.squadra(), visto = ls.get(K + '-visto');
-  if (sq && visto) return;
+  if (document.getElementById('sfOv') || ls.get(K + '-derby')) return;
+  const mio = mioPaese(); if (!mio) return setTimeout(schermata, 2500);   // prima o paese (o chiede o primo minuto)
   const d = document.createElement('div'); d.id = 'sfOv';
-  const testa = `<div class="k">⚔ A sfida de a settimana</div><h2>${S.nome(P[0])}<small>contro</small>${S.nome(P[1])}</h2><div class="f">${fineTesto()}</div>`;
-  if (!sq) {
-    d.innerHTML = `<div class="c">${testa}<div class="q">Pe' chi giochi?</div><div class="bb">${P.map(q => `<button type="button" data-q="${q}" style="background:${S.colore(q)}">Gioco pe' ${S.nome(q)}</button>`).join('')}</div>${REGOLE}</div>`;
-    d.querySelectorAll('[data-q]').forEach(b => b.onclick = () => { S.scegli(b.dataset.q); ls.set(K + '-visto', '1'); d.remove(); dopo(); });
-  } else {
-    d.innerHTML = `<div class="c">${testa}<div class="q">Tu giochi pe' <b style="color:${S.colore(sq)}">${S.nome(sq)}</b></div>${REGOLE}<button type="button" class="go">Vado!</button></div>`;
-    d.querySelector('.go').onclick = () => { ls.set(K + '-visto', '1'); d.remove(); dopo(); };
-  }
-  document.body.appendChild(d); ev('sfida_vista', sq || '-', null, { sfida: lun });
+  const dentro = P.includes(mio), nm = q => `<b style="color:${S.colore(q)}">${S.nome(q)}</b>`;
+  const corto = q => { try { return ((TG.PrimoMinuto && TG.PrimoMinuto.nomeComune(q)) || q).replace(/ (di|in|sul|al|nel) .*$/i, ''); } catch(e){ return q; } };
+  const testa = `<div class="k">⚔ O derby de a settimana</div><h2>${S.nome(P[0])}<small>contro</small>${S.nome(P[1])}</h2><div class="f">${fineTesto()}</div>`;
+  const tu = dentro ? `<div class="q">Tu giochi pe' ${nm(mio)}: e colonne de luce più alte so' i 12 campi de o derby. Prendeli prima de ${S.nome(P.find(q => q !== mio))}!</div>`
+    : `<div class="q">Tu giochi pe' <b>${corto(mio)}</b>: prendi i campi accesi vicino a casa. O derby lo guardi da a tribuna (e a settimana prossima pò toccà a te).</div>`;
+  d.innerHTML = `<div class="c">${testa}${tu}${REGOLE}<button type="button" class="go">Vado!</button></div>`;
+  d.querySelector('.go').onclick = () => { ls.set(K + '-derby', '1'); d.remove(); dopo(); };
+  document.body.appendChild(d); ev('derby_visto', mio, null, { derby: lun, dentro });
 }
 function dopo(){ try { TG.Terre && TG.Terre.aggiorna && TG.Terre.aggiorna(); } catch(e){} try { TG.Semplice && TG.Semplice.prossimo && setTimeout(TG.Semplice.prossimo, 300); } catch(e){} }
 function avvia(){
