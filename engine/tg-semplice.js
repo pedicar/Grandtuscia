@@ -58,7 +58,7 @@ function alto(){
 /* ---------- 2.0: O TERRENO SCELTO e a freccia ----------
    - Scegli tu dalla mappa (TG.Semplice.scelto, chiamato da app.js) → freccia e colonna arancione fin là.
    - Se nun hai scelto: cassone pieno → freccia a o terreno più vicino da prende; sennò nessuna freccia (raccoji dove te pare). */
-let mia = null, scelta = null, sceltaT = 0;
+let mia = null, scelta = null, sceltaT = 0, guidato = false;
 function scelto(id){ scelta = id; sceltaT = Date.now(); const T = TG.Terre.lista().find(x => x.id === id); mia = T ? { id, x: T.x, z: T.z } : null; try { TG.Stats && TG.Stats.ev('mappa_terreno', id, null, { stato: TG.Terre.stato(id) }); } catch(e){} }
 const bersaglio = () => (mia && mia.id) || null;
 function libera(){ scelta = null; mia = null; }
@@ -72,12 +72,16 @@ function prossimo(){
   if (mia && dentro && dentro.id === mia.id) { try { if (D.NAV && D.NAV.dest) D.setDest(null); } catch(e){} return; }
   if (scelta) return;   // meta scelta da te: nun se tocca
   const N = D.NAV || {};
-  if (N.dest && (!mia || Math.hypot(N.dest.x - mia.x, N.dest.z - mia.z) > 30)) return;   // un'altra meta (un gioco, un luogo): rispettata
-  if (!(C && C.pieno()) || dentro) { if (mia && !scelta) { mia = null; try { D.setDest(null); } catch(e){} } return; }
+  const pieno = C && C.pieno(); if (!pieno) guidato = false;
+  // cassone pieno: a prima volta pe' ogni pieno a freccia va a o terreno da comprà più vicino, anche se c'era un'altra meta (missione automatica)
+  if (N.dest && (!mia || Math.hypot(N.dest.x - mia.x, N.dest.z - mia.z) > 30) && (guidato || !pieno)) return;
+  const quiCompro = dentro && W.stato(dentro.id) !== 'nostro' && W.costo(dentro.id) <= C.n;
+  if (!pieno || quiCompro) { if (mia && !scelta && !pieno) { mia = null; try { D.setDest(null); } catch(e){} } return; }
   let best = null, bd = 1e9;
   for (const T of W.lista()) { if (W.stato(T.id) === 'nostro' || W.costo(T.id) > C.n) continue; const d = Math.hypot(T.x - c.x, T.z - c.z) - T.rad; if (d < bd) { bd = d; best = T; } }
   if (!best || (mia && mia.id === best.id)) return;
-  mia = { id: best.id, x: best.x, z: best.z };
+  mia = { id: best.id, x: best.x, z: best.z }; guidato = true;
+  try { TG.Stats && TG.Stats.ev('guida_compra', best.id, W.costo(best.id)); } catch(e){}
   try { D.setDest({ x: best.x, z: best.z, name: breve(best.nome) }); } catch(e){}
 }
 addEventListener('tg-presa', () => { scelta = null; });
@@ -105,7 +109,7 @@ function obiettivo(){
   }
   obi.style.borderColor = n >= cap ? '#ff8a3c' : col;
   const T = mia && W.lista().find(x => x.id === mia.id);
-  if (T) { const d = Math.max(0, Math.hypot(T.x - c.x, T.z - c.z) - T.rad), az = (W.azione(T.id) || '').replace('Vai a ', '').replace(/^(\S+) /, '$1 Vai a '); obi.innerHTML = `<div class="t">${az}</div><div class="s">${breve(T.nome)} · ${d < 950 ? Math.round(d / 10) * 10 + ' m' : (d / 1000).toFixed(1).replace('.', ',') + ' km'}</div>${barra}${piede}`; return; }
+  if (T) { const d = Math.max(0, Math.hypot(T.x - c.x, T.z - c.z) - T.rad), st = W.stato(T.id), cs = W.costo(T.id), dist = d < 950 ? Math.round(d / 10) * 10 + ' m' : (d / 1000).toFixed(1).replace('.', ',') + ' km'; obi.style.borderColor = '#ff8a3c'; obi.innerHTML = st === 'nostro' ? `<div class="t">🛡 Vai a rinforzà</div><div class="s">${breve(T.nome)} · ${dist}</div>${barra}${piede}` : `<div class="t">💰 ➜ ${breve(T.nome)}</div><div class="s">costa ${cs} 🌰${n >= cs ? ' · ce l\'hai' : ''} · ${dist}</div>${barra}${piede}`; return; }
   if (n >= cap) { obi.innerHTML = `<div class="t">Cassone pieno: vai a comprà!</div><div class="s">Tocca qui e scegli o terreno (o un mezzo novo)</div>${barra}${piede}`; return; }
   obi.innerHTML = `<div class="t">🌰 Raccoji e nocchie!</div>${barra}${piede}`;
 }
