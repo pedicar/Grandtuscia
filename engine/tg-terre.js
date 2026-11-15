@@ -85,8 +85,10 @@ const padrone = id => { const l = righe(id), r = l[0]; if (!r || r.punti <= 0) r
 // 2.1: i terreni se comprano: prezzo = quanto l'ha pagato chi o tiene; pe' prendelo ce vò prezzo + 10
 const prezzo = id => { const l = classifica[id]; return l && l[0] ? l[0].punti : 0; };
 const costo = id => padrone(id) ? prezzo(id) + 10 : 10;
+// TERRENI DE CASA: ogni paese parte padrone de i terreni suoi (prezzo 10) finché nun li compra quarcun altro
+const casa = id => { const l = classifica[id]; return !!(l && l[0] && l[0].casa); };
 function stato(id){ const l = righe(id).filter(r => r.punti > 0), p = paese(), pd = padrone(id); if (!l.length) return 'libero'; if (!pd) return 'conteso'; return pd === p ? 'nostro' : 'loro'; }
-async function aggiorna(){ try { const n = await rpc('tg_terre_padroni'); if (n && typeof n === 'object') { classifica = n; locali = {}; versione++; } } catch(e){} caricato = true; }
+async function aggiorna(){ try { let n; try { n = await rpc('tg_terre_mappa'); } catch(e){ n = await rpc('tg_terre_padroni'); } if (n && typeof n === 'object') { classifica = n; locali = {}; versione++; } } catch(e){} caricato = true; }
 async function invia(){
   const p = paese(), d = dev(); if (!p || !d) return;
   for (const id of Object.keys(daMandare)) {
@@ -104,15 +106,46 @@ async function invia(){
 // 2.0: ogni nocchia raccolta (ovunque) va ne o cassone; i punti arrivano solo scaricando su un terreno (deposita)
 function contaGuerra(t, a){
   if (!((t === 'n' || t === 'c') && a > 0)) return;
-  try { const m = (TG.debug.VEH.cur || {}).id; TG.Cassone && TG.Cassone.aggiungi(a * (m === 'semovente' ? 3 : 2)); } catch(e){}   // ogni nocchia vale 2 ne o cassone: o primo attacco in 2-3 minuti
+  try {
+    const m = (TG.debug.VEH.cur || {}).id, C = TG.Cassone; if (!C) return; let u = a * (m === 'semovente' ? 3 : 2);   // ogni nocchia vale 2 ne o cassone: o primo attacco in 2-3 minuti
+    // AFFITTO: se raccoji in un terreno de un altro paese, 1 su 5 va a o padrone
+    const car = TG.debug.car, T = car && terraIn(car.x, car.z), k = T && !C.pieno() ? affitto(T, u) : 0;
+    C.aggiungi(u - k);
+  } catch(e){}
+}
+const affAcc = {}, affDa = {}; let affVisto = null;
+function affitto(T, u){
+  const p = paese(); if (!p || stato(T.id) !== 'loro') return 0;
+  affAcc[T.id] = (affAcc[T.id] || 0) + u / 5; const k = Math.floor(affAcc[T.id]); affAcc[T.id] -= k;
+  if (k > 0) affDa[T.id] = (affDa[T.id] || 0) + k;
+  if (affVisto !== T.id) { affVisto = T.id; const pd = padrone(T.id); msg(`🏠 Terreno de ${corto(pd)}`, `Qui 1 nocchia su 5 va a loro de affitto. Compràtelo e l'affitto lo pij tu!`, 3.5); }
+  return k;
+}
+async function pagaAffitti(){
+  const p = paese(), d = dev(); if (!p || !d) return;
+  for (const id of Object.keys(affDa)) {
+    const n = Math.min(affDa[id], 60); if (!n) continue; affDa[id] -= n;
+    try { const r = await rpc('tg_terra_affitto', { p_dev: d, p_terra: id, p_paese: p, p_nocchie: n }); if (r && r.ok) ev('affitto_pagato', id, r.nocchie, { a: r.a }); } catch(e){ affDa[id] += n; }
+  }
+}
+let ritiroPrimo = true;
+async function ritiraAffitti(){
+  const p = paese(), d = dev(); if (!p || !d || !TG.Cassone) return;
+  let r = null; try { r = await rpc('tg_affitto_ritira', { p_dev: d, p_paese: p }); } catch(e){ return; }
+  const primo = ritiroPrimo; ritiroPrimo = false;
+  if (!r || !r.ok || !(r.tot > 0)) return;
+  TG.Cassone.aggiungi(r.tot, true); ev('affitto_ritirato', p, r.tot, { da: r.da });
+  const chi = (r.da || []).slice(0, 2).map(x => corto(x.paese)).join(' e ');
+  const dire = () => msg(`🏠 Affitto: +${r.tot} 🌰`, primo ? `I terreni vostri hanno fruttato mentre stavi via${chi ? ' (pagato da ' + chi + ')' : ''}` : `${chi || 'Quarcuno'} ha raccolto ne i terreni vostri`, primo ? 6 : 3.5);
+  if (document.body.classList.contains('playing')) dire(); else new MutationObserver((x, o) => { if (document.body.classList.contains('playing')) { o.disconnect(); setTimeout(dire, 1500); } }).observe(document.body, { attributes: true, attributeFilter: ['class'] });
 }
 /* ---------- A COMPRA: co' e nocchie de o cassone se compra o terreno (o se rinforza o vostro) ---------- */
 async function deposita(T, k){
   const p = paese(), d = dev(); if (!T || !p || !d || !(k > 0)) return null;
   const prima = padrone(T.id);
-  const r = await rpc('tg_terra_compra', { p_dev: d, p_terra: T.id, p_paese: p, p_nocchie: Math.round(k) });
+  const r = await rpc('tg_terra_compra2', { p_dev: d, p_terra: T.id, p_paese: p, p_nocchie: Math.round(k) });
   if (!r) return r;
-  if (!r.ok) { if (r.manca) { if (r.paese) classifica[T.id] = [{ paese: r.paese, punti: r.prezzo }]; else delete classifica[T.id]; versione++; msg(`Costa ${r.costo}: te ne mancano ${r.manca}`, "Qualcuno l'ha pagato de più: raccoji ancora e torna", 4); } return r; }
+  if (!r.ok) { if (r.manca) { if (r.paese) classifica[T.id] = [{ paese: r.paese, punti: r.prezzo, casa: !!r.casa }]; else delete classifica[T.id]; versione++; msg(`Costa ${r.costo}: te ne mancano ${r.manca}`, "Qualcuno l'ha pagato de più: raccoji ancora e torna", 4); } return r; }
   classifica[T.id] = [{ paese: r.paese, punti: r.prezzo }]; versione++;
   r.aggiunti = r.spesa;
   ev('deposito', T.id, r.spesa, { azione: r.azione, da: r.da || null, prezzo: r.prezzo });
@@ -123,7 +156,7 @@ async function deposita(T, k){
 // come sta o paese tuo (pe' a mappa)
 function situazione(){
   const p = paese(); if (!p) return null; const tot = {}; let contesi = 0;
-  for (const T of TERRE) { const pd = padrone(T.id); if (pd) tot[pd] = (tot[pd] || 0) + 1; else if (righe(T.id).some(r => r.paese === p && r.punti > 0)) contesi++; }
+  for (const T of TERRE) { const pd = padrone(T.id); if (pd && !casa(T.id)) tot[pd] = (tot[pd] || 0) + 1; else if (pd) {} else if (righe(T.id).some(r => r.paese === p && r.punti > 0)) contesi++; }
   for (const T of TERRE) { const pd = padrone(T.id); if (pd && pd !== p && punti(T.id, p) > 0) contesi++; }
   const cl = Object.entries(tot).sort((a, b) => b[1] - a[1]), pos = cl.findIndex(r => r[0] === p) + 1;
   return { paese: p, nome: nomeP(p), colore: colore(p), terreni: tot[p] || 0, contesi, pos };
@@ -388,7 +421,7 @@ function controllaPerse(){
   const p = paese(); if (!p || !caricato) return;
   let prima = {}; try { prima = JSON.parse(ls.get('tg-terre-mie') || '{}'); } catch(e){}
   const ora = {}; for (const T of TERRE) if (padrone(T.id) === p) ora[T.id] = 1;
-  const perse = Object.keys(prima).filter(id => !ora[id] && padrone(id));
+  const perse = Object.keys(prima).filter(id => !ora[id] && padrone(id) && !casa(id));   // o lunedì i terreni tornano a casa: quello nun è «fregato»
   ls.set('tg-terre-mie', JSON.stringify(ora));
   if (!perse.length) return;
   const T = TERRE.find(x => x.id === perse[0]); if (!T) return;
@@ -420,11 +453,12 @@ function descrivi(id){
   const b = pp => `<b style="color:${colore(pp)}">${corto(pp)}</b>`;
   const tu = cass >= c ? `Ce l'hai: o cassone ne tiene ${cass}.` : `Te ne mancano ${c - cass} (ne hai ${cass}).`;
   if (!pd) return `Terreno libero! Costa ${c} nocchie. ${tu}`;
+  if (casa(id)) return pd === p ? `🏠 Terreno de casa vostra. Rinforzalo pe' fallo costà de più (e conta pe' o Trono).` : `🏠 Terreno de casa de ${b(pd)}. Pe' compràllo ne servono ${c}. ${tu}`;
   if (pd === p) return `Sto terreno è nostro: l'avemo pagato ${prezzo(id)}. Rinforzalo: più ce metti, più costa a l'altri.`;
   return `Sto terreno è de ${b(pd)}: l'ha pagato ${prezzo(id)}. Pe' compràllo ne servono ${c}. ${tu}`;
 }
 const azione = id => ({ nostro: '🛡 Vai a rinforzà', libero: '💰 Vai a compràllo', conteso: '💰 Vai a compràllo', loro: '💰 Vai a compràllo' })[stato(id)];
-const etichetta = id => { const st = stato(id), pd = padrone(id); return (st === 'nostro' ? 'Nostro' : st === 'libero' ? 'Libero' : 'De ' + corto(pd)) + ' · costa ' + costo(id); };
+const etichetta = id => { const st = stato(id), pd = padrone(id); return (casa(id) ? '🏠 ' : '') + (st === 'nostro' ? (casa(id) ? 'Casa nostra' : 'Nostro') : st === 'libero' ? 'Libero' : 'De ' + corto(pd)) + ' · costa ' + costo(id); };
 
 /* ---------- IL PREMIO DE I GIOCHI: ogni partita a un gioco vicino ai terreni vince o terreno più vicino pe' o paese tuo,
    co' l'oro ne vince 5. Si legge dal ritorno ne o mondo (?da=<gioco>&esito=…&med=…); una volta sola pe' partita. ---------- */
@@ -444,7 +478,7 @@ async function premioGioco(){
   if (document.body.classList.contains('playing')) via(); else new MutationObserver((x, o) => { if (document.body.classList.contains('playing')) { o.disconnect(); via(); } }).observe(document.body, { attributes: true, attributeFilter: ['class'] });
   ev('terre_premio', da, bonus, { med: q.get('med') || null, preso });
 }
-TG.Terre = { colore, padrone, righe, terraIn, aggiorna, pannello, descrivi, puntoGuerra, mio: id => punti(id, paese()) + (daMandare[id] || 0), acceso, accesi: () => accesi, battaglia: () => battaglia, _card: cardImmagine, lista: () => TERRE, sfida: SF, derby: inDerby, stato, deposita, compra: deposita, costo, prezzo, situazione, azione, etichetta, paeseMio: paese, SOGLIA, _dbg: () => ({ classifica, locali, daMandare }) };
+TG.Terre = { colore, padrone, righe, terraIn, aggiorna, pannello, descrivi, puntoGuerra, mio: id => punti(id, paese()) + (daMandare[id] || 0), acceso, accesi: () => accesi, battaglia: () => battaglia, _card: cardImmagine, lista: () => TERRE, sfida: SF, derby: inDerby, stato, deposita, compra: deposita, costo, prezzo, casa, ritiraAffitti, situazione, azione, etichetta, paeseMio: paese, SOGLIA, _dbg: () => ({ classifica, locali, daMandare }) };
 // per i moduli che usavano le zone (presenza: colore del paese)
 TG.Zone = TG.Zone || { colore, squadra: false };
 function avvia(){
@@ -453,7 +487,7 @@ function avvia(){
   apriTutti(); aggancia(); calcolaAccesi(); setInterval(calcolaAccesi, 60000);
   aggiorna().then(controllaPerse).then(premioGioco); setInterval(aggiorna, 60000);
   setInterval(() => { aggiornaBox(); aggiornaCartelli(); nascondiVicini(); bottone(); }, 700);
-  setInterval(invia, 5000); addEventListener('pagehide', invia); requestAnimationFrame(pulsaFari);
+  setInterval(invia, 5000); setInterval(pagaAffitti, 8000); addEventListener('pagehide', pagaAffitti); setTimeout(ritiraAffitti, 4000); setInterval(ritiraAffitti, 60000); addEventListener('pagehide', invia); requestAnimationFrame(pulsaFari);
   requestAnimationFrame(mini);
 }
 if (document.readyState === 'complete') setTimeout(avvia, 1500); else addEventListener('load', () => setTimeout(avvia, 1500));

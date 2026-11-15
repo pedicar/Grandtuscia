@@ -42,7 +42,7 @@ const corto = p => { let n = p; try { n = (TG.PrimoMinuto && TG.PrimoMinuto.nome
 const breve = n => (n || '').replace(/^(Il|I|La|Le|Lo) /, '');
 
 /* ---------- in alto: quanti terreni tiene o paese tuo ---------- */
-function conta(){ const W = TG.Terre, t = {}; if (!W) return t; for (const T of W.lista()) { const p = W.padrone(T.id); if (p) t[p] = (t[p] || 0) + 1; } return t; }
+function conta(){ const W = TG.Terre, t = {}; if (!W) return t; for (const T of W.lista()) { const p = W.padrone(T.id); if (p && !(W.casa && W.casa(T.id))) t[p] = (t[p] || 0) + 1; } return t; }   /* conta solo i terreni comprati (come o Trono), no quelli de casa */
 function alto(){
   const sc = document.getElementById('score'); if (!sc || !TG.Terre) return;
   let el = document.getElementById('trTop'); if (!el) { el = document.createElement('div'); el.id = 'trTop'; sc.appendChild(el); }

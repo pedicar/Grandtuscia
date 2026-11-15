@@ -160,7 +160,7 @@ function classificaMini(){
   }
   box.style.setProperty('--clW', Math.max(108, Math.round(mini.getBoundingClientRect().width)) + 'px');
   const T = TG.Terre, tot = {};
-  for (const t of T.lista()) { const pd = T.padrone(t.id); if (pd) tot[pd] = (tot[pd] || 0) + 1; }
+  for (const t of T.lista()) { const pd = T.padrone(t.id); if (pd && !(T.casa && T.casa(t.id))) tot[pd] = (tot[pd] || 0) + 1; }
   const cl = Object.entries(tot).sort((a, b) => b[1] - a[1]); if (!cl.length) { box.style.display = 'none'; return; }
   box.style.display = '';
   const mio = T.paeseMio && T.paeseMio(), nome = q => { let n = q; try { n = (TG.PrimoMinuto && TG.PrimoMinuto.nomeComune(q)) || q; } catch(e){} return String(n).replace(/ (di|in|sul|al|nel) .*$/i, ''); };
