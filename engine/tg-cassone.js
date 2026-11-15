@@ -30,6 +30,8 @@ const C = TG.Cassone = {
     return k;
   },
   togli(a){ n = Math.max(0, n - a); salva(); },
+  // viaggio veloce verso i terreni (da a mappa) pe' chi c'ha o trattore o a semovente
+  veloce(){ try { const m = TG.Contadino.stato(TG.Profile.data).mezzi || {}; return !!(m.trattore || m.semovente); } catch(e){ return false; } },
   avvisa(){ if (Date.now() - avvisoPieno < 25000) return; avvisoPieno = Date.now(); msg('Cassone pieno', 'Vai a scaricà su un terreno: apri a mappa e scegli', 3.5); }
 };
 
@@ -104,7 +106,7 @@ function mappa(){
 const MEZZI = [
   { id: 'vespa', nome: 'Vespa', ico: '🛵', prezzo: 0, cosa: 'Veloce e agile' },
   { id: 'ape', nome: 'Ape', ico: '🛺', prezzo: 80, cosa: 'Cassone vero' },
-  { id: 'trattore', nome: 'Trattore', ico: '🚜', prezzo: 140, cosa: 'Passa ovunque tra i filari' },
+  { id: 'trattore', nome: 'Trattore', ico: '🚜', prezzo: 140, cosa: 'Passa ovunque e da a mappa vai subito ai terreni' },
   { id: 'semovente', nome: 'Semovente', ico: '🌾', prezzo: 240, cosa: 'Raccoje 3 pe\' nocchia, spazzola larga, veloce' }
 ];
 const stCont = () => { try { return TG.Contadino.stato(TG.Profile.data); } catch(e){ return null; } };

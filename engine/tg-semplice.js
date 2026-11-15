@@ -24,8 +24,8 @@ html.tg-campo #prompt{display:none!important}
 #mission .tg-label{font-size:0!important}#mission .tg-label::after{content:"🔥 Terreno acceso";font-size:11px}
 #mChange{display:none!important}
 #trBox{display:none!important}
-#obi{position:fixed;z-index:31;left:calc(10px + env(safe-area-inset-left,0px));top:var(--obiTop,112px);width:min(250px,60vw);padding:8px 11px 9px;border-radius:14px;background:rgba(16,22,21,.86);border:2px solid #ff8a3c;color:#f3e7cb;font:700 13px/1.3 Figtree,"Segoe UI",system-ui,sans-serif;box-shadow:0 6px 18px rgba(0,0,0,.3);pointer-events:auto;cursor:pointer}
-#obi .t{font:900 15px/1.2 Figtree,sans-serif;color:#fff}
+#obi{position:fixed;z-index:31;left:calc(10px + env(safe-area-inset-left,0px));top:var(--obiTop,112px);width:min(200px,46vw);padding:7px 10px 8px;border-radius:13px;background:rgba(16,22,21,.86);border:2px solid #ff8a3c;color:#f3e7cb;font:700 12px/1.25 Figtree,"Segoe UI",system-ui,sans-serif;box-shadow:0 6px 18px rgba(0,0,0,.3);pointer-events:auto;cursor:pointer}   /* stretto: o centro de lo schermo (a strada davanti) resta libero */
+#obi .t{font:900 14px/1.2 Figtree,sans-serif;color:#fff}
 #obi .s{margin-top:2px;color:#d9cfb6;font-weight:700}
 #obi .b{position:relative;height:9px;border-radius:5px;background:rgba(255,255,255,.15);margin-top:6px;overflow:hidden}#obi .b i{position:absolute;left:0;top:0;bottom:0;border-radius:5px;transition:width .3s}
 #obi .r{display:flex;justify-content:space-between;margin-top:3px;font-size:12px;color:#c9bfa8}
@@ -94,7 +94,7 @@ function obiettivo(){
   const p = paese(), c = D.car, dentro = W.terraIn(c.x, c.z), n = C.n, cap = C.cap(), pct = Math.min(100, n / cap * 100);
   if (!p) { obi.innerHTML = `<div class="t">Scegli o paese tuo</div>`; return; }
   const col = W.colore(p), barra = `<div class="b"><i style="width:${Math.max(3, pct)}%;background:${n >= cap ? '#ff8a3c' : col}"></i></div>`;
-  const piede = `<div class="r"><span>🌰 Cassone <b style="color:#fff">${n}/${cap}</b></span><span>🗺 tocca pe' a mappa</span></div>`;
+  const piede = `<div class="r"><span>🌰 <b style="color:#fff">${n}/${cap}</b></span><span>🗺 mappa</span></div>`;
   if (dentro) {
     const st = W.stato(dentro.id), pd = W.padrone(dentro.id), c = W.costo(dentro.id);
     obi.style.borderColor = pd ? W.colore(pd) : '#ff8a3c';
@@ -107,7 +107,7 @@ function obiettivo(){
   const T = mia && W.lista().find(x => x.id === mia.id);
   if (T) { const d = Math.max(0, Math.hypot(T.x - c.x, T.z - c.z) - T.rad), az = (W.azione(T.id) || '').replace('Vai a ', '').replace(/^(\S+) /, '$1 Vai a '); obi.innerHTML = `<div class="t">${az}</div><div class="s">${breve(T.nome)} · ${d < 950 ? Math.round(d / 10) * 10 + ' m' : (d / 1000).toFixed(1).replace('.', ',') + ' km'}</div>${barra}${piede}`; return; }
   if (n >= cap) { obi.innerHTML = `<div class="t">Cassone pieno: vai a comprà!</div><div class="s">Tocca qui e scegli o terreno (o un mezzo novo)</div>${barra}${piede}`; return; }
-  obi.innerHTML = `<div class="t">🌰 Raccoji e nocchie!</div><div class="s">Passace sopra ne i campi: co' e nocchie compri terreni e mezzi</div>${barra}${piede}`;
+  obi.innerHTML = `<div class="t">🌰 Raccoji e nocchie!</div>${barra}${piede}`;
 }
 /* ---------- la prima volta: come se conquista un campo, in tre righe ---------- */
 function tutorial(){
