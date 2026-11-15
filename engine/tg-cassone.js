@@ -16,7 +16,7 @@ const CAPIENZA = { piedi: 60, vespa: 100, ape: 150, trattore: 250, semovente: 40
 const MINIMO = 10;
 let n = Math.max(0, +(ls.get('tg-cassone') || 0) || 0), avvisoPieno = 0, prima10 = !ls.get('tg-cassone-10');
 const mezzo = () => { try { return TG.debug.VEH.cur.id; } catch(e){ return 'vespa'; } };
-const cap = () => CAPIENZA[mezzo()] || 100;
+const cap = () => Math.round((CAPIENZA[mezzo()] || 100) * (TG.Coop && TG.Coop.mio() >= 1 ? 1.1 : 1));   // cooperativa liv 1: cassone +10%
 const salva = () => ls.set('tg-cassone', String(n));
 const C = TG.Cassone = {
   get n(){ return n; }, cap, MINIMO,
@@ -109,19 +109,20 @@ const MEZZI = [
   { id: 'trattore', nome: 'Trattore', ico: '🚜', prezzo: 140, cosa: 'Passa ovunque e da a mappa vai subito ai terreni' },
   { id: 'semovente', nome: 'Semovente', ico: '🌾', prezzo: 240, cosa: 'Raccoje 3 pe\' nocchia, spazzola larga, veloce' }
 ];
+const prezzoM = m => Math.round(m.prezzo * (TG.Coop && TG.Coop.mio() >= 4 ? .8 : 1));   // cooperativa liv 4: mezzi −20%
 const stCont = () => { try { return TG.Contadino.stato(TG.Profile.data); } catch(e){ return null; } };
 function bottega(){
   const L = $('vehList'), st = stCont(); if (!L || !st) return; st.mezzi = st.mezzi || {};
   const cur = mezzo();
   L.innerHTML = `<p class="prog" style="margin:0 0 6px">🌰 Ne o cassone: <b style="color:#f2c74e">${n}</b> nocchie · co' e nocchie compri mezzi e terreni</p>` + MEZZI.map(m => {
     const ce = m.prezzo === 0 || st.mezzi[m.id], usa = cur === m.id;
-    const bt = usa ? '<span style="color:#8cbf52;font-weight:800">In uso</span>' : ce ? `<button class="tg-btn" data-usa="${m.id}">Usa</button>` : n >= m.prezzo ? `<button class="tg-btn" data-compra="${m.id}">Compra · ${m.prezzo} 🌰</button>` : `<span style="color:#9aa39c;font-weight:700">${m.prezzo} 🌰 · te ne mancano ${m.prezzo - n}</span>`;
+    const bt = usa ? '<span style="color:#8cbf52;font-weight:800">In uso</span>' : ce ? `<button class="tg-btn" data-usa="${m.id}">Usa</button>` : n >= prezzoM(m) ? `<button class="tg-btn" data-compra="${m.id}">Compra · ${prezzoM(m)} 🌰</button>` : `<span style="color:#9aa39c;font-weight:700">${prezzoM(m)} 🌰 · te ne mancano ${prezzoM(m) - n}</span>`;
     return `<div style="display:flex;align-items:center;gap:10px;padding:10px 4px;border-top:1px solid rgba(255,255,255,.08)"><span style="font-size:28px">${m.ico}</span><div style="flex:1"><b style="font-size:16px">${m.nome}</b><br><small style="color:#c9bfa8">${m.cosa} · cassone ${CAPIENZA[m.id]}</small></div>${bt}</div>`;
   }).join('');
   L.querySelectorAll('[data-usa]').forEach(b => b.onclick = () => { try { TG.debug.setVehicle(b.dataset.usa); } catch(e){} chiudiMezzi(); });
   L.querySelectorAll('[data-compra]').forEach(b => b.onclick = () => {
-    const m = MEZZI.find(x => x.id === b.dataset.compra); if (!m || n < m.prezzo) return;
-    C.togli(m.prezzo); st.mezzi[m.id] = Date.now(); try { TG.Profile.salva(); } catch(e){}
+    const m = MEZZI.find(x => x.id === b.dataset.compra); if (!m || n < prezzoM(m)) return;
+    C.togli(prezzoM(m)); st.mezzi[m.id] = Date.now(); try { TG.Profile.salva(); } catch(e){}
     ev('acquisto_mezzo', m.id, m.prezzo); try { TG.debug.setVehicle(m.id); } catch(e){}
     chiudiMezzi(); msg(`${m.ico} ${m.nome} comprata!`, `Cassone da ${CAPIENZA[m.id]}${m.id === 'semovente' ? ' e ogni nocchia vale 3' : ''}`, 4);
   });

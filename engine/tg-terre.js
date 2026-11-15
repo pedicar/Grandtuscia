@@ -116,9 +116,10 @@ function contaGuerra(t, a){
 const affAcc = {}, affDa = {}; let affVisto = null;
 function affitto(T, u){
   const p = paese(); if (!p || stato(T.id) !== 'loro') return 0;
-  affAcc[T.id] = (affAcc[T.id] || 0) + u / 5; const k = Math.floor(affAcc[T.id]); affAcc[T.id] -= k;
+  const pd0 = padrone(T.id), div = TG.Coop && TG.Coop.liv(pd0) >= 3 ? 4 : 5;   // cooperativa liv 3 de o padrone: 1 su 4
+  affAcc[T.id] = (affAcc[T.id] || 0) + u / div; const k = Math.floor(affAcc[T.id]); affAcc[T.id] -= k;
   if (k > 0) affDa[T.id] = (affDa[T.id] || 0) + k;
-  if (affVisto !== T.id) { affVisto = T.id; const pd = padrone(T.id); msg(`🏠 Terreno de ${corto(pd)}`, `Qui 1 nocchia su 5 va a loro de affitto. Compràtelo e l'affitto lo pij tu!`, 3.5); }
+  if (affVisto !== T.id) { affVisto = T.id; const pd = padrone(T.id); msg(`🏠 Terreno de ${corto(pd)}`, `Qui 1 nocchia su ${div} va a loro de affitto. Compràtelo e l'affitto lo pij tu!`, 3.5); }
   return k;
 }
 async function pagaAffitti(){
