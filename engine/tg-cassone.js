@@ -143,11 +143,38 @@ function vicinoGioco(){
   if (!vicinoGioco[A.id] || Date.now() - vicinoGioco[A.id] > 240000) { vicinoGioco[A.id] = Date.now(); ev('gioco_popup', A.id); }
 }
 
+
+/* ---------- CLASSIFICA DE I TERRENI sotto a a minimappa: i primi 3 paesi (e o tuo se nun c'è) ---------- */
+let clHtml = '';
+function classificaMini(){
+  const mini = $('mini'); if (!mini || !TG.Terre || !TG.Terre.lista) return;
+  let box = $('trCl');
+  if (!box) {
+    const st = document.createElement('style'); st.textContent = `#trCl{margin-top:6px;width:var(--clW,92px);margin-left:auto;padding:4px 6px;border-radius:10px;background:rgba(20,28,26,.62);color:#f3e7cb;font:800 10px/1.4 Figtree,system-ui,sans-serif;cursor:pointer;box-sizing:border-box}
+#trCl div{display:flex;align-items:center;gap:4px;white-space:nowrap;overflow:hidden}#trCl i{flex:none;width:7px;height:7px;border-radius:50%}#trCl span{flex:1;overflow:hidden;text-overflow:ellipsis}#trCl b{flex:none}#trCl .me{color:#ffd65a}#trCl .t{font-size:9.5px;opacity:.75;letter-spacing:.04em}
+@media (orientation:landscape) and (max-height:500px){#trCl{position:absolute;right:calc(100% + 6px);top:0;margin:0}}`;
+    document.head.appendChild(st);
+    box = document.createElement('div'); box.id = 'trCl'; box.setAttribute('aria-label', 'Classifica de i terreni: tocca pe\' a mappa');
+    box.addEventListener('click', () => { try { mini.click(); } catch(e){} ev('classifica_mini'); });
+    mini.insertAdjacentElement('afterend', box);
+  }
+  box.style.setProperty('--clW', Math.max(108, Math.round(mini.getBoundingClientRect().width)) + 'px');
+  const T = TG.Terre, tot = {};
+  for (const t of T.lista()) { const pd = T.padrone(t.id); if (pd) tot[pd] = (tot[pd] || 0) + 1; }
+  const cl = Object.entries(tot).sort((a, b) => b[1] - a[1]); if (!cl.length) { box.style.display = 'none'; return; }
+  box.style.display = '';
+  const mio = T.paeseMio && T.paeseMio(), nome = q => { let n = q; try { n = (TG.PrimoMinuto && TG.PrimoMinuto.nomeComune(q)) || q; } catch(e){} return String(n).replace(/ (di|in|sul|al|nel) .*$/i, ''); };
+  let righe = cl.slice(0, 3).map((r, i) => [i + 1, r]); const pm = cl.findIndex(r => r[0] === mio);
+  if (pm >= 3) righe.push([pm + 1, cl[pm]]); else if (pm < 0 && mio) righe.push([0, [mio, 0]]);
+  const h = '<div class="t">🏆 TERRENI</div>' + righe.map(([n, [q, k]]) => `<div class="${q === mio ? 'me' : ''}"><i style="background:${T.colore(q)}"></i><span>${nome(q)}</span><b>${k}</b></div>`).join('');
+  if (h !== clHtml) { clHtml = h; box.innerHTML = h; }
+}
+
 function avvia(){
   if (!TG.Terre || !TG.debug || !TG.debug.car) return setTimeout(avvia, 1000);
   // da computer: E o Invio scaricano quanno o bottone c'è
   addEventListener('keydown', e => { if ((e.key === 'e' || e.key === 'E' || e.key === 'Enter') && btn && btn.style.display === 'flex' && !occupato && !/INPUT|TEXTAREA/.test((e.target || {}).tagName || '')) { e.preventDefault(); scarica(); } });
-  setInterval(bottone, 300); setInterval(mappa, 600); setInterval(vicinoGioco, 700); osservaMezzi();
+  setInterval(bottone, 300); setInterval(mappa, 600); setInterval(vicinoGioco, 700); setInterval(classificaMini, 2000); classificaMini(); osservaMezzi();
 }
 if (document.readyState === 'complete') setTimeout(avvia, 1500); else addEventListener('load', () => setTimeout(avvia, 1500));
 })();
