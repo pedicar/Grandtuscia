@@ -1,7 +1,4 @@
-<!doctype html>
-<html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-</head><body>
-<title>Cestino della Tuscia</title>
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"></head><body><title>Cestino della Tuscia</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Atkinson+Hyperlegible:wght@400;700&display=swap">
@@ -114,18 +111,83 @@ const PEZZI = {
 const TIPI = ['nocciola','castagna','fungo','oliva'];
 
 /* ------------------------------------------------------------------ i paesi (livelli): cose vere della Tuscia, frasi brevi */
-const LIVELLI = [
-  { paese:'Fabrica di Roma', tipi:4, mosse:20, ob:{nocciola:15}, fatto:'Nelle campagne di Fabrica c\'è Falerii Novi, una città romana con le mura ancora in piedi.' },
-  { paese:'Carbognano', tipi:4, mosse:20, ob:{nocciola:25}, fatto:'Carbognano è il paese delle nocciole: qui cresce la Tonda Gentile Romana, oggi Nocciola Romana DOP.' },
-  { paese:'Vallerano', tipi:4, mosse:20, ob:{castagna:22}, fatto:'La Castagna di Vallerano ha il marchio DOP: si raccoglie sui Monti Cimini in autunno.' },
-  { paese:'Caprarola', tipi:4, mosse:22, ob:{oliva:18, nocciola:18}, fatto:'A Caprarola c\'è Palazzo Farnese, con la sua pianta a cinque lati e la grande scala a chiocciola.' },
-  { paese:'Lago di Vico', tipi:4, mosse:22, ob:{fungo:24}, fatto:'Il Lago di Vico è dentro un antico vulcano. Intorno c\'è una riserva naturale con boschi di faggi.' },
-  { paese:'Ronciglione', tipi:4, mosse:22, ob:{castagna:20, fungo:15}, fatto:'Ronciglione è famoso per il Carnevale e per le corse a vuoto, i cavalli che corrono senza fantino.' },
-  { paese:'Soriano nel Cimino', tipi:4, mosse:24, ob:{castagna:30, fungo:15}, fatto:'A Soriano, in ottobre, c\'è la Sagra delle Castagne, sotto il Castello Orsini.' },
-  { paese:'Vetralla', tipi:4, mosse:24, ob:{oliva:30, fungo:15}, fatto:'Intorno a Vetralla gli ulivi danno l\'olio extravergine della Tuscia, che ha anche lui la DOP.' },
-  { paese:'Civita Castellana', tipi:4, mosse:25, ob:{oliva:25, nocciola:25}, fatto:'Civita Castellana è la città della ceramica: le sue fabbriche lavorano da più di un secolo.' },
-  { paese:'Viterbo', tipi:4, mosse:26, ob:{nocciola:22, castagna:22, fungo:18}, fatto:'Ogni 3 settembre a Viterbo cento uomini portano a spalla la Macchina di Santa Rosa, alta circa 30 metri.' }
+// zona → cosa si raccoglie (in ordine d'importanza)
+const ZONE = {
+  falisco: ['nocciola', 'oliva', 'fungo'],     // Agro Falisco
+  cimini:  ['nocciola', 'castagna', 'fungo'],  // Monti Cimini e Lago di Vico
+  teverina:['oliva', 'fungo', 'castagna'],     // Viterbo e valle del Tevere
+  bolsena: ['fungo', 'oliva', 'castagna'],     // Lago di Bolsena e Alta Tuscia
+  maremma: ['oliva', 'fungo', 'nocciola']      // Maremma e Tuscia del sud-ovest
+};
+// i 60 paesi della provincia di Viterbo, uno per livello: [paese, zona, lo sapevi]
+const PAESI_TUSCIA = [
+  ['Fabrica di Roma','falisco','Nelle campagne di Fabrica c\'è Falerii Novi, una città romana con le mura ancora in piedi.'],
+  ['Carbognano','cimini','Carbognano è il paese delle nocciole: qui cresce la Tonda Gentile Romana, oggi Nocciola Romana DOP.'],
+  ['Vallerano','cimini','La Castagna di Vallerano ha il marchio DOP: si raccoglie sui Monti Cimini in autunno.'],
+  ['Caprarola','cimini','A Caprarola c\'è Palazzo Farnese, con la pianta a cinque lati e la grande scala a chiocciola.'],
+  ['Ronciglione','cimini','Ronciglione è famoso per il Carnevale e per le corse a vuoto, i cavalli che corrono senza fantino.'],
+  ['Corchiano','falisco','Corchiano è circondato da forre e boschi; vicino passa la Via Amerina, con le sue tagliate nel tufo.'],
+  ['Civita Castellana','falisco','Civita Castellana è la città della ceramica: le sue fabbriche lavorano da più di un secolo.'],
+  ['Faleria','falisco','Faleria guarda la valle del Treja dall\'alto del suo castello.'],
+  ['Calcata','falisco','Calcata è un borgo arroccato su una rupe sopra la valle del Treja, amato da artisti e pittori.'],
+  ['Castel Sant\'Elia','falisco','Nella valle sotto il paese c\'è la Basilica di Sant\'Elia, con affreschi di quasi mille anni fa.'],
+  ['Nepi','falisco','Nepi è la città delle acque: famosa per la sua acqua minerale e per il Forte dei Borgia.'],
+  ['Monterosi','falisco','Monterosi sta sulla Via Cassia, accanto a un piccolo lago nato da un vulcano.'],
+  ['Sutri','maremma','Sutri ha un anfiteatro romano scavato tutto nel tufo.'],
+  ['Capranica','maremma','Capranica sta sulla Via Francigena, la strada dei pellegrini diretti a Roma.'],
+  ['Bassano Romano','maremma','A Bassano Romano c\'è Palazzo Giustiniani, con sale affrescate nel Seicento.'],
+  ['Oriolo Romano','maremma','Oriolo fu costruito nel Cinquecento con le strade dritte; in piazza c\'è Palazzo Altieri.'],
+  ['Vejano','maremma','Vejano sta su uno sperone di tufo, dominato dal suo castello.'],
+  ['Barbarano Romano','maremma','Vicino a Barbarano c\'è il parco di Marturanum, con tombe etrusche scavate nella roccia.'],
+  ['Blera','maremma','Blera è un paese sul tufo: lungo le forre ci sono necropoli etrusche.'],
+  ['Villa San Giovanni in Tuscia','maremma','Villa San Giovanni è un piccolo paese tra boschi e campi, vicino a Blera.'],
+  ['Vetralla','maremma','Intorno a Vetralla gli ulivi danno l\'olio extravergine della Tuscia, che ha la DOP.'],
+  ['Viterbo','teverina','Ogni 3 settembre a Viterbo cento uomini portano a spalla la Macchina di Santa Rosa, alta circa 30 metri.'],
+  ['Vitorchiano','teverina','A Vitorchiano c\'è un Moai, scolpito nel peperino da artigiani venuti dall\'Isola di Pasqua.'],
+  ['Soriano nel Cimino','cimini','A Soriano, in ottobre, c\'è la Sagra delle Castagne, sotto il Castello Orsini.'],
+  ['Canepina','cimini','Canepina è famosa per il fieno: una pasta all\'uovo sottilissima, tagliata a mano.'],
+  ['Vignanello','cimini','Vignanello ha un vino DOC con il suo nome e il Castello Ruspoli con il giardino all\'italiana.'],
+  ['Vasanello','falisco','Vasanello ha una lunga tradizione di ceramica e il Castello Orsini.'],
+  ['Gallese','falisco','Gallese è un borgo sul tufo vicino al Tevere, con il suo Palazzo Ducale.'],
+  ['Orte','teverina','Sotto Orte c\'è Orte Sotterranea: cunicoli, cisterne e colombari scavati nel tufo.'],
+  ['Bassano in Teverina','teverina','Bassano in Teverina è un borgo medievale affacciato sulla valle del Tevere.'],
+  ['Bomarzo','cimini','A Bomarzo c\'è il Sacro Bosco, il Parco dei Mostri: statue giganti scolpite nella roccia nel Cinquecento.'],
+  ['Graffignano','teverina','A Graffignano il Castello Baglioni domina la valle del Tevere.'],
+  ['Civitella d\'Agliano','teverina','Civitella d\'Agliano è un borgo sulla valle del Tevere, con i resti del suo castello.'],
+  ['Castiglione in Teverina','teverina','Castiglione in Teverina è terra di vino: c\'è anche un museo del vino, il MUVIS.'],
+  ['Celleno','teverina','Il borgo vecchio di Celleno, abbandonato per anni, era chiamato «il borgo fantasma».'],
+  ['Bagnoregio','teverina','Da Bagnoregio si arriva a piedi a Civita, «la città che muore», su un ponte lungo e stretto.'],
+  ['Lubriano','teverina','Da Lubriano si vede Civita di Bagnoregio come da un balcone.'],
+  ['Montefiascone','bolsena','Montefiascone è la patria del vino Est! Est!! Est!!! e guarda il Lago di Bolsena dalla Rocca dei Papi.'],
+  ['Marta','bolsena','A Marta il fiume Marta esce dal Lago di Bolsena; a maggio c\'è la festa della Barabbata.'],
+  ['Capodimonte','bolsena','Capodimonte sta su un promontorio del Lago di Bolsena, davanti all\'isola Bisentina.'],
+  ['Bolsena','bolsena','Il Lago di Bolsena è il più grande lago vulcanico d\'Europa.'],
+  ['San Lorenzo Nuovo','bolsena','San Lorenzo Nuovo fu ricostruito nel Settecento attorno a una piazza a otto lati.'],
+  ['Grotte di Castro','bolsena','Grotte di Castro sta sopra il Lago di Bolsena, tra campi di patate e di lenticchie.'],
+  ['Gradoli','bolsena','A Gradoli si fa l\'Aleatico, un vino dolce rosso che ha la DOC.'],
+  ['Onano','bolsena','A Onano si coltiva la Lenticchia di Onano, piccola e saporita.'],
+  ['Acquapendente','bolsena','Ad Acquapendente, a maggio, la Festa dei Pugnaloni riempie il paese di grandi quadri fatti di fiori.'],
+  ['Proceno','bolsena','Proceno è l\'ultimo paese prima della Toscana, con il suo castello medievale.'],
+  ['Latera','bolsena','Vicino a Latera c\'è il Lago di Mezzano, un piccolo lago nato da un vulcano.'],
+  ['Valentano','bolsena','Dalla Rocca Farnese di Valentano si vede tutto il Lago di Bolsena.'],
+  ['Piansano','bolsena','Piansano è un paese di campagna sull\'altopiano tra il Lago di Bolsena e la Maremma.'],
+  ['Ischia di Castro','maremma','Vicino a Ischia di Castro ci sono le rovine di Castro, la città distrutta nel 1649.'],
+  ['Farnese','maremma','Da Farnese prende il nome la famiglia Farnese; vicino c\'è il bosco della Selva del Lamone.'],
+  ['Cellere','maremma','A Cellere c\'è la chiesa di Sant\'Egidio, attribuita ad Antonio da Sangallo.'],
+  ['Canino','maremma','Canino è terra d\'olio: il suo olio extravergine ha la DOP.'],
+  ['Tessennano','maremma','Tessennano è uno dei paesi più piccoli della Tuscia, in mezzo agli ulivi.'],
+  ['Arlena di Castro','maremma','Arlena di Castro è un piccolo paese della Maremma viterbese, tra grano e ulivi.'],
+  ['Tuscania','maremma','A Tuscania le chiese di San Pietro e di Santa Maria Maggiore sono capolavori del romanico.'],
+  ['Monte Romano','maremma','Monte Romano sta tra i pascoli della Maremma, terra di butteri e cavalli.'],
+  ['Tarquinia','maremma','Le tombe etrusche dipinte di Tarquinia sono patrimonio dell\'UNESCO.'],
+  ['Montalto di Castro','maremma','A Montalto c\'è Vulci, una grande città etrusca, e il mare della Tuscia.']
 ];
+// livelli che crescono piano: più raccolto e un po' più di mosse, uno, due o tre frutti da raccogliere
+const LIVELLI = PAESI_TUSCIA.map(([paese, zona, fatto], i) => {
+  const quanti = i < 10 ? 1 : i < 40 ? 2 : 3, tipi = ZONE[zona].slice(0, quanti), tot = 15 + Math.round(i * 1.1);
+  const ob = {}; tipi.forEach((t, k) => { ob[t] = Math.max(8, Math.round(tot * (quanti === 1 ? 1 : k === 0 ? .55 : (1 - .55) / (quanti - 1)))); });
+  return { paese, tipi: 4, mosse: 20 + Math.min(10, Math.floor(i / 6)), ob, fatto };
+});
 
 /* ------------------------------------------------------------------ stato */
 const N = 7;
@@ -354,11 +416,12 @@ function apri(html){ $('carta').innerHTML = html; $('velo').hidden = false; cons
 function chiudi(){ $('velo').hidden = true; }
 function mappa(){
   const fatti = Object.keys(salvato.stelle).length, prossimo = Math.min(LIVELLI.length - 1, Math.max(0, ...Object.keys(salvato.stelle).map(Number).map(x => x + 1), 0));
-  apri(`<h2>I paesi della Tuscia</h2><p>Ogni paese è un cestino da riempire. ${fatti ? `Ne hai fatti ${fatti} su ${LIVELLI.length}.` : 'Si parte da Fabrica di Roma.'}</p>
+  apri(`<h2>I paesi della Tuscia</h2><p>Tutti i ${LIVELLI.length} paesi della provincia di Viterbo, uno dopo l'altro. ${fatti ? `Ne hai fatti ${fatti}.` : 'Si parte da Fabrica di Roma.'}</p>
     <div class="livelli">${LIVELLI.map((x, i) => { const s = salvato.stelle[i] || 0, aperto = i <= prossimo; return `<button type="button" class="livello${i === prossimo ? ' prossimo' : ''}" data-l="${i}" ${aperto ? '' : 'disabled'}>${x.paese}<small>${aperto ? Object.keys(x.ob).map(k => PEZZI[k].nome).join(' e ') : '🔒 da aprire'}</small>${s ? `<span class="st">${'★'.repeat(s)}</span>` : ''}</button>`; }).join('')}</div>
     <button type="button" class="piccolo" id="bTorna">Torna al gioco</button>`);
   $('carta').querySelectorAll('[data-l]').forEach(b => b.onclick = () => { chiudi(); parti(+b.dataset.l); });
   $('bTorna').onclick = chiudi;
+  const pr = $('carta').querySelector('.livello.prossimo'); if (pr) pr.scrollIntoView({ block: 'center' });
 }
 function benvenuto(){
   apri(`<h2>Cestino della Tuscia</h2><div class="intro-pezzi">${TIPI.map(t => PEZZI[t].svg).join('')}</div>
@@ -379,5 +442,4 @@ window.__cestino = { stato: () => ({ B, mosse, punti, resto, lv, giorno: !!(L &&
 if (!salvato.visto) { salvato.visto = true; ls.set('cestino-tuscia', salvato); benvenuto(); }
 })();
 </script>
-
 </body></html>
