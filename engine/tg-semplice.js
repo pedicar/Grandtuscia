@@ -72,9 +72,9 @@ function prossimo(){
   if (mia && dentro && dentro.id === mia.id) { try { if (D.NAV && D.NAV.dest) D.setDest(null); } catch(e){} return; }
   if (scelta) return;   // meta scelta da te: nun se tocca
   const N = D.NAV || {};
-  const pieno = C && C.pieno(); if (!pieno) guidato = false;
+  const pieno = C && (C.pieno() || (TG.Passi && TG.Passi.n() === 2 && C.n >= C.MINIMO)); if (!pieno) guidato = false;
   // cassone pieno: a prima volta pe' ogni pieno a freccia va a o terreno da comprà più vicino, anche se c'era un'altra meta (missione automatica)
-  if (TG.Coop && TG.Coop.guida()) return;   /* stai a annà a a cooperativa */
+  if (TG.Coop && !(TG.Passi && TG.Passi.n() < 5) && TG.Coop.guida()) return;   /* stai a annà a a cooperativa */
   if (N.dest && (!mia || Math.hypot(N.dest.x - mia.x, N.dest.z - mia.z) > 30) && (guidato || !pieno)) return;
   const quiCompro = dentro && W.stato(dentro.id) !== 'nostro' && W.costo(dentro.id) <= C.n;
   if (!pieno || quiCompro) { if (mia && !scelta && !pieno) { mia = null; try { D.setDest(null); } catch(e){} } return; }
@@ -98,9 +98,10 @@ function obiettivo(){
 
   const p = paese(), c = D.car, dentro = W.terraIn(c.x, c.z), n = C.n, cap = C.cap(), pct = Math.min(100, n / cap * 100);
   if (!p) { obi.innerHTML = `<div class="t">Scegli o paese tuo</div>`; return; }
+  const P = TG.Passi && TG.Passi.riquadro(dentro); if (P) { obi.style.borderColor = '#ff8a3c'; obi.innerHTML = P; return; }
   const col = W.colore(p), barra = `<div class="b"><i style="width:${Math.max(3, pct)}%;background:${n >= cap ? '#ff8a3c' : col}"></i></div>`;
   const piede = `<div class="r"><span>🌰 <b style="color:#fff">${n}/${cap}</b></span><span>${TG.Coop ? '<b data-coop style="padding:0 4px;cursor:pointer">🏛</b> · ' : ''}🗺 mappa</span></div>`;
-  const cb = !dentro && TG.Coop && TG.Coop.box(); if (cb) { obi.style.borderColor = cb.col; obi.innerHTML = cb.html + piede; return; }
+  const cb = !dentro && TG.Coop && !(TG.Passi && TG.Passi.n() < 5) && TG.Coop.box(); if (cb) { obi.style.borderColor = cb.col; obi.innerHTML = cb.html + piede; return; }
   if (dentro) {
     const st = W.stato(dentro.id), pd = W.padrone(dentro.id), c = W.costo(dentro.id);
     obi.style.borderColor = pd ? W.colore(pd) : '#ff8a3c';

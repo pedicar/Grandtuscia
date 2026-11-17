@@ -189,6 +189,7 @@ async function aggiorna(){
   for (const C of COOP) { const f = info(C.p).liv + '|' + ((info(C.p).pres || {}).nome || '') + '|' + paese(); if (f !== C.firma) ridisegna(C); }
 }
 function intro(){
+  if (TG.Passi && TG.Passi.n() < 5) return;   /* tg-passi.js: a cooperativa se presenta al passo 5 */
   const p = paese(), M = COOP.find(x => x.p === p); if (!M || ls.get('tg-coop-intro') || !document.body.classList.contains('playing')) return;
   ls.set('tg-coop-intro', '1'); msg(`🏛 A cooperativa de ${M.nome} sta a ${M.luogo}`, 'Portace e nocchie: cresce pe\' sempre e aiuta tutti i paesani. Tocca 🏛 ne o riquadro pe\' a freccia', 7);
 }
