@@ -15059,30 +15059,30 @@ function forseInstalla(){
   var MED = { autore: "oro", oro: "oro", argento: "argento", bronzo: "bronzo" };
   // SFIDA AL FANTASMA: 60 secondi, vince chi fa più metri giù pe' via Roma (engine/tg-sfida60.js)
   var SF = window.TGSfida, sfGiro = 0;
-  function startMis(){ scegliModo("tempo"); initAudio(); avvia(); setTimeout(function(){ try { flash("60 secondi: fai più strada del fantasma! Vale 300 nocchie", 3200); } catch(e){} }, 4200);
+  function startMis(){ scegliModo("tempo"); initAudio(); avvia(); setTimeout(function(){ try { flash("Arriva in fondo prima del fantasma! Vale 300 nocchie", 3200); } catch(e){} }, 4200);
     clearInterval(sfGiro); var partito = false;
     sfGiro = setInterval(function(){
       if(MODO !== "tempo" || PONTE.finita){ clearInterval(sfGiro); return; }
-      if(!partito && state.t > 0){ partito = true; if(SF) SF.avvia({ gioco: "carrettini", punti: function(){ return Math.round(state.s); }, tempo: function(){ return 60 - state.t; }, unita: "m", bot: 480, top: 64, nascondi: "#hud-pos,.delta,.delta-chi" }); }
-      if(partito && state.t >= 60 && !state.done){ clearInterval(sfGiro); finish(); }
+      if(!partito && state.t > 0){ partito = true; if(SF) SF.avvia({ gioco: "carrettini", progresso: function(){ return state.s / __carrettini.len(); }, trascorso: function(){ return state.t; }, obiettivo: "Arriva in fondo a via Roma", bot: 105, top: 64, nascondi: "#hud-pos,.delta,.delta-chi" }); }
+      if(partito && state.t >= 120 && !state.done){ clearInterval(sfGiro); finish(); }
     }, 200); }
   setTimeout(startMis, 0);
   var finOrig = finish;
   finish = function(){
-    var live = !PONTE.finita && MODO === "tempo", metriVeri = Math.round(Math.min(state.s, __carrettini.len()));
+    var live = !PONTE.finita && MODO === "tempo", arrivato = state.s >= __carrettini.len() - 3 && state.t < 120, tempoArrivo = arrivato ? state.t : 0;
     finOrig();
     if(!live){ back.className = "ghost-btn"; back.onclick = function(){ PONTE.torna(null); }; return; }
     clearInterval(sfGiro);
-    var metri = metriVeri, res = { ok: metri > 0, t: metri };
-    try { document.getElementById("end-total").textContent = metri + " m"; } catch(e){}
+    var res = tempoArrivo ? { ok: true, t: tempoArrivo } : { ok: false, msg: "Due minuti e nun sei arrivato in fondo." };
+    if(!tempoArrivo) try { document.getElementById("end-total").textContent = "—"; } catch(e){}
     if(SF){ res.sf = SF.token; try { document.getElementById("end-note").textContent = "👻 Controllo chi ha vinto…"; } catch(e){}
-      SF.fine(metri).then(function(r){ var e = SF.esito(r); try { document.getElementById("end-title").textContent = e.breve || e.titolo; document.getElementById("end-note").textContent = e.testo; } catch(x){} }); }
+      SF.fine(tempoArrivo).then(function(r){ var e = SF.esito(r); try { document.getElementById("end-title").textContent = e.breve || e.titolo; document.getElementById("end-note").textContent = e.testo; } catch(x){} }); }
     back.className = "go ancora"; back.innerHTML = PONTE.icona + "<b>Torna ne o mondo</b>";
     back.onclick = function(e){ if(e) e.stopPropagation(); PONTE.torna(res); };
     fine.insertBefore(back, fine.firstChild);
     var ag = document.getElementById("btn-again"); ag.className = "ghost-btn"; ag.innerHTML = "<b>Rigioca a sfida</b>";
     document.getElementById("btn-garage").textContent = "Gioco completo";
-    try { document.getElementById("end-kicker").textContent = "Sfida al fantasma · 60 secondi"; } catch(e){}
+    try { document.getElementById("end-kicker").textContent = "Sfida al fantasma"; } catch(e){}
   };
   document.getElementById("btn-garage").addEventListener("click", function(){
     var ag = document.getElementById("btn-again"); ag.className = "go ancora"; try { scegliModo("quattro"); } catch(e){} });

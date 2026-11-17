@@ -2048,12 +2048,13 @@ window.__funghi = { S, start, SP, tryPick, stepRivals };
   let misAgain = true;
   $('#bAgain').addEventListener('click', e => { if (!misAgain || PONTE.finita) return; e.stopImmediatePropagation(); startMis(); }, true);
   // SFIDA AL FANTASMA: 60 secondi contro o migliore de un antro paese (engine/tg-sfida60.js)
-  const SF = window.TGSfida;
+  const SF = window.TGSfida, GOAL = 250; let sfGiro = 0, arrivo = 0;
   const startMis = () => {
-    start('competizione'); S.limit = 60; updateHud();
+    start('competizione'); S.limit = 120; updateHud(); arrivo = 0;
     $('#toasts').innerHTML = '';
-    if (SF) SF.avvia({ gioco: 'funghi', punti: () => S.score, tempo: () => S.limit - S.time, unita: 'punti', bot: 180, top: 74, posizione: 'sinistra', nascondi: '#cRank,#cHerb,#cFx,#cCombo,#cKnow' });
-    toast('<b>Sfida al fantasma!</b> 60 secondi: trova più funghi buoni del fantasma. Vale 300 nocchie.', 'gold');
+    if (SF) SF.avvia({ gioco: 'funghi', progresso: () => S.score / GOAL, trascorso: () => S.time, obiettivo: 'Riempi o cestino: ' + GOAL + ' punti', bot: 90, top: 74, posizione: 'sinistra', nascondi: '#cRank,#cHerb,#cFx,#cCombo,#cKnow' });
+    clearInterval(sfGiro); sfGiro = setInterval(() => { if (S.mode !== 'competizione' || PONTE.finita || !S.playing) { if (!S.playing) clearInterval(sfGiro); return; } if (S.score >= GOAL && !arrivo) { arrivo = S.time; clearInterval(sfGiro); endGame(); } }, 150);
+    toast('<b>Sfida al fantasma!</b> Riempi o cestino (' + GOAL + ' punti de funghi buoni) prima del fantasma. Vale 300 nocchie.', 'gold');
   };
   $('#oMenu').hidden = true;
   setTimeout(startMis, 0);
@@ -2067,9 +2068,10 @@ window.__funghi = { S, start, SP, tryPick, stepRivals };
     // la missione da 2 minuti non tocca il record della gara da 5
     if (best0 === undefined) delete saved.best.competizione; else saved.best.competizione = best0; persist();
     $('#eLine').textContent = $('#eLine').textContent.replace(/ (Nuovo record personale!|Il tuo record: \d+\.)$/, '') + ' Il punteggio torna al trattore e vale per i punti Tuscia.';
-    const res = S.score > 0 ? { ok: true, t: S.score } : { ok: false, msg: 'Un minuto e il cestino è rimasto vuoto.' };
+    clearInterval(sfGiro); const fatto = arrivo || (S.score >= GOAL ? S.time : 0);
+    const res = fatto ? { ok: true, t: fatto } : { ok: false, t: S.score, msg: 'Tempo scaduto col cestino mezzo vòto.' };
     $('#eMode').textContent = 'Sfida al fantasma';
-    if (SF) { res.sf = SF.token; const linea = $('#eLine'); linea.textContent = '👻 Controllo chi ha vinto…'; SF.fine().then(r => { const e = SF.esito(r); $('#eMode').textContent = e.titolo; linea.textContent = e.testo; }); }
+    if (SF) { res.sf = SF.token; const linea = $('#eLine'); linea.textContent = '👻 Controllo chi ha vinto…'; SF.fine(fatto).then(r => { const e = SF.esito(r); $('#eMode').textContent = e.titolo; linea.textContent = e.testo; }); }
     back.className = 'btn primary'; back.innerHTML = PONTE.icona + 'Torna ne o mondo'; back.onclick = () => PONTE.torna(res);
     back.parentNode.insertBefore(back, back.parentNode.firstChild);
     $('#bAgain').className = 'btn'; $('#bAgain').textContent = 'Rigioca a sfida';

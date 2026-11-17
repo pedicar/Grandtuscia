@@ -2343,7 +2343,11 @@ window.__VP={HARBOUR,cam:()=>camera,POSTI,WEA,setWx,CAMS,S,FI,PB,startGame,HOT,R
   const SOGLIE = { oro: 1200, argento: 700, bronzo: 300 };
   // SFIDA AL FANTASMA: 60 secondi contro o migliore de un antro paese (engine/tg-sfida60.js)
   const SF = window.TGSfida;
-  const startMis = () => { startGame('fun'); S.time = 60; if (SF) SF.avvia({ gioco: 'vicopesca', punti: () => S.pts, tempo: () => S.time, unita: 'punti', bot: 350, top: 64, nascondi: '#coach' }); setTimeout(() => flash('60 secondi: fai più punti del fantasma! Vale 300 nocchie.', 4200), 300); };
+  const GOAL = 600; let sfGiro = 0, arrivo = 0;
+  const startMis = () => { startGame('fun'); S.time = 120; arrivo = 0;
+    if (SF) SF.avvia({ gioco: 'vicopesca', progresso: () => S.pts / GOAL, trascorso: () => 120 - S.time, obiettivo: 'Fai ' + GOAL + ' punti prima del fantasma', bot: 90, top: 64, nascondi: '#coach' });
+    clearInterval(sfGiro); sfGiro = setInterval(() => { if (S.mode !== 'fun' || PONTE.finita) { clearInterval(sfGiro); return; } if (S.pts >= GOAL && !arrivo) { arrivo = 120 - S.time; clearInterval(sfGiro); endGame(); } }, 150);
+    setTimeout(() => flash('Fai ' + GOAL + ' punti prima del fantasma! Vale 300 nocchie.', 4200), 300); };
   try { $('intro').hidden = true; $('intro').classList.add('out'); } catch (e) {}
   setTimeout(startMis, 0);
   const endOrig = endGame;
@@ -2351,10 +2355,11 @@ window.__VP={HARBOUR,cam:()=>camera,POSTI,WEA,setWx,CAMS,S,FI,PB,startGame,HOT,R
     endOrig();
     const back = document.getElementById('bBackWorld');
     if (PONTE.finita || S.mode !== 'fun') { back.onclick = () => PONTE.torna(null); return; }
-    const res = S.n > 0 ? { ok: true, t: S.pts } : { ok: false, msg: 'Un minuto e nessun pesce: capita anche ai migliori pescatori del lago.' };
+    clearInterval(sfGiro); const fatto = arrivo || (S.pts >= GOAL ? 120 - S.time : 0);
+    const res = fatto ? { ok: true, t: fatto } : { ok: false, t: S.pts, msg: 'Tempo scaduto prima dei ' + GOAL + ' punti.' };
     $('rEyebrow').textContent = 'Sfida al fantasma · Grand Tuscia';
     const nota = $('rNote').textContent;
-    if (SF) { res.sf = SF.token; $('rNote').textContent = '👻 Controllo chi ha vinto…'; SF.fine().then(r => { const e = SF.esito(r); try { $('rTitle').textContent = e.titolo; } catch (x) {} $('rNote').textContent = e.testo; res.sf = SF.token; }); }
+    if (SF) { res.sf = SF.token; $('rNote').textContent = '👻 Controllo chi ha vinto…'; SF.fine(fatto).then(r => { const e = SF.esito(r); try { $('rTitle').textContent = e.titolo; } catch (x) {} $('rNote').textContent = e.testo; res.sf = SF.token; }); }
     else $('rNote').textContent = nota;
     back.className = 'btn'; back.innerHTML = PONTE.icona + 'Torna ne o mondo'; back.onclick = () => PONTE.torna(res);
     back.parentNode.insertBefore(back, back.parentNode.firstChild);

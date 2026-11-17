@@ -7,13 +7,13 @@
 const P=window.TGPonte;if(!P)return;
 const touch=(()=>{try{return matchMedia("(pointer: coarse)").matches}catch(e){return!1}})();
 const G={
- carrettini:{t:"Sfida al fantasma",o:"60 secondi: fai più strada del fantasma giù per via Roma.",c:["Tocca i lati per sterzare · in basso frena · in alto spingi","Frecce ← → sterzi · ↑ spingi · ↓ o spazio freni"]},
+ carrettini:{t:"Sfida al fantasma",o:"Arriva in fondo a via Roma prima del fantasma (massimo 2 minuti).",c:["Tocca i lati per sterzare · in basso frena · in alto spingi","Frecce ← → sterzi · ↑ spingi · ↓ o spazio freni"]},
  ciminodh:{t:"Trick nella faggeta",o:"La bici scende da sola: salta sulle rampe e fai i trick. Oro sopra 50.000 punti.",c:["«Salta» sulle rampe · in aria muovi il pollice per il trick","Spazio salta · frecce in aria per il trick"]},
  citta:{t:"Sfida al contadino",o:"2 minuti col georadar: scopri Falerii Novi prima che arrivi l'aratro. Oro sopra il 40%.",c:["Trascina il dito per passare il georadar sul campo","Mouse o frecce per passare il georadar sul campo"]},
  corseavuoto:{t:"La batteria del Palio",o:"Il tuo cavallo contro cinque Rioni: arriva primo.",c:["◀ ▶ per stare in traiettoria · «Incita» per lo scatto","Frecce ← → traiettoria · spazio incita"]},
- funghi:{t:"Sfida al fantasma",o:"60 secondi: trova più funghi buoni del fantasma.",c:["Joystick per camminare · «Raccogli» vicino al fungo · M la mappa","WASD per camminare · E raccogli · M la mappa"]},
+ funghi:{t:"Sfida al fantasma",o:"Riempi il cestino (250 punti di funghi buoni) prima del fantasma.",c:["Joystick per camminare · «Raccogli» vicino al fungo · M la mappa","WASD per camminare · E raccogli · M la mappa"]},
  santarosa:{t:"Il trasporto",o:"Porta la Macchina da San Sisto al santuario. Oro sotto 1:40.",c:["Tieni premuto «Solleva» al comando · ◀ ▶ per stare dritti","Spazio solleva · frecce ← → per stare dritti"]},
- vicopesca:{t:"Sfida al fantasma",o:"60 secondi al pontile: fai più punti del fantasma.",c:["Tieni premuto «Lancia» e lascia · quando abbocca, recupera","Tieni premuto spazio per lanciare · quando abbocca, recupera"]},
+ vicopesca:{t:"Sfida al fantasma",o:"Fai 600 punti di pesca prima del fantasma (massimo 2 minuti).",c:["Tieni premuto «Lancia» e lascia · quando abbocca, recupera","Tieni premuto spazio per lanciare · quando abbocca, recupera"]},
  vicosail:{t:"La regata",o:"Contro 3 barche: gira le boe e taglia primo il traguardo.",c:["◀ ▶ timone · «Cazza» e «Lasca» la vela","Frecce ← → timone · ↑ ↓ cazza e lasca"]},
  vicovolo:{t:"Sprint alle Pantanacce",o:"Dal decollo passa 2 porte e atterra sul campo in meno di 2 minuti.",c:["Trascina il dito per inclinare l'ala","Frecce o mouse per inclinare l'ala"]}
 };
