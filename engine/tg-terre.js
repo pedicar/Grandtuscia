@@ -89,6 +89,32 @@ const TETTO = 300, DI = {};
 // MANUTENZIONE: più terreni hai, più spese hai. Ogni notte i terreni fori casa perdono 5% + 0,5% pe' terreno tenuto (max 40%): server tg_manutenzione_esegui
 let MANUT = {}, manutDetto = false;
 const manutenzione = p => MANUT[p || paese()] || null;
+/* ACCOUNT: chi nun se registra paga a manutenzione doppia (anche su i terreni de casa) e l'affitto suo va a a cooperativa.
+   O telefono se lega a l'account co' tg_dev_lega (token de l'utente da localStorage 'tg-auth'). */
+const registrato = () => { try { return TG.Account && TG.Account.stato === 'registrato'; } catch(e){ return false; } };
+let legato = false;
+async function lega(){
+  if (legato || !registrato()) return; const d = dev(); if (!d || !cfg.url) return;
+  let tok = null; try { const s = JSON.parse(localStorage.getItem('tg-auth') || 'null'); tok = s && (s.access_token || (s.currentSession && s.currentSession.access_token)); } catch(e){}
+  if (!tok) return;
+  try { const r = await fetch(cfg.url.replace(/\/$/, '') + '/rest/v1/rpc/tg_dev_lega', { method: 'POST', headers: { 'Content-Type': 'application/json', apikey: cfg.pub || cfg.key, Authorization: 'Bearer ' + tok }, body: JSON.stringify({ p_dev: d }) }); const j = r.ok && await r.json(); if (j && j.ok) { legato = true; ev('account_legato', d); } } catch(e){}
+}
+let toccaFn = null, toccaFino = 0;   /* tocchi o messaggio in alto e se apre quarcosa (delegato: a riga in alto viene ridisegnata) */
+document.addEventListener('click', e => { if (!toccaFn || Date.now() > toccaFino || !(e.target.closest && e.target.closest('#hud .where'))) return; const f = toccaFn; toccaFn = null; e.stopPropagation(); f(); }, true);
+function tocca(fn, s){ toccaFn = fn; toccaFino = Date.now() + (s || 8) * 1000; }
+const apriAccount = () => { try { TG.debug.openAccount(); ev('account_da_terreni'); } catch(e){} };
+let senzaDetto = false;
+function avvisaSenzaAccount(){ if (senzaDetto || registrato()) return; senzaDetto = true; setTimeout(() => { msg('💾 Salva a partita co\' a mail', 'Senza account i terreni tuoi pagano a manutenzione doppia e l\'affitto va a a cooperativa. Tocca qui', 7); tocca(apriAccount, 9); }, 4500); }
+let manutVista = false;
+async function manutMia(){
+  if (manutVista) return; const d = dev(); if (!d) return; manutVista = true;
+  let r = null; try { r = await rpc('tg_manutenzione_mia', { p_dev: d }); } catch(e){ manutVista = false; return; }
+  if (!r || !r.ok || !(r.perso > 0)) return;
+  manutDetto = true;   // stesso giorno: basta un messaggio
+  ev('manutenzione_vista', paese(), r.perso, { terreni: r.terreni, tornati: r.tornati });
+  const dire = () => { msg(`🧾 Stanotte i terreni tuoi hanno perso ${r.perso} 🌰`, `${r.terreni} terren${r.terreni === 1 ? 'o' : 'i'} calat${r.terreni === 1 ? 'o' : 'i'}${r.tornati ? `, ${r.tornati} tornat${r.tornati === 1 ? 'o' : 'i'} a casa loro` : ''}. Più terreni tieni, più costa${registrato() ? '' : ': senza account costa o doppio'}`, 7); if (!registrato()) { tocca(apriAccount, 9); senzaDetto = true; } };
+  if (document.body.classList.contains('playing')) setTimeout(dire, 3000); else new MutationObserver((x, o) => { if (document.body.classList.contains('playing')) { o.disconnect(); setTimeout(dire, 9000); } })   /* dopo o benvenuto */.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+}
 function avvisaManut(){ const m = manutenzione(), p = paese(); if (manutDetto || !m || m.pct < 15 || !document.body.classList.contains('playing')) return; const k = 'tg-manut-' + new Date().toISOString().slice(0, 10); try { if (localStorage.getItem(k)) { manutDetto = true; return; } localStorage.setItem(k, '1'); } catch(e){} manutDetto = true; msg(`🧾 Manutenzione: ${m.terreni} terreni`, `Più terreni tenete, più costa: stanotte quelli fori casa perdono o ${m.pct}%. Rinforzate quelli che contano`, 6); }
 const riconquista = id => { const pd = padrone(id), p = paese(); return !!(pd && p && DI[id] === p && pd !== p); };
 const costo = id => { const c = padrone(id) ? Math.min(prezzo(id), TETTO) + 10 : 10; return riconquista(id) ? Math.ceil(c / 2) : c; };
@@ -96,7 +122,7 @@ const alMassimo = id => prezzo(id) >= TETTO;
 // TERRENI DE CASA: ogni paese parte padrone de i terreni suoi (prezzo 10) finché nun li compra quarcun altro
 const casa = id => { const l = classifica[id]; return !!(l && l[0] && l[0].casa); };
 function stato(id){ const l = righe(id).filter(r => r.punti > 0), p = paese(), pd = padrone(id); if (!l.length) return 'libero'; if (!pd) return 'conteso'; return pd === p ? 'nostro' : 'loro'; }
-async function aggiorna(){ try { let n; try { n = await rpc('tg_terre_mappa'); } catch(e){ n = await rpc('tg_terre_padroni'); } if (n && typeof n === 'object') { classifica = n; for (const k in n) { const r = n[k] && n[k][0]; if (r && r.di) DI[k] = r.di; } locali = {}; versione++; } } catch(e){} caricato = true; try { const m = await rpc('tg_manutenzione_stato'); if (m && typeof m === 'object') MANUT = m; } catch(e){} avvisaManut(); }
+async function aggiorna(){ try { let n; try { n = await rpc('tg_terre_mappa'); } catch(e){ n = await rpc('tg_terre_padroni'); } if (n && typeof n === 'object') { classifica = n; for (const k in n) { const r = n[k] && n[k][0]; if (r && r.di) DI[k] = r.di; } locali = {}; versione++; } } catch(e){} caricato = true; try { const m = await rpc('tg_manutenzione_stato'); if (m && typeof m === 'object') MANUT = m; } catch(e){} lega(); manutMia().then(avvisaManut, avvisaManut); }
 async function invia(){
   const p = paese(), d = dev(); if (!p || !d) return;
   for (const id of Object.keys(daMandare)) {
@@ -160,6 +186,7 @@ async function deposita(T, k){
   classifica[T.id] = [{ paese: r.paese, punti: r.prezzo }]; versione++;
   r.aggiunti = r.spesa;
   ev('deposito', T.id, r.spesa, { azione: r.azione, da: r.da || null, prezzo: r.prezzo });
+  if (r.azione === 'compra') avvisaSenzaAccount();
   if (r.azione === 'compra') { ev('terra_presa', T.id, null, { a: r.da || null, prezzo: r.prezzo }); festeggiati[T.id] = 1; festa(T, r.da || prima, p, 1, `💰 Pagato ${r.spesa} nocchie`); }
   else msg(`🛡 ${breve(T.nome)} rinforzato!`, r.prezzo >= TETTO ? `È al massimo: chi o vò paga ${TETTO + 10}` : `Mo' costa ${r.prezzo + 10}: chi o vò deve pagà de più`, 4);
   if (r.riconquista) msg('🏠 Ripreso a metà prezzo!', 'Era de casa vostra: riprenderlo costa a metà', 3.5);
