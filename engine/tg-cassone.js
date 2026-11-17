@@ -67,19 +67,21 @@ function bottone(){
   btn.style.display = 'flex';
   const s = W.stato(T.id), c = W.costo(T.id), tasto = matchMedia('(pointer:fine)').matches ? ' · tasto E' : '';
   const nostro = s === 'nostro', pago = !nostro && n >= c;
-  const h = nostro ? (n >= MINIMO ? `🛡 RINFORZA<small>ce metti ${Math.min(n, 300)} 🌰 · poi costa ${c + Math.min(n, 300)}${tasto}</small>` : `✅ È NOSTRO<small>costa ${c} a chi o vò</small>`)
-    : pago ? `💰 COMPRA<small>costa ${c} 🌰 · ce l'hai${tasto}</small>` : `💰 COSTA ${c}<small>te ne mancano ${c - n}</small>`;
-  btn.classList.toggle('no', !(pago || (nostro && n >= MINIMO))); if (btn._h !== h) { btn._h = h; btn.innerHTML = h; }   // riscritto solo se cambia: sennò Safari perde o clic
+  const pr = W.prezzo(T.id), max = W.alMassimo && W.alMassimo(T.id), mette = Math.min(n, 300, Math.max(0, 300 - pr)), rq = W.riconquista && W.riconquista(T.id);
+  const h = nostro ? (max ? `✅ AL MASSIMO<small>vale 300: chi o vò paga 310</small>` : n >= MINIMO ? `🛡 RINFORZA<small>ce metti ${mette} 🌰 · poi costa ${pr + mette + 10}${tasto}</small>` : `✅ È NOSTRO<small>costa ${c} a chi o vò</small>`)
+    : pago ? (rq ? `🏠 RIPRENDILO<small>a metà: ${c} 🌰${tasto}</small>` : `💰 COMPRA<small>costa ${c} 🌰 · ce l'hai${tasto}</small>`) : `💰 COSTA ${c}<small>${rq ? 'a metà, è de casa · ' : ''}te ne mancano ${c - n}</small>`;
+  btn.classList.toggle('no', !(pago || (nostro && n >= MINIMO && !max))); if (btn._h !== h) { btn._h = h; btn.innerHTML = h; }   // riscritto solo se cambia: sennò Safari perde o clic
   btn.classList.toggle('go', pago);
 }
 async function scarica(){
   const W = TG.Terre, D = TG.debug; if (occupato || !W || !D) return;
   const T = W.terraIn(D.car.x, D.car.z); if (!T) return;
   const nostro = W.stato(T.id) === 'nostro', c = W.costo(T.id);
+  if (nostro && W.alMassimo && W.alMassimo(T.id)) { msg('✅ È già al massimo', 'Vale 300: rinforza un antro terreno vostro', 3); return; }
   if (nostro && n < MINIMO) { msg('È già vostro', 'Raccoji nocchie pe\' rinforzallo', 2.5); return; }
   if (!nostro && n < c) { msg(`Costa ${c}: te ne mancano ${c - n}`, 'Raccoji ancora e torna (o cerca un terreno che costa meno)', 3.5); return; }
   occupato = true; btn._h = '…'; btn.innerHTML = '…'; volo();
-  try { const r = await W.deposita(T, nostro ? Math.min(n, 300) : n); if (r && r.aggiunti) { ls.set('tg-primo-scarico', '1'); const g = $('scGrande'); g && g.remove(); C.togli(r.aggiunti); try { TG.Semplice && TG.Semplice.libera && TG.Semplice.libera(); } catch(e){} } else if (r && r.tetto) msg('Pe\' oggi basta', 'Hai speso tanto: riprova domani', 3.5); else if (!(r && r.manca)) msg('Nun è riuscito', 'Controlla a connessione e riprova', 3); }
+  try { const r = await W.deposita(T, nostro ? Math.min(n, 300, Math.max(1, 300 - W.prezzo(T.id))) : n); if (r && r.aggiunti) { ls.set('tg-primo-scarico', '1'); const g = $('scGrande'); g && g.remove(); C.togli(r.aggiunti); try { TG.Semplice && TG.Semplice.libera && TG.Semplice.libera(); } catch(e){} } else if (r && r.tetto) msg('Pe\' oggi basta', 'Hai speso tanto: riprova domani', 3.5); else if (!(r && (r.manca || r.tetto_ora || r.al_massimo))) msg('Nun è riuscito', 'Controlla a connessione e riprova', 3); }
   catch(e){ msg('Nun è riuscito', 'Controlla a connessione e riprova', 3); }
   occupato = false; bottone();
 }

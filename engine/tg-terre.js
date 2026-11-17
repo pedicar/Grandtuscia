@@ -84,11 +84,15 @@ const SOGLIA = 10;
 const padrone = id => { const l = righe(id), r = l[0]; if (!r || r.punti <= 0) return null; return !l[1] || r.punti - l[1].punti >= SOGLIA ? r.paese : null; };
 // 2.1: i terreni se comprano: prezzo = quanto l'ha pagato chi o tiene; pe' prendelo ce vò prezzo + 10
 const prezzo = id => { const l = classifica[id]; return l && l[0] ? l[0].punti : 0; };
-const costo = id => padrone(id) ? prezzo(id) + 10 : 10;
+// TETTO: un terreno vale al massimo 300 (chi o vò paga 310). RICONQUISTA: ricomprà un terreno de casa de o paese tuo costa a metà (server: tg_terra_compra2)
+const TETTO = 300, DI = {};
+const riconquista = id => { const pd = padrone(id), p = paese(); return !!(pd && p && DI[id] === p && pd !== p); };
+const costo = id => { const c = padrone(id) ? Math.min(prezzo(id), TETTO) + 10 : 10; return riconquista(id) ? Math.ceil(c / 2) : c; };
+const alMassimo = id => prezzo(id) >= TETTO;
 // TERRENI DE CASA: ogni paese parte padrone de i terreni suoi (prezzo 10) finché nun li compra quarcun altro
 const casa = id => { const l = classifica[id]; return !!(l && l[0] && l[0].casa); };
 function stato(id){ const l = righe(id).filter(r => r.punti > 0), p = paese(), pd = padrone(id); if (!l.length) return 'libero'; if (!pd) return 'conteso'; return pd === p ? 'nostro' : 'loro'; }
-async function aggiorna(){ try { let n; try { n = await rpc('tg_terre_mappa'); } catch(e){ n = await rpc('tg_terre_padroni'); } if (n && typeof n === 'object') { classifica = n; locali = {}; versione++; } } catch(e){} caricato = true; }
+async function aggiorna(){ try { let n; try { n = await rpc('tg_terre_mappa'); } catch(e){ n = await rpc('tg_terre_padroni'); } if (n && typeof n === 'object') { classifica = n; for (const k in n) { const r = n[k] && n[k][0]; if (r && r.di) DI[k] = r.di; } locali = {}; versione++; } } catch(e){} caricato = true; }
 async function invia(){
   const p = paese(), d = dev(); if (!p || !d) return;
   for (const id of Object.keys(daMandare)) {
@@ -146,12 +150,15 @@ async function deposita(T, k){
   const prima = padrone(T.id);
   const r = await rpc('tg_terra_compra2', { p_dev: d, p_terra: T.id, p_paese: p, p_nocchie: Math.round(k) });
   if (!r) return r;
+  if (!r.ok && r.tetto_ora) { msg('🐢 Piano piano!', 'In un\'ora se ponno spende al massimo 1.500 nocchie: riprova fra un po\'', 4); return r; }
+  if (!r.ok && r.al_massimo) { classifica[T.id] = [{ paese: p, punti: r.prezzo }]; versione++; msg('✅ È già al massimo', `Vale ${TETTO}: chi o vò paga ${TETTO + 10}`, 3.5); return r; }
   if (!r.ok) { if (r.manca) { if (r.paese) classifica[T.id] = [{ paese: r.paese, punti: r.prezzo, casa: !!r.casa }]; else delete classifica[T.id]; versione++; msg(`Costa ${r.costo}: te ne mancano ${r.manca}`, "Qualcuno l'ha pagato de più: raccoji ancora e torna", 4); } return r; }
   classifica[T.id] = [{ paese: r.paese, punti: r.prezzo }]; versione++;
   r.aggiunti = r.spesa;
   ev('deposito', T.id, r.spesa, { azione: r.azione, da: r.da || null, prezzo: r.prezzo });
   if (r.azione === 'compra') { ev('terra_presa', T.id, null, { a: r.da || null, prezzo: r.prezzo }); festeggiati[T.id] = 1; festa(T, r.da || prima, p, 1, `💰 Pagato ${r.spesa} nocchie`); }
-  else msg(`🛡 ${breve(T.nome)} rinforzato!`, `Mo' costa ${r.prezzo + 10}: chi o vò deve pagà de più`, 4);
+  else msg(`🛡 ${breve(T.nome)} rinforzato!`, r.prezzo >= TETTO ? `È al massimo: chi o vò paga ${TETTO + 10}` : `Mo' costa ${r.prezzo + 10}: chi o vò deve pagà de più`, 4);
+  if (r.riconquista) msg('🏠 Ripreso a metà prezzo!', 'Era de casa vostra: riprenderlo costa a metà', 3.5);
   return r;
 }
 // come sta o paese tuo (pe' a mappa)
@@ -479,7 +486,7 @@ async function premioGioco(){
   if (document.body.classList.contains('playing')) via(); else new MutationObserver((x, o) => { if (document.body.classList.contains('playing')) { o.disconnect(); via(); } }).observe(document.body, { attributes: true, attributeFilter: ['class'] });
   ev('terre_premio', da, bonus, { med: q.get('med') || null, preso });
 }
-TG.Terre = { colore, padrone, righe, terraIn, aggiorna, pannello, descrivi, puntoGuerra, mio: id => punti(id, paese()) + (daMandare[id] || 0), acceso, accesi: () => accesi, battaglia: () => battaglia, _card: cardImmagine, lista: () => TERRE, sfida: SF, derby: inDerby, stato, deposita, compra: deposita, costo, prezzo, casa, ritiraAffitti, situazione, azione, etichetta, paeseMio: paese, SOGLIA, _dbg: () => ({ classifica, locali, daMandare }) };
+TG.Terre = { colore, padrone, righe, terraIn, aggiorna, pannello, descrivi, puntoGuerra, mio: id => punti(id, paese()) + (daMandare[id] || 0), acceso, accesi: () => accesi, battaglia: () => battaglia, _card: cardImmagine, lista: () => TERRE, sfida: SF, derby: inDerby, stato, deposita, compra: deposita, costo, prezzo, casa, riconquista, alMassimo, TETTO, ritiraAffitti, situazione, azione, etichetta, paeseMio: paese, SOGLIA, _dbg: () => ({ classifica, locali, daMandare }) };
 // per i moduli che usavano le zone (presenza: colore del paese)
 TG.Zone = TG.Zone || { colore, squadra: false };
 function avvia(){
