@@ -70,6 +70,8 @@ function bottone(){
   const pr = W.prezzo(T.id), max = W.alMassimo && W.alMassimo(T.id), mette = Math.min(n, 300, Math.max(0, 300 - pr)), rq = W.riconquista && W.riconquista(T.id);
   const h = nostro ? (max ? `✅ AL MASSIMO<small>vale 300: chi o vò paga 310</small>` : n >= MINIMO ? `🛡 RINFORZA<small>ce metti ${mette} 🌰 · poi costa ${pr + mette + 10}${tasto}</small>` : `✅ È NOSTRO<small>costa ${c} a chi o vò</small>`)
     : pago ? (rq ? `🏠 RIPRENDILO<small>a metà: ${c} 🌰${tasto}</small>` : `💰 COMPRA<small>costa ${c} 🌰 · ce l'hai${tasto}</small>`) : `💰 COSTA ${c}<small>${rq ? 'a metà, è de casa · ' : ''}te ne mancano ${c - n}</small>`;
+  const bl = W.blocco ? W.blocco() : 0;
+  if (bl && (pago || (nostro && n >= MINIMO && !max))) { const hb = `🐢 ASPETTA<small>limite orario · fra ${bl} min</small>`; btn.classList.add('no'); btn.classList.remove('go'); if (btn._h !== hb) { btn._h = hb; btn.innerHTML = hb; } return; }
   btn.classList.toggle('no', !(pago || (nostro && n >= MINIMO && !max))); if (btn._h !== h) { btn._h = h; btn.innerHTML = h; }   // riscritto solo se cambia: sennò Safari perde o clic
   btn.classList.toggle('go', pago);
 }
@@ -77,6 +79,7 @@ async function scarica(){
   const W = TG.Terre, D = TG.debug; if (occupato || !W || !D) return;
   const T = W.terraIn(D.car.x, D.car.z); if (!T) return;
   const nostro = W.stato(T.id) === 'nostro', c = W.costo(T.id);
+  if (W.blocco && W.blocco()) { msg('🐢 Limite orario raggiunto', `Al massimo 3.000 nocchie spese in un'ora: riprova fra ${W.blocco()} min`, 3.5); return; }
   if (nostro && W.alMassimo && W.alMassimo(T.id)) { msg('✅ È già al massimo', 'Vale 300: rinforza un antro terreno vostro', 3); return; }
   if (nostro && n < MINIMO) { msg('È già vostro', 'Raccoji nocchie pe\' rinforzallo', 2.5); return; }
   if (!nostro && n < c) { msg(`Costa ${c}: te ne mancano ${c - n}`, 'Raccoji ancora e torna (o cerca un terreno che costa meno)', 3.5); return; }

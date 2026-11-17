@@ -136,7 +136,7 @@ async function dona(){
       if (r.liv > r.prima_liv) msg(`🎉 A cooperativa è salita: ${NOMI[r.liv]}!`, `${DA[r.liv]}. Grazie a te e a tutti i paesani`, 6);
       else msg(`🏛 Grazie! +${r.dato} a a cooperativa`, `${prox ? `${fmt(r.tot)}/${fmt(prox)} pe' ${NOMI[I.liv + 1]}` : 'Livello massimo'}${pres ? ' · 👑 O Presidente sei tu!' : r.pres ? ` · 👑 ${r.pres.nome} ${fmt(r.pres.nocchie)}` : ''}`, 4.5);
       const P = COOP.find(x => x.p === p); if (P) ridisegna(P);
-    } else if (r && r.tetto_ora) msg('🐢 Piano piano!', 'In un\'ora se ponno spende al massimo 1.500 nocchie: riprova fra un po\'', 4);
+    } else if (r && r.tetto_ora) msg('🐢 Piano piano!', 'In un\'ora se ponno spende al massimo 3.000 nocchie: riprova fra un po\'', 4);
     else if (r && r.tetto) msg('Pe\' oggi basta', 'Hai donato tanto: riprova domani', 3);
     else msg('Nun è riuscito', 'Controlla a connessione e riprova', 3);
   } catch(e){ msg('Nun è riuscito', 'Controlla a connessione e riprova', 3); }

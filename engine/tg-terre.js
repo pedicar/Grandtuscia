@@ -86,6 +86,8 @@ const padrone = id => { const l = righe(id), r = l[0]; if (!r || r.punti <= 0) r
 const prezzo = id => { const l = classifica[id]; return l && l[0] ? l[0].punti : 0; };
 // TETTO: un terreno vale al massimo 300 (chi o vò paga 310). RICONQUISTA: ricomprà un terreno de casa de o paese tuo costa a metà (server: tg_terra_compra2)
 const TETTO = 300, DI = {};
+let bloccoFino = 0;   // limite orario de spesa (server): fino a quanno o bottone resta fermo
+const blocco = () => bloccoFino > Date.now() ? Math.ceil((bloccoFino - Date.now()) / 60000) : 0;
 // MANUTENZIONE: più terreni hai, più spese hai. Ogni notte i terreni fori casa perdono 5% + 0,5% pe' terreno tenuto (max 40%): server tg_manutenzione_esegui
 let MANUT = {}, manutDetto = false;
 const manutenzione = p => MANUT[p || paese()] || null;
@@ -180,7 +182,7 @@ async function deposita(T, k){
   const prima = padrone(T.id);
   const r = await rpc('tg_terra_compra2', { p_dev: d, p_terra: T.id, p_paese: p, p_nocchie: Math.round(k) });
   if (!r) return r;
-  if (!r.ok && r.tetto_ora) { msg('🐢 Piano piano!', 'In un\'ora se ponno spende al massimo 1.500 nocchie: riprova fra un po\'', 4); return r; }
+  if (!r.ok && r.tetto_ora) { const fra = Math.max(1, +r.fra || 10); bloccoFino = Date.now() + fra * 60000; msg('🐢 Limite orario raggiunto', `Al massimo 3.000 nocchie spese in un'ora: riprova fra ${fra} minut${fra === 1 ? 'o' : 'i'}`, 5); return r; }
   if (!r.ok && r.al_massimo) { classifica[T.id] = [{ paese: p, punti: r.prezzo }]; versione++; msg('✅ È già al massimo', `Vale ${TETTO}: chi o vò paga ${TETTO + 10}`, 3.5); return r; }
   if (!r.ok) { if (r.manca) { if (r.paese) classifica[T.id] = [{ paese: r.paese, punti: r.prezzo, casa: !!r.casa }]; else delete classifica[T.id]; versione++; msg(`Costa ${r.costo}: te ne mancano ${r.manca}`, "Qualcuno l'ha pagato de più: raccoji ancora e torna", 4); } return r; }
   classifica[T.id] = [{ paese: r.paese, punti: r.prezzo }]; versione++;
@@ -528,7 +530,7 @@ async function premioGioco(){
   if (document.body.classList.contains('playing')) via(); else new MutationObserver((x, o) => { if (document.body.classList.contains('playing')) { o.disconnect(); via(); } }).observe(document.body, { attributes: true, attributeFilter: ['class'] });
   ev('terre_premio', da, bonus, { med: q.get('med') || null, preso });
 }
-TG.Terre = { colore, padrone, righe, terraIn, aggiorna, pannello, descrivi, puntoGuerra, mio: id => punti(id, paese()) + (daMandare[id] || 0), acceso, accesi: () => accesi, battaglia: () => battaglia, _card: cardImmagine, lista: () => TERRE, sfida: SF, derby: inDerby, stato, deposita, compra: deposita, costo, prezzo, casa, riconquista, alMassimo, TETTO, manutenzione, ritiraAffitti, situazione, azione, etichetta, paeseMio: paese, SOGLIA, _dbg: () => ({ classifica, locali, daMandare }) };
+TG.Terre = { colore, padrone, righe, terraIn, aggiorna, pannello, descrivi, puntoGuerra, mio: id => punti(id, paese()) + (daMandare[id] || 0), acceso, accesi: () => accesi, battaglia: () => battaglia, _card: cardImmagine, lista: () => TERRE, sfida: SF, derby: inDerby, stato, deposita, compra: deposita, costo, prezzo, casa, riconquista, alMassimo, TETTO, manutenzione, blocco, ritiraAffitti, situazione, azione, etichetta, paeseMio: paese, SOGLIA, _dbg: () => ({ classifica, locali, daMandare }) };
 // per i moduli che usavano le zone (presenza: colore del paese)
 TG.Zone = TG.Zone || { colore, squadra: false };
 function avvia(){
