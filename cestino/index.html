@@ -1,0 +1,383 @@
+<!doctype html>
+<html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+</head><body>
+<title>Cestino della Tuscia</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Atkinson+Hyperlegible:wght@400;700&display=swap">
+<style>
+/* Un cestino di vimini su un prato: in alto mosse e obiettivo grandi, al centro la griglia 7x7, sotto due soli bottoni.
+   Pensato per chi ha 60 anni e più: caselle grandi, testo grande, niente tempo che scorre, un aiuto se ti fermi. Tema unico, voluto. */
+:root{
+  --prato:#24452f; --prato2:#1b3524; --vimini:#c99a5b; --vimini2:#a87a40; --cella:#f3e3c3; --cella2:#e8d2a6;
+  --testo:#fff8ea; --scuro:#2a1d10; --oro:#f5c542; --rosso:#d9573b;
+  --f-titolo:"Fredoka","Trebuchet MS",system-ui,sans-serif; --f-testo:"Atkinson Hyperlegible","Verdana",system-ui,sans-serif;
+  color-scheme:dark;
+}
+[hidden]{display:none!important}
+html,body{height:100%}
+body{background:radial-gradient(120% 80% at 50% 0%,var(--prato) 0%,var(--prato2) 100%);color:var(--testo);font:400 19px/1.4 var(--f-testo);overflow:hidden;-webkit-user-select:none;user-select:none;touch-action:manipulation}
+.app{height:100%;display:flex;flex-direction:column;align-items:center;gap:12px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:12px 14px;box-sizing:border-box}
+button{font-family:var(--f-titolo);cursor:pointer;border:0}
+button:focus-visible{outline:4px solid var(--oro);outline-offset:3px}
+
+/* barra in alto */
+.barra{width:min(100%,520px);display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:stretch}
+.box{background:rgba(0,0,0,.28);border-radius:16px;padding:8px 12px;display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:76px}
+.box small{font:700 13px var(--f-testo);letter-spacing:.06em;text-transform:uppercase;opacity:.85}
+.box b{font:700 32px/1 var(--f-titolo);font-variant-numeric:tabular-nums}
+.box.poche b{color:#ffb4a0}
+.obiettivi{flex-direction:row;gap:14px;flex-wrap:wrap}
+.ob{display:flex;align-items:center;gap:6px;font:700 24px var(--f-titolo);font-variant-numeric:tabular-nums}
+.ob svg{width:38px;height:38px}
+.ob.fatto{color:#a8e6a0}
+.paese{font:600 20px var(--f-titolo);text-align:center;margin:0;line-height:1.1;text-wrap:balance}
+.paese span{display:block;font:400 15px var(--f-testo);opacity:.8;margin-top:2px}
+
+/* il cestino */
+.cesto{position:relative;width:var(--lato);height:var(--lato);padding:10px;border-radius:22px;background:repeating-linear-gradient(45deg,var(--vimini) 0 9px,var(--vimini2) 9px 18px);box-shadow:0 10px 0 #7a5228,0 18px 30px rgba(0,0,0,.35);box-sizing:content-box}
+.griglia{position:absolute;inset:10px;border-radius:14px;overflow:hidden;background:var(--cella2)}
+.casa{position:absolute;width:var(--c);height:var(--c);box-sizing:border-box;border:1px solid rgba(120,80,30,.12)}
+.casa.chiara{background:var(--cella)}
+.pezzo{position:absolute;left:0;top:0;width:var(--c);height:var(--c);display:flex;align-items:center;justify-content:center;transition:transform .2s ease-in;will-change:transform}
+.pezzo svg{width:84%;height:84%;transition:transform .18s ease;filter:drop-shadow(0 2px 1px rgba(0,0,0,.25))}
+.pezzo.scelto svg{transform:scale(1.15)}
+.pezzo.scelto::before{content:"";position:absolute;inset:3px;border-radius:12px;border:4px solid var(--rosso)}
+.pezzo.via svg{transform:scale(0);transition:transform .22s ease-in}
+.pezzo.aiuto svg{animation:aiuto 1s ease-in-out infinite}
+@keyframes aiuto{50%{transform:scale(1.22) rotate(-6deg)}}
+.pezzo .spec{position:absolute;inset:6%;border-radius:12px;pointer-events:none}
+.pezzo .spec.h{background:linear-gradient(transparent 42%,rgba(255,255,255,.85) 42% 58%,transparent 58%)}
+.pezzo .spec.v{background:linear-gradient(90deg,transparent 42%,rgba(255,255,255,.85) 42% 58%,transparent 58%)}
+.lampo{position:absolute;pointer-events:none;background:rgba(255,246,200,.85);border-radius:10px;animation:lampo .35s ease-out forwards}
+@keyframes lampo{from{opacity:1}to{opacity:0}}
+.punti{position:absolute;pointer-events:none;font:700 26px var(--f-titolo);color:#fff;text-shadow:0 2px 0 rgba(0,0,0,.5);animation:su .8s ease-out forwards}
+@keyframes su{to{transform:translateY(-50px);opacity:0}}
+@media (prefers-reduced-motion:reduce){.pezzo,.pezzo svg{transition-duration:.05s}.pezzo.aiuto svg{animation:none;outline:4px solid var(--oro)}}
+
+/* sotto */
+.sotto{display:flex;gap:12px;width:min(100%,520px)}
+.sotto button{flex:1;min-height:56px;border-radius:16px;font-size:18px;padding:0 6px;font-weight:600;background:rgba(0,0,0,.3);color:var(--testo)}
+.consiglio{min-height:28px;font-size:18px;text-align:center;opacity:.95;margin:0}
+
+/* schermate (mappa, fine livello) */
+.velo{position:fixed;inset:0;z-index:20;background:rgba(15,28,19,.82);display:flex;align-items:center;justify-content:center;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:16px}
+.carta{width:min(100%,460px);max-height:100%;overflow:auto;background:#fbf3e2;color:var(--scuro);border-radius:24px;padding:22px;box-sizing:border-box;box-shadow:0 20px 50px rgba(0,0,0,.45);text-align:center}
+.carta h2{font:700 30px/1.15 var(--f-titolo);margin:0 0 6px;text-wrap:balance}
+.carta p{margin:8px 0;font-size:19px}
+.carta .fatto-vero{background:#efe1c2;border-radius:16px;padding:12px 14px;text-align:left;font-size:18px;margin:14px 0}
+.carta .fatto-vero b{font-family:var(--f-titolo)}
+.stelle{font-size:46px;letter-spacing:6px;margin:4px 0;color:var(--oro);text-shadow:0 2px 0 #a8801c}
+.stelle .spenta{color:#d8c9a8;text-shadow:none}
+.grande{display:block;width:100%;min-height:62px;border-radius:18px;background:var(--rosso);color:#fff;font-size:24px;font-weight:600;margin-top:12px;box-shadow:0 5px 0 #9c3a24}
+.grande:active{transform:translateY(3px);box-shadow:0 2px 0 #9c3a24}
+.piccolo{display:block;width:100%;min-height:52px;border-radius:16px;background:transparent;color:var(--scuro);font-size:19px;margin-top:8px;border:2px solid #cdb68b}
+.livelli{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:14px}
+.livello{min-height:74px;border-radius:16px;background:#efe1c2;color:var(--scuro);font:600 18px/1.15 var(--f-titolo);padding:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
+.livello small{font:400 15px var(--f-testo);color:#7a5a32}
+.livello .st{color:#c9971c;font-size:16px;letter-spacing:2px}
+.livello[disabled]{opacity:.45;cursor:default}
+.livello.prossimo{background:var(--oro);box-shadow:0 4px 0 #b38b1f}
+.intro-pezzi{display:flex;justify-content:center;gap:6px;margin:10px 0}
+.intro-pezzi svg{width:44px;height:44px}
+</style>
+
+<div class="app" id="app">
+  <div class="barra">
+    <div class="box" id="boxMosse"><small>Mosse</small><b id="mosse">20</b></div>
+    <div class="box obiettivi" id="obiettivi" aria-label="Obiettivo"></div>
+    <div class="box"><small>Punti</small><b id="punti" style="font-size:24px">0</b></div>
+  </div>
+  <p class="paese" id="paese">Fabrica di Roma<span>raccogli le nocciole</span></p>
+  <div class="cesto" id="cesto"><div class="griglia" id="griglia"></div></div>
+  <p class="consiglio" id="consiglio">Scambia due vicini per metterne 3 in fila</p>
+  <div class="sotto">
+    <button type="button" id="bMappa">🗺️ Paesi</button>
+    <button type="button" id="bGiorno">📅 Del giorno</button>
+    <button type="button" id="bRifai">↻ Rifai</button>
+  </div>
+</div>
+
+<div class="velo" id="velo" hidden><div class="carta" id="carta"></div></div>
+
+<script>
+(function(){
+'use strict';
+/* ------------------------------------------------------------------ nocciola, castagna, fungo, oliva: forme e colori ben diversi */
+const PEZZI = {
+  nocciola: { nome:'nocciole', svg:'<svg viewBox="0 0 64 64"><ellipse cx="32" cy="38" rx="21" ry="20" fill="#a0612c"/><ellipse cx="25" cy="34" rx="6" ry="8" fill="#c98a4f" opacity=".7"/><path d="M10 27c4-15 40-15 44 0-6-5-12 3-22-2-10 5-16-3-22 2z" fill="#6aa83a"/><path d="M32 7v8" stroke="#4d6b26" stroke-width="4" stroke-linecap="round"/></svg>' },
+  castagna: { nome:'castagne', svg:'<svg viewBox="0 0 64 64"><path d="M32 6C19 18 9 30 10 42c1 10 10 16 22 16s21-6 22-16C55 30 45 18 32 6z" fill="#4a210f"/><path d="M12 45c6 6 34 6 40 0-1 9-9 13-20 13S13 54 12 45z" fill="#e2c49a"/><path d="M24 21c-3 5-5 10-5 15" stroke="#8a4a2a" stroke-width="4" stroke-linecap="round" fill="none"/></svg>' },
+  fungo:    { nome:'funghi porcini', svg:'<svg viewBox="0 0 64 64"><path d="M23 33h18l4 21c0 5-26 5-26 0z" fill="#fbf2dc" stroke="#d8c7a0" stroke-width="2"/><path d="M6 34C6 17 18 7 32 7s26 10 26 27c-7 5-45 5-52 0z" fill="#c0612a"/><path d="M15 21c4-6 10-9 17-9" stroke="#e39a62" stroke-width="4" stroke-linecap="round" fill="none"/></svg>' },
+  oliva:    { nome:'olive', svg:'<svg viewBox="0 0 64 64"><path d="M38 8c9-3 17 1 19 7-7 3-14 0-19-7z" fill="#4f8a2a"/><ellipse cx="30" cy="38" rx="16" ry="21" transform="rotate(-25 30 38)" fill="#6f8d1a"/><ellipse cx="24" cy="31" rx="4.5" ry="8" transform="rotate(-25 24 31)" fill="#cddc72" opacity=".85"/><path d="M38 20l5-9" stroke="#56661a" stroke-width="3" stroke-linecap="round"/></svg>' },
+  jolly:    { nome:'cestino magico', svg:'<svg viewBox="0 0 64 64"><path d="M12 28h40l-5 26H17z" fill="#b8843f"/><path d="M12 28h40" stroke="#7a5228" stroke-width="5" stroke-linecap="round"/><path d="M20 28c0-12 24-12 24 0" stroke="#7a5228" stroke-width="5" fill="none"/><path d="M32 6l3 7 7 1-5 5 1 7-6-3-6 3 1-7-5-5 7-1z" fill="#ffd84a" stroke="#c8961a" stroke-width="1.5"/><path d="M17 38h30M19 46h26" stroke="#d9a861" stroke-width="3"/></svg>' }
+};
+const TIPI = ['nocciola','castagna','fungo','oliva'];
+
+/* ------------------------------------------------------------------ i paesi (livelli): cose vere della Tuscia, frasi brevi */
+const LIVELLI = [
+  { paese:'Fabrica di Roma', tipi:4, mosse:20, ob:{nocciola:15}, fatto:'Nelle campagne di Fabrica c\'è Falerii Novi, una città romana con le mura ancora in piedi.' },
+  { paese:'Carbognano', tipi:4, mosse:20, ob:{nocciola:25}, fatto:'Carbognano è il paese delle nocciole: qui cresce la Tonda Gentile Romana, oggi Nocciola Romana DOP.' },
+  { paese:'Vallerano', tipi:4, mosse:20, ob:{castagna:22}, fatto:'La Castagna di Vallerano ha il marchio DOP: si raccoglie sui Monti Cimini in autunno.' },
+  { paese:'Caprarola', tipi:4, mosse:22, ob:{oliva:18, nocciola:18}, fatto:'A Caprarola c\'è Palazzo Farnese, con la sua pianta a cinque lati e la grande scala a chiocciola.' },
+  { paese:'Lago di Vico', tipi:4, mosse:22, ob:{fungo:24}, fatto:'Il Lago di Vico è dentro un antico vulcano. Intorno c\'è una riserva naturale con boschi di faggi.' },
+  { paese:'Ronciglione', tipi:4, mosse:22, ob:{castagna:20, fungo:15}, fatto:'Ronciglione è famoso per il Carnevale e per le corse a vuoto, i cavalli che corrono senza fantino.' },
+  { paese:'Soriano nel Cimino', tipi:4, mosse:24, ob:{castagna:30, fungo:15}, fatto:'A Soriano, in ottobre, c\'è la Sagra delle Castagne, sotto il Castello Orsini.' },
+  { paese:'Vetralla', tipi:4, mosse:24, ob:{oliva:30, fungo:15}, fatto:'Intorno a Vetralla gli ulivi danno l\'olio extravergine della Tuscia, che ha anche lui la DOP.' },
+  { paese:'Civita Castellana', tipi:4, mosse:25, ob:{oliva:25, nocciola:25}, fatto:'Civita Castellana è la città della ceramica: le sue fabbriche lavorano da più di un secolo.' },
+  { paese:'Viterbo', tipi:4, mosse:26, ob:{nocciola:22, castagna:22, fungo:18}, fatto:'Ogni 3 settembre a Viterbo cento uomini portano a spalla la Macchina di Santa Rosa, alta circa 30 metri.' }
+];
+
+/* ------------------------------------------------------------------ stato */
+const N = 7;
+const ls = { get(k){ try { return JSON.parse(localStorage.getItem(k)); } catch(e){ return null; } }, set(k,v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch(e){} } };
+let salvato = ls.get('cestino-tuscia') || { stelle:{}, attuale:0 };
+let lv = 0, L = null, B = [], mosse = 0, punti = 0, resto = {}, occupato = false, scelto = null, timerAiuto = 0, lato = 0, C = 0;
+const $ = id => document.getElementById(id);
+const griglia = $('griglia'), cesto = $('cesto');
+const attesa = ms => new Promise(r => setTimeout(r, ms));
+const vibra = n => { try { navigator.vibrate && navigator.vibrate(n); } catch(e){} };
+
+/* ------------------------------------------------------------------ suoni gentili (partono dopo il primo tocco) */
+let ac = null;
+function suono(f, d, v){ try { ac = ac || new (window.AudioContext || window.webkitAudioContext)(); const o = ac.createOscillator(), g = ac.createGain(); o.type = 'sine'; o.frequency.value = f; g.gain.setValueAtTime(v || .08, ac.currentTime); g.gain.exponentialRampToValueAtTime(.0001, ac.currentTime + (d || .15)); o.connect(g).connect(ac.destination); o.start(); o.stop(ac.currentTime + (d || .15)); } catch(e){} }
+
+/* ------------------------------------------------------------------ misure: il cestino occupa tutto lo spazio libero */
+function misura(){
+  const app = $('app'), altri = [...app.children].filter(e => e !== cesto).reduce((a, e) => a + e.getBoundingClientRect().height, 0);
+  const alto = app.clientHeight - altri - 12 * (app.children.length - 1) - 26 - 20;
+  lato = Math.floor(Math.max(240, Math.min(app.clientWidth - 20, alto, 520)) / N) * N; C = lato / N;
+  document.documentElement.style.setProperty('--lato', lato + 'px'); document.documentElement.style.setProperty('--c', C + 'px');
+  for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) { const p = B[r] && B[r][c]; if (p) metti(p, r, c); }
+  disegnaCase();
+}
+function disegnaCase(){ griglia.querySelectorAll('.casa').forEach(e => e.remove()); for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) { const d = document.createElement('div'); d.className = 'casa' + ((r + c) % 2 ? '' : ' chiara'); d.style.left = c * C + 'px'; d.style.top = r * C + 'px'; griglia.prepend(d); } }
+
+/* ------------------------------------------------------------------ pezzi */
+function nuovo(tipo, r, c, daRiga){
+  const el = document.createElement('div'); el.className = 'pezzo';
+  const p = { tipo, spec:null, el, r, c };
+  disegnaPezzo(p); griglia.appendChild(el);
+  el.style.transition = 'none'; el.style.transform = `translate(${c * C}px,${(daRiga == null ? r : daRiga) * C}px)`; el.offsetWidth; el.style.transition = '';
+  el.addEventListener('pointerdown', e => giu(e, p));
+  return p;
+}
+function disegnaPezzo(p){ p.el.innerHTML = PEZZI[p.tipo].svg + (p.spec === 'h' || p.spec === 'v' ? `<span class="spec ${p.spec}"></span>` : ''); p.el.setAttribute('aria-label', PEZZI[p.tipo].nome); }
+function metti(p, r, c){ p.r = r; p.c = c; p.el.style.transform = `translate(${c * C}px,${r * C}px)`; }
+let rnd = Math.random;
+function seme(str){ let h = 1779033703 ^ str.length; for (let i = 0; i < str.length; i++) { h = Math.imul(h ^ str.charCodeAt(i), 3432918353); h = h << 13 | h >>> 19; } let a = h >>> 0; return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+const caso = () => TIPI[Math.floor(rnd() * L.tipi)];
+
+/* ------------------------------------------------------------------ partita */
+const oggi = () => { try { return new Intl.DateTimeFormat('en-CA', { timeZone:'Europe/Rome' }).format(new Date()); } catch(e){ return new Date().toISOString().slice(0, 10); } };
+const MESI = ['gennaio','febbraio','marzo','aprile','maggio','giugno','luglio','agosto','settembre','ottobre','novembre','dicembre'];
+const dataBella = g => +g.slice(8) + ' ' + MESI[+g.slice(5, 7) - 1];
+const GIORNO = { paese:'Sfida del giorno', tipi:4, mosse:20, ob:{}, giorno:true };
+function parti(i, k){
+  if (i === 'giorno' && !salvato.paese) return chiediPaese(() => parti('giorno'));
+  const g = i === 'giorno'; rnd = g ? seme('cestino-' + oggi() + (k ? '-' + k : '')) : Math.random;
+  lv = g ? lv : i; L = g ? GIORNO : LIVELLI[i]; mosse = L.mosse; punti = 0; resto = Object.assign({}, L.ob); scelto = null; occupato = false;
+  griglia.querySelectorAll('.pezzo,.lampo,.punti').forEach(e => e.remove());
+  B = [];
+  for (let r = 0; r < N; r++) { B[r] = []; for (let c = 0; c < N; c++) { let t; do { t = caso(); } while ((c >= 2 && B[r][c-1].tipo === t && B[r][c-2].tipo === t) || (r >= 2 && B[r-1][c].tipo === t && B[r-2][c].tipo === t)); B[r][c] = nuovo(t, r, c, r - N); } }
+  requestAnimationFrame(() => { for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) metti(B[r][c], r, c); });
+  if (!c_mossa()) return parti(i, (k || 0) + 1);
+  $('paese').innerHTML = g ? `Sfida del giorno · ${dataBella(oggi())}<span>stesso cestino per tutta la Tuscia: fai più punti che puoi</span>` : `${L.paese}<span>${Object.keys(L.ob).map(k => 'raccogli ' + PEZZI[k].nome).join(' e ')}</span>`;
+  scrivi(); consiglio('Scambia due vicini per metterne 3 in fila'); aiutoDopo();
+  if (!g) { salvato.attuale = i; ls.set('cestino-tuscia', salvato); }
+}
+function scrivi(){
+  $('mosse').textContent = mosse; $('boxMosse').classList.toggle('poche', mosse <= 5); $('punti').textContent = punti;
+  if (L.giorno) { $('obiettivi').innerHTML = `<span class="ob" style="font-size:19px">📅 ${(salvato.giorni || {})[oggi()] != null ? 'Allenamento' : 'Uguale per tutti'}</span>`; return; }
+  $('obiettivi').innerHTML = Object.keys(L.ob).map(k => `<span class="ob${resto[k] <= 0 ? ' fatto' : ''}">${PEZZI[k].svg}${resto[k] <= 0 ? '✓' : resto[k]}</span>`).join('');
+}
+function consiglio(t){ $('consiglio').textContent = t; }
+
+/* ------------------------------------------------------------------ tocchi: scorri il dito, oppure tocca uno e poi il vicino */
+let inizio = null;
+function giu(e, p){
+  if (occupato) return; e.preventDefault(); togliAiuto(); suono(0, .01, .0001);
+  inizio = { x:e.clientX, y:e.clientY, p, mosso:false };
+  const muovi = ev => { if (!inizio || inizio.mosso) return; const dx = ev.clientX - inizio.x, dy = ev.clientY - inizio.y; if (Math.hypot(dx, dy) < C * .35) return; inizio.mosso = true;
+    const dr = Math.abs(dy) > Math.abs(dx) ? Math.sign(dy) : 0, dc = dr ? 0 : Math.sign(dx); const q = B[p.r + dr] && B[p.r + dr][p.c + dc]; deseleziona(); if (q) prova(p, q); };
+  const su = () => { removeEventListener('pointermove', muovi); removeEventListener('pointerup', su); removeEventListener('pointercancel', su);
+    if (inizio && !inizio.mosso) { if (scelto && scelto !== p && Math.abs(scelto.r - p.r) + Math.abs(scelto.c - p.c) === 1) { const a = scelto; deseleziona(); prova(a, p); } else if (scelto === p) deseleziona(); else { deseleziona(); scelto = p; p.el.classList.add('scelto'); } }
+    inizio = null; };
+  addEventListener('pointermove', muovi); addEventListener('pointerup', su); addEventListener('pointercancel', su);
+}
+function deseleziona(){ if (scelto) scelto.el.classList.remove('scelto'); scelto = null; }
+
+function scambia(a, b){ const ar = a.r, ac2 = a.c; B[b.r][b.c] = a; B[ar][ac2] = b; metti(a, b.r, b.c); metti(b, ar, ac2); }
+async function prova(a, b){
+  if (occupato || mosse <= 0) return; occupato = true; togliAiuto();
+  scambia(a, b); suono(520, .08); await attesa(210);
+  let ok = false;
+  if (a.tipo === 'jolly' || b.tipo === 'jolly') {           // cestino magico: porta via tutti quelli dell'altro tipo
+    const j = a.tipo === 'jolly' ? a : b, o = j === a ? b : a, via = new Set([j]);
+    for (const riga of B) for (const p of riga) if (p.tipo === o.tipo || (o.tipo === 'jolly')) via.add(p);
+    mosse--; scrivi(); await togli(via, 'Cestino magico! 🧺'); await cadi(); await cascate(); ok = true;
+  } else if (trovaFile().length) { mosse--; scrivi(); await cascate([a, b]); ok = true; }
+  if (!ok) { scambia(a, b); suono(260, .12); vibra(30); consiglio('Così non fanno fila: prova un\'altra coppia'); await attesa(220); }
+  occupato = false; dopoMossa();
+}
+
+/* ------------------------------------------------------------------ file da 3, 4, 5 */
+function trovaFile(){
+  const file = [];
+  for (let r = 0; r < N; r++) { let c = 0; while (c < N) { const t = B[r][c].tipo; let e = c + 1; while (e < N && B[r][e].tipo === t && t !== 'jolly') e++; if (e - c >= 3 && t !== 'jolly') file.push({ dir:'h', celle:[...Array(e - c)].map((x, i) => B[r][c + i]) }); c = e; } }
+  for (let c = 0; c < N; c++) { let r = 0; while (r < N) { const t = B[r][c].tipo; let e = r + 1; while (e < N && B[e][c].tipo === t && t !== 'jolly') e++; if (e - r >= 3 && t !== 'jolly') file.push({ dir:'v', celle:[...Array(e - r)].map((x, i) => B[r + i][c]) }); r = e; } }
+  return file;
+}
+async function cascate(mossi){
+  let giro = 0;
+  for (;;) {
+    const file = trovaFile(); if (!file.length) break; giro++;
+    const via = new Set(), premi = [];
+    for (const f of file) {
+      f.celle.forEach(p => via.add(p));
+      if (f.celle.length >= 4) {               // 4 in fila: pezzo a righe · 5 in fila: cestino magico
+        const dove = (mossi && f.celle.find(p => mossi.includes(p))) || f.celle[Math.floor(f.celle.length / 2)];
+        premi.push({ p:dove, spec: f.celle.length >= 5 ? 'jolly' : (f.dir === 'h' ? 'h' : 'v') });
+      }
+    }
+    for (const pr of premi) via.delete(pr.p);
+    await togli(via, giro > 1 ? ['Bravo!', 'Che raccolta!', 'Bellissimo!'][Math.min(2, giro - 2)] : null, giro);
+    for (const pr of premi) { if (pr.spec === 'jolly') { pr.p.tipo = 'jolly'; pr.p.spec = null; } else pr.p.spec = pr.spec; disegnaPezzo(pr.p); suono(880, .2, .06); }
+    if (premi.length) consiglio(premi.some(x => x.spec === 'jolly') ? 'Hai fatto un cestino magico: scambialo con un vicino!' : 'Pezzo a righe: quando lo metti in fila, pulisce tutta la riga');
+    await cadi(); mossi = null;
+  }
+}
+async function togli(via, frase, giro){
+  // i pezzi a righe portano via la loro riga o colonna
+  let ancora = true; while (ancora) { ancora = false; for (const p of [...via]) { if (p.spec && !p.usato) { p.usato = true; ancora = true; lampo(p);
+    if (p.spec === 'h') for (let c = 0; c < N; c++) via.add(B[p.r][c]); else for (let r = 0; r < N; r++) via.add(B[r][p.c]); } } }
+  let n = 0;
+  for (const p of via) { if (resto[p.tipo] > 0) resto[p.tipo]--; p.el.classList.add('via'); n++; }
+  const g = Math.max(1, giro || 1); punti += n * 10 * g; scrivi();
+  const uno = [...via][0]; if (uno) puntiVolanti(uno, '+' + n * 10 * g);
+  suono(600 + 80 * Math.min(6, g), .12); vibra(15);
+  if (frase) consiglio(frase);
+  await attesa(230);
+  for (const p of via) { p.el.remove(); B[p.r][p.c] = null; }
+}
+function lampo(p){ const d = document.createElement('div'); d.className = 'lampo'; if (p.spec === 'h') Object.assign(d.style, { left:'0', top:p.r * C + 'px', width:lato + 'px', height:C + 'px' }); else Object.assign(d.style, { left:p.c * C + 'px', top:'0', width:C + 'px', height:lato + 'px' }); griglia.appendChild(d); setTimeout(() => d.remove(), 400); suono(1040, .25, .07); }
+function puntiVolanti(p, t){ const d = document.createElement('div'); d.className = 'punti'; d.textContent = t; d.style.left = p.c * C + 'px'; d.style.top = p.r * C + 'px'; griglia.appendChild(d); setTimeout(() => d.remove(), 800); }
+async function cadi(){
+  for (let c = 0; c < N; c++) {
+    let giu = N - 1;
+    for (let r = N - 1; r >= 0; r--) if (B[r][c]) { const p = B[r][c]; B[r][c] = null; B[giu][c] = p; metti(p, giu, c); giu--; }
+    for (let r = giu, k = 1; r >= 0; r--, k++) { const p = nuovo(caso(), r, c, -k); B[r][c] = p; }
+  }
+  await attesa(30);
+  for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) metti(B[r][c], r, c);
+  await attesa(240);
+}
+
+/* ------------------------------------------------------------------ c'è ancora una mossa? (sennò si rimescola) e l'aiuto */
+function mossaPossibile(){
+  for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) {
+    if (B[r][c].tipo === 'jolly') return [B[r][c], (B[r][c + 1]) || (B[r][c - 1]) || (B[r + 1] && B[r + 1][c]) || (B[r - 1] && B[r - 1][c])];
+    for (const [dr, dc] of [[0,1],[1,0]]) { const r2 = r + dr, c2 = c + dc; if (r2 >= N || c2 >= N) continue;
+      const a = B[r][c], b = B[r2][c2]; B[r][c] = b; B[r2][c2] = a; const ok = trovaFile().length > 0; B[r][c] = a; B[r2][c2] = b; if (ok) return [a, b]; }
+  }
+  return null;
+}
+const c_mossa = () => !!mossaPossibile();
+async function rimescola(){
+  consiglio('Nessuna mossa: rimescolo il cestino'); await attesa(500);
+  const tutti = B.flat(); let t = tutti.map(p => p.tipo);
+  for (let k = 0; k < 30; k++) { for (let i = t.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [t[i], t[j]] = [t[j], t[i]]; } tutti.forEach((p, i) => { p.tipo = t[i]; }); if (!trovaFile().length && mossaPossibile()) break; }
+  tutti.forEach(disegnaPezzo);
+}
+function aiutoDopo(){ clearTimeout(timerAiuto); timerAiuto = setTimeout(() => { if (occupato || !$('velo').hidden) return; const m = mossaPossibile(); if (m) { m.forEach(p => p && p.el.classList.add('aiuto')); consiglio('Un aiuto: scambia i due che si muovono'); } }, 7000); }
+function togliAiuto(){ griglia.querySelectorAll('.aiuto').forEach(e => e.classList.remove('aiuto')); aiutoDopo(); }
+
+/* ------------------------------------------------------------------ fine del paese */
+async function dopoMossa(){
+  if (L.giorno) { if (mosse <= 0) { occupato = true; await attesa(400); return finitoGiorno(); } if (!c_mossa()) { occupato = true; await rimescola(); occupato = false; } if (mosse === 5) consiglio('Restano 5 mosse!'); aiutoDopo(); return; }
+  const vinto = Object.keys(resto).every(k => resto[k] <= 0);
+  if (vinto) { occupato = true; await attesa(400); return finito(true); }
+  if (mosse <= 0) { occupato = true; await attesa(400); return finito(false); }
+  if (!c_mossa()) { occupato = true; await rimescola(); occupato = false; }
+  if (mosse === 5) consiglio('Restano 5 mosse!');
+  aiutoDopo();
+}
+function finito(vinto){
+  clearTimeout(timerAiuto);
+  const st = vinto ? (mosse >= Math.ceil(L.mosse * .35) ? 3 : mosse >= Math.ceil(L.mosse * .15) ? 2 : 1) : 0;
+  if (vinto) { salvato.stelle[lv] = Math.max(salvato.stelle[lv] || 0, st); if (lv + 1 < LIVELLI.length) salvato.attuale = lv + 1; ls.set('cestino-tuscia', salvato); suono(660, .2); setTimeout(() => suono(880, .3), 180); setTimeout(() => suono(1100, .4), 380); }
+  const stelle = '<div class="stelle">' + [1,2,3].map(i => i <= st ? '★' : '<span class="spenta">★</span>').join('') + '</div>';
+  const prossimo = lv + 1 < LIVELLI.length;
+  apri(vinto
+    ? `<h2>Bravo! ${L.paese} è fatto</h2>${stelle}<p>${punti} punti · ${mosse} mosse avanzate</p><div class="fatto-vero"><b>Lo sapevi?</b><br>${L.fatto}</div>
+       ${prossimo ? `<button type="button" class="grande" id="bAvanti">Avanti: ${LIVELLI[lv + 1].paese}</button>` : `<button type="button" class="grande" id="bMappa2">Hai girato tutta la Tuscia!</button>`}
+       <button type="button" class="piccolo" id="bAncora">Rigioca ${L.paese}</button>`
+    : `<h2>Mosse finite</h2><p>Ti mancava poco: ${Object.keys(resto).filter(k => resto[k] > 0).map(k => resto[k] + ' ' + PEZZI[k].nome).join(' e ')}.</p><p>Riprova, con calma: non c'è nessun tempo che scorre.</p>
+       <button type="button" class="grande" id="bAncora">Riprova</button><button type="button" class="piccolo" id="bMappa2">Scegli un altro paese</button>`);
+  const a = $('bAvanti'), b = $('bAncora'), m = $('bMappa2');
+  a && (a.onclick = () => { chiudi(); parti(lv + 1); }); b && (b.onclick = () => { chiudi(); parti(lv); }); m && (m.onclick = mappa);
+}
+
+/* ------------------------------------------------------------------ schermate */
+/* ------------------------------------------------------------------ sfida del giorno: classifica dei paesi (sul sito, col server) */
+const SERVER = { url:'https://wahrowxonkfqsktjmbdg.supabase.co', key:'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndhaHJvd3hvbmtmcXNrdGptYmRnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA3NzQ2MTYsImV4cCI6MjEwNjM1MDYxNn0.QwHZbXyt5i78UtAldmGCl7VG7N2nRemgqntfga2Sf5U' };
+const PAESI = [['fabrica','Fabrica di Roma'],['carbognano','Carbognano'],['caprarola','Caprarola'],['vallerano','Vallerano'],['vignanello','Vignanello'],['ronciglione','Ronciglione'],['soriano','Soriano nel Cimino'],['civita-castellana','Civita Castellana'],['nepi','Nepi'],['corchiano','Corchiano'],['canepina','Canepina'],['vetralla','Vetralla'],['viterbo','Viterbo'],['fuori','Fuori Tuscia']];
+const nomeP = id => (PAESI.find(x => x[0] === id) || [id, id])[1];
+function dev(){ try { const s = JSON.parse(localStorage.getItem('tuscia-stats-v1') || 'null'); if (s && s.dev) return s.dev; } catch(e){} if (!salvato.dev) { salvato.dev = 'c' + Math.random().toString(36).slice(2, 12); ls.set('cestino-tuscia', salvato); } return salvato.dev; }
+async function rpc(f, body){
+  const ctl = new AbortController(), t = setTimeout(() => ctl.abort(), 6000);
+  try { const r = await fetch(SERVER.url + '/rest/v1/rpc/' + f, { method:'POST', signal:ctl.signal, headers:{ 'Content-Type':'application/json', apikey:SERVER.key, Authorization:'Bearer ' + SERVER.key }, body:JSON.stringify(body) }); return r.ok ? await r.json() : null; }
+  catch(e){ return null; } finally { clearTimeout(t); }
+}
+function chiediPaese(poi){
+  apri(`<h2>Di che paese sei?</h2><p>Nella sfida del giorno ogni paese fa la media dei suoi giocatori.</p><div class="livelli">${PAESI.map(([id, n]) => `<button type="button" class="livello" data-p="${id}">${n}</button>`).join('')}</div>`);
+  $('carta').querySelectorAll('[data-p]').forEach(b => b.onclick = () => { salvato.paese = b.dataset.p; ls.set('cestino-tuscia', salvato); chiudi(); poi && poi(); });
+}
+async function finitoGiorno(){
+  clearTimeout(timerAiuto);
+  const g = oggi(); salvato.giorni = salvato.giorni || {}; const primo = salvato.giorni[g] == null;
+  if (primo) { salvato.giorni[g] = punti; ls.set('cestino-tuscia', salvato); }
+  const valido = salvato.giorni[g];
+  suono(660, .2); setTimeout(() => suono(880, .3), 180);
+  apri(`<h2>${primo ? 'Sfida del giorno fatta!' : 'Allenamento finito'}</h2><div class="stelle" style="font:700 40px var(--f-titolo);letter-spacing:0;color:var(--scuro);text-shadow:none">${punti} punti</div>
+    <p>${primo ? 'Questo è il punteggio che vale per oggi.' : `Per oggi vale il primo tentativo: <b>${valido} punti</b>.`}</p><div class="fatto-vero" id="classifica">Guardo come vanno i paesi…</div>
+    <button type="button" class="grande" id="bCondividi">Condividi il risultato</button><button type="button" class="piccolo" id="bMappa2">Torna ai paesi</button>
+    <p style="font-size:16px;color:#7a5a32">Domani alle 0:00 c'è un cestino nuovo, uguale per tutti.</p>`);
+  $('bMappa2').onclick = mappa;
+  const testo = `🧺 Cestino della Tuscia · ${dataBella(g)}\n${valido} punti per ${nomeP(salvato.paese)}\nRiesci a fare meglio?`;
+  $('bCondividi').onclick = async () => { try { await navigator.clipboard.writeText(testo); $('bCondividi').textContent = 'Copiato! Incollalo su WhatsApp'; } catch(e){ $('bCondividi').textContent = 'Non riesco a copiare da qui'; } };
+  const r = primo ? await rpc('tg_cestino_invia', { p_dev:dev(), p_giorno:g, p_paese:salvato.paese, p_punti:valido }) : await rpc('tg_cestino_classifica', { p_giorno:g, p_dev:dev() });
+  const box = $('classifica'); if (!box) return;
+  if (!r || !r.paesi) { box.innerHTML = `<b>${nomeP(salvato.paese)}</b>: la classifica dei paesi si vede quando giochi dal sito di Grand Tuscia.`; return; }
+  box.innerHTML = `<b>Oggi hanno giocato ${r.giocatori} persone.</b>${r.posizione ? ` Sei ${r.posizione}°.` : ''}<br>` + r.paesi.slice(0, 5).map((x, i) => `${i + 1}. ${x.paese === salvato.paese ? '<b>' + x.nome + '</b>' : x.nome} · media ${x.media} (${x.n})`).join('<br>');
+}
+function apri(html){ $('carta').innerHTML = html; $('velo').hidden = false; const f = $('carta').querySelector('button'); f && f.focus({ preventScroll:true }); }
+function chiudi(){ $('velo').hidden = true; }
+function mappa(){
+  const fatti = Object.keys(salvato.stelle).length, prossimo = Math.min(LIVELLI.length - 1, Math.max(0, ...Object.keys(salvato.stelle).map(Number).map(x => x + 1), 0));
+  apri(`<h2>I paesi della Tuscia</h2><p>Ogni paese è un cestino da riempire. ${fatti ? `Ne hai fatti ${fatti} su ${LIVELLI.length}.` : 'Si parte da Fabrica di Roma.'}</p>
+    <div class="livelli">${LIVELLI.map((x, i) => { const s = salvato.stelle[i] || 0, aperto = i <= prossimo; return `<button type="button" class="livello${i === prossimo ? ' prossimo' : ''}" data-l="${i}" ${aperto ? '' : 'disabled'}>${x.paese}<small>${aperto ? Object.keys(x.ob).map(k => PEZZI[k].nome).join(' e ') : '🔒 da aprire'}</small>${s ? `<span class="st">${'★'.repeat(s)}</span>` : ''}</button>`; }).join('')}</div>
+    <button type="button" class="piccolo" id="bTorna">Torna al gioco</button>`);
+  $('carta').querySelectorAll('[data-l]').forEach(b => b.onclick = () => { chiudi(); parti(+b.dataset.l); });
+  $('bTorna').onclick = chiudi;
+}
+function benvenuto(){
+  apri(`<h2>Cestino della Tuscia</h2><div class="intro-pezzi">${TIPI.map(t => PEZZI[t].svg).join('')}</div>
+    <p>Scambia due vicini per metterne <b>3 uguali in fila</b>: spariscono e finiscono nel cestino.</p>
+    <p>In ogni paese c'è un raccolto da fare con poche mosse. Nessun tempo che scorre: pensa con calma.</p>
+    <p>Se ti fermi, dopo qualche secondo ti mostro io una mossa.</p><p>Ogni giorno c'è anche la <b>sfida del giorno</b>: lo stesso cestino per tutta la Tuscia.</p>
+    <button type="button" class="grande" id="bVia">Gioca</button>`);
+  $('bVia').onclick = () => { chiudi(); suono(660, .12); };
+}
+
+$('bMappa').onclick = mappa;
+$('bRifai').onclick = () => { if (!occupato) parti(L && L.giorno ? 'giorno' : lv); };
+$('bGiorno').onclick = () => { if (!occupato) parti('giorno'); };
+addEventListener('resize', () => { clearTimeout(misura.t); misura.t = setTimeout(misura, 120); });
+L = LIVELLI[salvato.attuale || 0];
+misura(); parti(Math.min(salvato.attuale || 0, LIVELLI.length - 1)); misura();
+window.__cestino = { stato: () => ({ B, mosse, punti, resto, lv, giorno: !!(L && L.giorno) }), mossa: () => mossaPossibile(), prova: (a, b) => prova(a, b), parti };   // per le prove
+if (!salvato.visto) { salvato.visto = true; ls.set('cestino-tuscia', salvato); benvenuto(); }
+})();
+</script>
+
+</body></html>
