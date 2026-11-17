@@ -99,7 +99,7 @@ function mappa(){
   const h = mo.querySelector('.sheetHead h2'); if (!h) return;
   let e = document.getElementById('trSitu'); if (!e) { e = document.createElement('div'); e.id = 'trSitu'; e.setAttribute('style', 'font:800 13px/1.3 Figtree,system-ui,sans-serif;color:#f3e7cb;margin-top:4px'); h.insertAdjacentElement('afterend', e); }
   h.textContent = s.nome; h.style.color = s.colore;
-  e.textContent = `${s.terreni} terren${s.terreni === 1 ? 'o' : 'i'} · ${s.contesi ? s.contesi + ' sotto attacco · ' : ''}${s.pos ? s.pos + '° in Tuscia' : 'ancora fori classifica'} · 🌰 cassone ${n}/${cap()}`;
+  e.textContent = `${s.terreni} terren${s.terreni === 1 ? 'o' : 'i'} · ${s.contesi ? s.contesi + ' sotto attacco · ' : ''}${s.pos ? s.pos + '° in Tuscia' : 'ancora fori classifica'} · 🌰 cassone ${n}/${cap()}${(m => m && m.pct >= 10 ? ` · 🧾 stanotte −${m.pct}% fori casa` : '')(W.manutenzione && W.manutenzione())}`;
 }
 
 

@@ -86,13 +86,17 @@ const padrone = id => { const l = righe(id), r = l[0]; if (!r || r.punti <= 0) r
 const prezzo = id => { const l = classifica[id]; return l && l[0] ? l[0].punti : 0; };
 // TETTO: un terreno vale al massimo 300 (chi o vò paga 310). RICONQUISTA: ricomprà un terreno de casa de o paese tuo costa a metà (server: tg_terra_compra2)
 const TETTO = 300, DI = {};
+// MANUTENZIONE: più terreni hai, più spese hai. Ogni notte i terreni fori casa perdono 5% + 0,5% pe' terreno tenuto (max 40%): server tg_manutenzione_esegui
+let MANUT = {}, manutDetto = false;
+const manutenzione = p => MANUT[p || paese()] || null;
+function avvisaManut(){ const m = manutenzione(), p = paese(); if (manutDetto || !m || m.pct < 15 || !document.body.classList.contains('playing')) return; const k = 'tg-manut-' + new Date().toISOString().slice(0, 10); try { if (localStorage.getItem(k)) { manutDetto = true; return; } localStorage.setItem(k, '1'); } catch(e){} manutDetto = true; msg(`🧾 Manutenzione: ${m.terreni} terreni`, `Più terreni tenete, più costa: stanotte quelli fori casa perdono o ${m.pct}%. Rinforzate quelli che contano`, 6); }
 const riconquista = id => { const pd = padrone(id), p = paese(); return !!(pd && p && DI[id] === p && pd !== p); };
 const costo = id => { const c = padrone(id) ? Math.min(prezzo(id), TETTO) + 10 : 10; return riconquista(id) ? Math.ceil(c / 2) : c; };
 const alMassimo = id => prezzo(id) >= TETTO;
 // TERRENI DE CASA: ogni paese parte padrone de i terreni suoi (prezzo 10) finché nun li compra quarcun altro
 const casa = id => { const l = classifica[id]; return !!(l && l[0] && l[0].casa); };
 function stato(id){ const l = righe(id).filter(r => r.punti > 0), p = paese(), pd = padrone(id); if (!l.length) return 'libero'; if (!pd) return 'conteso'; return pd === p ? 'nostro' : 'loro'; }
-async function aggiorna(){ try { let n; try { n = await rpc('tg_terre_mappa'); } catch(e){ n = await rpc('tg_terre_padroni'); } if (n && typeof n === 'object') { classifica = n; for (const k in n) { const r = n[k] && n[k][0]; if (r && r.di) DI[k] = r.di; } locali = {}; versione++; } } catch(e){} caricato = true; }
+async function aggiorna(){ try { let n; try { n = await rpc('tg_terre_mappa'); } catch(e){ n = await rpc('tg_terre_padroni'); } if (n && typeof n === 'object') { classifica = n; for (const k in n) { const r = n[k] && n[k][0]; if (r && r.di) DI[k] = r.di; } locali = {}; versione++; } } catch(e){} caricato = true; try { const m = await rpc('tg_manutenzione_stato'); if (m && typeof m === 'object') MANUT = m; } catch(e){} avvisaManut(); }
 async function invia(){
   const p = paese(), d = dev(); if (!p || !d) return;
   for (const id of Object.keys(daMandare)) {
@@ -486,7 +490,7 @@ async function premioGioco(){
   if (document.body.classList.contains('playing')) via(); else new MutationObserver((x, o) => { if (document.body.classList.contains('playing')) { o.disconnect(); via(); } }).observe(document.body, { attributes: true, attributeFilter: ['class'] });
   ev('terre_premio', da, bonus, { med: q.get('med') || null, preso });
 }
-TG.Terre = { colore, padrone, righe, terraIn, aggiorna, pannello, descrivi, puntoGuerra, mio: id => punti(id, paese()) + (daMandare[id] || 0), acceso, accesi: () => accesi, battaglia: () => battaglia, _card: cardImmagine, lista: () => TERRE, sfida: SF, derby: inDerby, stato, deposita, compra: deposita, costo, prezzo, casa, riconquista, alMassimo, TETTO, ritiraAffitti, situazione, azione, etichetta, paeseMio: paese, SOGLIA, _dbg: () => ({ classifica, locali, daMandare }) };
+TG.Terre = { colore, padrone, righe, terraIn, aggiorna, pannello, descrivi, puntoGuerra, mio: id => punti(id, paese()) + (daMandare[id] || 0), acceso, accesi: () => accesi, battaglia: () => battaglia, _card: cardImmagine, lista: () => TERRE, sfida: SF, derby: inDerby, stato, deposita, compra: deposita, costo, prezzo, casa, riconquista, alMassimo, TETTO, manutenzione, ritiraAffitti, situazione, azione, etichetta, paeseMio: paese, SOGLIA, _dbg: () => ({ classifica, locali, daMandare }) };
 // per i moduli che usavano le zone (presenza: colore del paese)
 TG.Zone = TG.Zone || { colore, squadra: false };
 function avvia(){
