@@ -142,7 +142,7 @@ function vicinoGioco(){
   try { A = (TG.debug.acts || []).find(a => [a.name, a.nome, a.id].some(x => x && String(x).trim() === nome)); } catch(e){}
   pr.classList.toggle('tgVinci', !!A);
   const box = nm.parentNode; if (!A || box.querySelector('.tgVinci')) return;
-  const sp = document.createElement('span'); sp.className = 'tgVinci'; sp.textContent = '🎮 Vinci fino a 120 🌰'; box.appendChild(sp);
+  const sp = document.createElement('span'); sp.className = 'tgVinci'; sp.textContent = ({ vicopesca: 1, funghi: 1, carrettini: 1 })[A.id] ? '👻 Batti o fantasma: 300 🌰' : '🎮 Vinci fino a 120 🌰';   /* sfida da 60 s (tg-sfida60.js) */ box.appendChild(sp);
   if (!vicinoGioco[A.id] || Date.now() - vicinoGioco[A.id] > 240000) { vicinoGioco[A.id] = Date.now(); ev('gioco_popup', A.id); }
 }
 

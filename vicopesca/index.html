@@ -562,6 +562,7 @@ tr.me td{color:var(--bob);font-weight:900}
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="../engine/tg-sfida60.js"></script>
 <script src="../engine/tg-ponte.js"></script>
 <script>
 (function(){
@@ -2340,7 +2341,9 @@ window.__VP={HARBOUR,cam:()=>camera,POSTI,WEA,setWx,CAMS,S,FI,PB,startGame,HOT,R
   // 3. missione
   if (!PONTE.missione) return;
   const SOGLIE = { oro: 1200, argento: 700, bronzo: 300 };
-  const startMis = () => { startGame('fun'); S.time = 120; setTimeout(() => flash('Missione: 2 minuti di frenesia! Oro sopra 1.200 punti, argento 700, bronzo 300.', 5200), 300); };
+  // SFIDA AL FANTASMA: 60 secondi contro o migliore de un antro paese (engine/tg-sfida60.js)
+  const SF = window.TGSfida;
+  const startMis = () => { startGame('fun'); S.time = 60; if (SF) SF.avvia({ gioco: 'vicopesca', punti: () => S.pts, tempo: () => S.time, unita: 'punti', bot: 350, top: 64, nascondi: '#coach' }); setTimeout(() => flash('60 secondi: fai più punti del fantasma! Vale 300 nocchie.', 4200), 300); };
   try { $('intro').hidden = true; $('intro').classList.add('out'); } catch (e) {}
   setTimeout(startMis, 0);
   const endOrig = endGame;
@@ -2348,13 +2351,14 @@ window.__VP={HARBOUR,cam:()=>camera,POSTI,WEA,setWx,CAMS,S,FI,PB,startGame,HOT,R
     endOrig();
     const back = document.getElementById('bBackWorld');
     if (PONTE.finita || S.mode !== 'fun') { back.onclick = () => PONTE.torna(null); return; }
-    const med = PONTE.medaglia(S.pts, SOGLIE);
-    const res = S.n > 0 ? { ok: true, t: S.pts, med } : { ok: false, msg: 'Due minuti e nessun pesce: capita anche ai migliori pescatori del lago.' };
-    $('rEyebrow').textContent = 'Missione · Grand Tuscia Adventure';
-    $('rNote').textContent = (med ? 'Medaglia d\'' + med + '! ' : 'Oro sopra 1.200 punti, argento 700, bronzo 300. ') + $('rNote').textContent;
-    back.className = 'btn'; back.innerHTML = PONTE.icona + 'Torna al trattore'; back.onclick = () => PONTE.torna(res);
+    const res = S.n > 0 ? { ok: true, t: S.pts } : { ok: false, msg: 'Un minuto e nessun pesce: capita anche ai migliori pescatori del lago.' };
+    $('rEyebrow').textContent = 'Sfida al fantasma · Grand Tuscia';
+    const nota = $('rNote').textContent;
+    if (SF) { res.sf = SF.token; $('rNote').textContent = '👻 Controllo chi ha vinto…'; SF.fine().then(r => { const e = SF.esito(r); try { $('rTitle').textContent = e.titolo; } catch (x) {} $('rNote').textContent = e.testo; res.sf = SF.token; }); }
+    else $('rNote').textContent = nota;
+    back.className = 'btn'; back.innerHTML = PONTE.icona + 'Torna ne o mondo'; back.onclick = () => PONTE.torna(res);
     back.parentNode.insertBefore(back, back.parentNode.firstChild);
-    $('bAgain').textContent = 'Riprova la missione'; $('bAgain').className = 'ibtn'; $('bAgain').onclick = () => startMis();
+    $('bAgain').textContent = 'Rigioca a sfida'; $('bAgain').className = 'ibtn'; $('bAgain').onclick = () => startMis();
     $('bMenu').textContent = 'Gioco completo';
   };
   $('bKeep').addEventListener('click', () => PONTE.chiudiMissione());

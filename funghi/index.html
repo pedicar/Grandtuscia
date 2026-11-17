@@ -341,6 +341,7 @@ h2.sub{font-family:var(--f-display);font-weight:400;font-size:clamp(26px,4.5vw,3
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="../engine/tg-sfida60.js"></script>
 <script src="../engine/tg-ponte.js"></script>
 <script>
 (() => {
@@ -2046,10 +2047,13 @@ window.__funghi = { S, start, SP, tryPick, stepRivals };
   const MED = ['oro', 'argento', 'bronzo'];
   let misAgain = true;
   $('#bAgain').addEventListener('click', e => { if (!misAgain || PONTE.finita) return; e.stopImmediatePropagation(); startMis(); }, true);
+  // SFIDA AL FANTASMA: 60 secondi contro o migliore de un antro paese (engine/tg-sfida60.js)
+  const SF = window.TGSfida;
   const startMis = () => {
-    start('competizione'); S.limit = 120; updateHud();
+    start('competizione'); S.limit = 60; updateHud();
     $('#toasts').innerHTML = '';
-    toast('<b>Missione: sfida ai fungaioli!</b> Due minuti contro Sor Checco, la Peppa e Nando. Primo posto oro, secondo argento, terzo bronzo.', 'gold');
+    if (SF) SF.avvia({ gioco: 'funghi', punti: () => S.score, tempo: () => S.limit - S.time, unita: 'punti', bot: 180, top: 74, posizione: 'sinistra', nascondi: '#cRank,#cHerb,#cFx,#cCombo,#cKnow' });
+    toast('<b>Sfida al fantasma!</b> 60 secondi: trova più funghi buoni del fantasma. Vale 300 nocchie.', 'gold');
   };
   $('#oMenu').hidden = true;
   setTimeout(startMis, 0);
@@ -2063,11 +2067,12 @@ window.__funghi = { S, start, SP, tryPick, stepRivals };
     // la missione da 2 minuti non tocca il record della gara da 5
     if (best0 === undefined) delete saved.best.competizione; else saved.best.competizione = best0; persist();
     $('#eLine').textContent = $('#eLine').textContent.replace(/ (Nuovo record personale!|Il tuo record: \d+\.)$/, '') + ' Il punteggio torna al trattore e vale per i punti Tuscia.';
-    const res = S.score > 0 ? { ok: true, t: S.score, med } : { ok: false, msg: 'Due minuti e il cestino è rimasto vuoto: i fungaioli del Cimino ti hanno fregato.' };
-    $('#eMode').textContent = `Missione · ${pos}° posto` + (med ? ` · medaglia d'${med}` : '');
-    back.className = 'btn primary'; back.innerHTML = PONTE.icona + 'Torna al trattore'; back.onclick = () => PONTE.torna(res);
+    const res = S.score > 0 ? { ok: true, t: S.score } : { ok: false, msg: 'Un minuto e il cestino è rimasto vuoto.' };
+    $('#eMode').textContent = 'Sfida al fantasma';
+    if (SF) { res.sf = SF.token; const linea = $('#eLine'); linea.textContent = '👻 Controllo chi ha vinto…'; SF.fine().then(r => { const e = SF.esito(r); $('#eMode').textContent = e.titolo; linea.textContent = e.testo; }); }
+    back.className = 'btn primary'; back.innerHTML = PONTE.icona + 'Torna ne o mondo'; back.onclick = () => PONTE.torna(res);
     back.parentNode.insertBefore(back, back.parentNode.firstChild);
-    $('#bAgain').className = 'btn'; $('#bAgain').textContent = 'Riprova la missione';
+    $('#bAgain').className = 'btn'; $('#bAgain').textContent = 'Rigioca a sfida';
     $('#bMenu').textContent = 'Gioco completo';
   };
   const chiudi = () => { PONTE.chiudiMissione(); misAgain = false; $('#bAgain').textContent = 'Gioca ancora'; $('#bAgain').className = 'btn primary'; };

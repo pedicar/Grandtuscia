@@ -2168,6 +2168,7 @@
      apposta: bloccano la lettura della pagina finché la libreria non è
      caricata, che è esattamente quello che serve prima dello script sotto. -->
 <script src="lib/three.min.js"></script>
+<script src="../engine/tg-sfida60.js"></script>
 <script src="../engine/tg-ponte.js"></script>
 <script src="../engine/tg-fantasmi.js"></script>
 <script>window.THREE || document.write('<scr'+'ipt src="three.min.js"><\/scr'+'ipt>');</script>
@@ -15042,7 +15043,7 @@ function forseInstalla(){
    Con ?missione=1: una discesa "Solo in pista" fino a Via Roma, con le medaglie
    del gioco (Pavò, oro, argento, bronzo); tempo e medaglia tornano al trattore. */
 (function(){
-  window.__carrettini = { state: function(){ return state; }, fine: function(){ finish(); }, modo: function(){ return MODO; }, MEDAGLIE: MEDAGLIE };
+  window.__carrettini = { state: function(){ return state; }, fine: function(){ finish(); }, modo: function(){ return MODO; }, MEDAGLIE: MEDAGLIE, len: function(){ return TRACK_LEN; } };
   var PONTE = window.TGPonte ? TGPonte.init("carrettini") : null;
   if(!PONTE || !PONTE.attivo) return;
   // 1. menu
@@ -15056,20 +15057,32 @@ function forseInstalla(){
   // 3. missione
   if(!PONTE.missione) return;
   var MED = { autore: "oro", oro: "oro", argento: "argento", bronzo: "bronzo" };
-  function startMis(){ scegliModo("tempo"); initAudio(); avvia(); setTimeout(function(){ try { flash("Missione: giù fino a Via Roma · oro sotto " + fmt(MEDAGLIE[1].t), 3200); } catch(e){} }, 4200); }
+  // SFIDA AL FANTASMA: 60 secondi, vince chi fa più metri giù pe' via Roma (engine/tg-sfida60.js)
+  var SF = window.TGSfida, sfGiro = 0;
+  function startMis(){ scegliModo("tempo"); initAudio(); avvia(); setTimeout(function(){ try { flash("60 secondi: fai più strada del fantasma! Vale 300 nocchie", 3200); } catch(e){} }, 4200);
+    clearInterval(sfGiro); var partito = false;
+    sfGiro = setInterval(function(){
+      if(MODO !== "tempo" || PONTE.finita){ clearInterval(sfGiro); return; }
+      if(!partito && state.t > 0){ partito = true; if(SF) SF.avvia({ gioco: "carrettini", punti: function(){ return Math.round(state.s); }, tempo: function(){ return 60 - state.t; }, unita: "m", bot: 480, top: 64, nascondi: "#hud-pos,.delta,.delta-chi" }); }
+      if(partito && state.t >= 60 && !state.done){ clearInterval(sfGiro); finish(); }
+    }, 200); }
   setTimeout(startMis, 0);
   var finOrig = finish;
   finish = function(){
-    var live = !PONTE.finita && MODO === "tempo";
+    var live = !PONTE.finita && MODO === "tempo", metriVeri = Math.round(Math.min(state.s, __carrettini.len()));
     finOrig();
     if(!live){ back.className = "ghost-btn"; back.onclick = function(){ PONTE.torna(null); }; return; }
-    var t = state.t, i = medagliaPer(t), med = i >= 0 ? MED[MEDAGLIE[i].id] : "";
-    back.className = "go ancora"; back.innerHTML = PONTE.icona + "<b>Torna al trattore</b>";
-    back.onclick = function(e){ if(e) e.stopPropagation(); PONTE.torna({ ok: true, t: t, med: med }); };
+    clearInterval(sfGiro);
+    var metri = metriVeri, res = { ok: metri > 0, t: metri };
+    try { document.getElementById("end-total").textContent = metri + " m"; } catch(e){}
+    if(SF){ res.sf = SF.token; try { document.getElementById("end-note").textContent = "👻 Controllo chi ha vinto…"; } catch(e){}
+      SF.fine(metri).then(function(r){ var e = SF.esito(r); try { document.getElementById("end-title").textContent = e.breve || e.titolo; document.getElementById("end-note").textContent = e.testo; } catch(x){} }); }
+    back.className = "go ancora"; back.innerHTML = PONTE.icona + "<b>Torna ne o mondo</b>";
+    back.onclick = function(e){ if(e) e.stopPropagation(); PONTE.torna(res); };
     fine.insertBefore(back, fine.firstChild);
-    var ag = document.getElementById("btn-again"); ag.className = "ghost-btn"; ag.innerHTML = "<b>Riprova la missione</b>";
+    var ag = document.getElementById("btn-again"); ag.className = "ghost-btn"; ag.innerHTML = "<b>Rigioca a sfida</b>";
     document.getElementById("btn-garage").textContent = "Gioco completo";
-    try { document.getElementById("end-kicker").textContent = "Missione · Grand Tuscia Adventure"; } catch(e){}
+    try { document.getElementById("end-kicker").textContent = "Sfida al fantasma · 60 secondi"; } catch(e){}
   };
   document.getElementById("btn-garage").addEventListener("click", function(){
     var ag = document.getElementById("btn-again"); ag.className = "go ancora"; try { scegliModo("quattro"); } catch(e){} });

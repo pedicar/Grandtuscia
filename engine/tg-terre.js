@@ -511,6 +511,17 @@ async function premioGioco(){
   let A = null; try { A = (TG.debug.acts || []).find(a => a.id === da); } catch(e){}
   if (!A || !TG.Cassone) { if ((premioGioco.n = (premioGioco.n || 0) + 1) < 40) setTimeout(premioGioco, 1500); return; }
   ls.set(chiave, '1');
+  // SFIDA AL FANTASMA: o premio o decide o server (una volta sola pe' partita)
+  const sf = q.get('sf');
+  if (sf) {
+    let r = null; try { r = await rpc('tg_sfida_ritira', { p_dev: d, p_token: sf }); } catch(e){}
+    ev('sfida_ritirata', da, r && r.premio || 0, { vinto: !!(r && r.vinto) });
+    if (!r || !r.ok) return;
+    const chi = r.f_paese && r.f_paese !== 'contadino' ? 'o fantasma de ' + corto(r.f_paese) : 'O Contadino';
+    const dai = () => setTimeout(() => { const k = TG.Cassone.aggiungi(r.premio, true); msg(r.vinto ? `👻 Hai battuto ${chi}! +${k} 🌰` : `👻 +${k} 🌰 pe' a sfida`, r.vinto ? 'Mo\' vai a comprà: terreni o un mezzo novo' : 'Batti o fantasma e ne pij 300', 5); }, 1800);
+    if (document.body.classList.contains('playing')) dai(); else new MutationObserver((x, o) => { if (document.body.classList.contains('playing')) { o.disconnect(); dai(); } }).observe(document.body, { attributes: true, attributeFilter: ['class'] });
+    return;
+  }
   const med = q.get('med'), bonus = ({ oro: 120, argento: 90, bronzo: 70 })[med] || (esito === 'ok' ? 50 : 25);   // 2.1: i giochi pagano bene (anche oltre o cassone)
   const via = () => setTimeout(() => { const k = TG.Cassone ? TG.Cassone.aggiungi(bonus, true) : 0; msg(`🎮 +${k} nocchie ne o cassone`, (med ? ({ oro: '🥇 ', argento: '🥈 ', bronzo: '🥉 ' })[med] || '' : '') + 'Mo\' vai a comprà: terreni o un mezzo novo', 4.5); }, 1800);
   const preso = false;
