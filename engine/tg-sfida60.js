@@ -30,6 +30,8 @@ const paese = () => { const p = ls('tg-paese-dev'); return p && p !== 'nessuno' 
 const nomeMio = () => { try { return (window.TG && TG.Fantasmi && TG.Fantasmi.soprannome && TG.Fantasmi.soprannome()) || ''; } catch(e){ return ''; } };
 const NOMI = { fabrica: 'Fabrica', carbognano: 'Carbognano', caprarola: 'Caprarola', ronciglione: 'Ronciglione', viterbo: 'Viterbo', vignanello: 'Vignanello', canepina: 'Canepina', nepi: 'Nepi', 'civita-castellana': 'Civita', vallerano: 'Vallerano', corchiano: 'Corchiano', sutri: 'Sutri', soriano: 'Soriano', contadino: 'O Contadino' };
 const nomeP = p => NOMI[p] || (p ? p.replace(/-/g, ' ').replace(/^./, c => c.toUpperCase()) : '?');
+// o fantasma è o miglior tempo de quarcun antro: se ha un soprannome se chiama così, sennò co' o paese suo
+const chiFantasma = (nome, p) => nome && nome !== 'O Contadino' ? String(nome).slice(0, 14) : p === 'contadino' || !p ? 'O Contadino' : 'Uno de ' + nomeP(p);
 const mmss = s => { s = Math.max(0, s); const m = Math.floor(s / 60), r = s - m * 60; return m + ':' + (r < 10 ? '0' : '') + r.toFixed(1); };
 const mmssCorto = s => { s = Math.max(0, Math.floor(s)); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
 async function rpc(f, body){
@@ -49,7 +51,7 @@ function striscia(){
 #tgSfida{position:fixed;z-index:10001;left:50%;transform:translateX(-50%);top:calc(var(--sfTop,8px) + env(safe-area-inset-top,0px));width:min(262px,66vw);padding:6px 10px 7px;border-radius:12px;background:rgba(14,20,19,.82);color:#f3e7cb;font:700 12px/1.25 Figtree,system-ui,sans-serif;pointer-events:none;box-shadow:0 4px 14px rgba(0,0,0,.3)}
 body:has(#tgCartello) #tgSfida{visibility:hidden}
 #tgSfida.sx{left:calc(10px + env(safe-area-inset-left,0px));transform:none;width:min(236px,60vw)}
-#tgSfida .r{display:grid;grid-template-columns:78px minmax(0,1fr) 40px;align-items:center;gap:6px;margin-top:3px}
+#tgSfida .r{display:grid;grid-template-columns:92px minmax(0,1fr) 36px;align-items:center;gap:6px;margin-top:3px}
 #tgSfida .r span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}#tgSfida .r b{text-align:right;font-variant-numeric:tabular-nums}
 #tgSfida .tr{height:6px;border-radius:3px;background:rgba(255,255,255,.12);overflow:hidden}#tgSfida .tr i{display:block;height:100%;border-radius:3px;transition:width .3s}
 #tgSfida .tu i{background:#f2c74e}#tgSfida .fa i{background:#b9c2ff}#tgSfida .fa.arr b{color:#b9c2ff}
@@ -67,7 +69,7 @@ function disegna(){
   bar.classList.toggle('avanti', mio > fa + .01 && s > 3); bar.classList.toggle('dietro', fa > mio + .01 && s > 3); bar.classList.toggle('poco', MAX - s < 20);
   bar.innerHTML = `<div class="h"><span>👻 Sfida</span><em>⏱ ${mmssCorto(s)} / 2:00</em></div>${opz.obiettivo ? `<div class="o">🎯 ${opz.obiettivo}</div>` : ''}
     <div class="r tu"><span>Tu</span><span class="tr"><i style="width:${mio * 100}%"></i></span><b>${Math.round(mio * 100)}%</b></div>
-    <div class="r fa${arrivato ? ' arr' : ''}"><span>${nomeP(F.paese)}</span><span class="tr"><i style="width:${fa * 100}%"></i></span><b>${arrivato ? '🏁' : Math.round(fa * 100) + '%'}</b></div>`;
+    <div class="r fa${arrivato ? ' arr' : ''}"><span>👻 ${chiFantasma(F.nome, F.paese)}</span><span class="tr"><i style="width:${fa * 100}%"></i></span><b>${arrivato ? '🏁' : Math.round(fa * 100) + '%'}</b></div>`;
 }
 async function avvia(o){
   opz = Object.assign({ top: 8 }, o || {}); tl = []; F = null; chiusa = false; S.token = null; S.risultato = null; S.attiva = true;
@@ -98,7 +100,7 @@ async function fine(secondi){
 }
 function esito(r){
   r = r || S.risultato || {};
-  const chi = r.f_paese === 'contadino' || !r.f_paese ? 'O Contadino' : 'o fantasma de ' + nomeP(r.f_paese), chiC = chi.replace(/^o /, '');
+  const fc = chiFantasma(r.f_nome, r.f_paese), chi = fc === 'O Contadino' ? 'O Contadino' : r.f_nome ? 'o fantasma de ' + fc + (r.f_paese && r.f_paese !== 'contadino' ? ' (' + nomeP(r.f_paese) + ')' : '') : 'o fantasma de ' + nomeP(r.f_paese), chiC = r.f_nome ? fc : 'fantasma';
   const mio = r.punti > 0 ? mmss(r.punti / 10) : 'nun sei arrivato', suo = mmss((r.fantasma || 0) / 10);
   if (r.nulla) return { breve: '👻 Nun vale', titolo: '👻 Partita nun valida', testo: 'Qualcosa nun torna co\' i tempi: riprova da capo.', premio: 0 };
   const riga = `Tu ${mio} · ${chiC} ${suo}.`;
