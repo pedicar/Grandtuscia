@@ -266,5 +266,16 @@ setInterval(() => {
   if (T.S && T.S.paused) return;
   const c = trovaConsiglio(); if (c) mostraCons(c);
 }, 1200);
+/* ---------------------------------------------------------------- 6. MONDO APERTO: se va pure fori da e strade
+   Prima a Vespa poteva stà solo su strade e campi (fori, tornava indietro). Mo' se va ovunque su a terra:
+   no ne l'acqua, no oltre o bordo de o mondo, e case/alberi/sassi restano ostacoli (mondo/app.js Bn). */
+let bordo = null;
+TG.liberoOk = (x, z) => {
+  const W = D() && D().world; if (!W) return false;
+  if (!bordo) { let a = 1e9, b = -1e9, c = 1e9, e = -1e9; for (const r of W.colliders || []) { if (r.x < a) a = r.x; if (r.x > b) b = r.x; if (r.z < c) c = r.z; if (r.z > e) e = r.z; } bordo = [a - 250, b + 250, c - 250, e + 250]; }
+  if (x < bordo[0] || x > bordo[1] || z < bordo[2] || z > bordo[3]) return false;
+  try { if (W.isWater(x, z)) return false; } catch(e){}
+  return true;
+};
 TG.Consigli = { trova: trovaConsiglio, chiudi: () => chiudiCons(true) };
 })();
