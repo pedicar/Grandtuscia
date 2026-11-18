@@ -31,6 +31,7 @@ const C = TG.Cassone = {
   },
   togli(a){ n = Math.max(0, n - a); salva(); },
   compraMezzo: id => compraMezzo(id), prossimoMezzo: () => prossimoMezzo(),
+  compraQui: () => scarica(),   // o SÌ, COMPRALO de tg-facile.js (o bottone scBtn risponde a pointerdown, no a click)
   // viaggio veloce verso i terreni (da a mappa) pe' chi c'ha o trattore o a semovente
   veloce(){ try { const m = TG.Contadino.stato(TG.Profile.data).mezzi || {}; return !!(m.trattore || m.semovente); } catch(e){ return false; } },
   avvisa(){ if (Date.now() - avvisoPieno < 25000) return; avvisoPieno = Date.now(); msg('Cassone pieno', 'Vai a scaricà su un terreno: apri a mappa e scegli', 3.5); }

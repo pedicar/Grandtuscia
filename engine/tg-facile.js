@@ -197,7 +197,7 @@ function controllaCompra(forza){
   compra.querySelector('.s').textContent = 'Costa ' + W.costo(t.id) + ' nocchie. Ce l\'hai!';
   compra.style.display = 'flex'; compra.dataset.t = t.id;
 }
-compra.querySelector('.si').onclick = () => { compra.style.display = 'none'; const b = document.getElementById('scBtn'); ev('compra_tocco', compra.dataset.t); if (b) b.click(); };
+compra.querySelector('.si').onclick = () => { compra.style.display = 'none'; ev('compra_tocco', compra.dataset.t); try { TG.Cassone.compraQui(); } catch(e){} };
 compra.querySelector('.no').onclick = () => { compra.style.display = 'none'; no.add(compra.dataset.t); };
 setInterval(vaiTick, 400);
 
