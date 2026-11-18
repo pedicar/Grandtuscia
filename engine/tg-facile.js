@@ -272,7 +272,7 @@ setInterval(() => {
 let bordo = null;
 TG.liberoOk = (x, z) => {
   const W = D() && D().world; if (!W) return false;
-  if (!bordo) { let a = 1e9, b = -1e9, c = 1e9, e = -1e9; for (const r of W.colliders || []) { if (r.x < a) a = r.x; if (r.x > b) b = r.x; if (r.z < c) c = r.z; if (r.z > e) e = r.z; } bordo = [a - 250, b + 250, c - 250, e + 250]; }
+  if (!bordo) { const B = (TG.GEO && TG.GEO.BOUNDS) || { x0: -3300, x1: 8000, z0: -4700, z1: 3200 }; bordo = [B.x0 + 60, B.x1 - 60, B.z0 + 60, B.z1 - 60]; }   // o bordo vero de o mondo (tg-world.js GEO.BOUNDS)
   if (x < bordo[0] || x > bordo[1] || z < bordo[2] || z > bordo[3]) return false;
   try { if (W.isWater(x, z)) return false; } catch(e){}
   return true;
