@@ -74,6 +74,7 @@ function bottone(){
     : pago ? (rq ? `🏠 RIPRENDILO<small>a metà: ${c} 🌰${tasto}</small>` : `💰 COMPRA<small>costa ${c} 🌰 · ce l'hai${tasto}</small>`) : `💰 COSTA ${c}<small>${rq ? 'a metà, è de casa · ' : ''}te ne mancano ${c - n}</small>`;
   const bl = W.blocco ? W.blocco() : 0;
   if (bl && (pago || (nostro && n >= MINIMO && !max))) { const hb = `🐢 ASPETTA<small>limite orario · fra ${bl} min</small>`; btn.classList.add('no'); btn.classList.remove('go'); if (btn._h !== hb) { btn._h = hb; btn.innerHTML = hb; } return; }
+  if (!nostro && !pago) { btn.style.display = 'none'; return; }   // troppo caro: niente bottone grigio, ce pensa o consiglio de tg-facile.js
   btn.classList.toggle('no', !(pago || (nostro && n >= MINIMO && !max))); if (btn._h !== h) { btn._h = h; btn.innerHTML = h; }   // riscritto solo se cambia: sennò Safari perde o clic
   btn.classList.toggle('go', pago);
 }
@@ -176,7 +177,7 @@ function classificaMini(){
   for (const t of T.lista()) { const pd = T.padrone(t.id); if (pd && !(T.casa && T.casa(t.id))) tot[pd] = (tot[pd] || 0) + 1; }
   const cl = Object.entries(tot).sort((a, b) => b[1] - a[1]); if (!cl.length) { box.style.display = 'none'; return; }
   box.style.display = '';
-  const mio = T.paeseMio && T.paeseMio(), nome = q => { let n = q; try { n = (TG.PrimoMinuto && TG.PrimoMinuto.nomeComune(q)) || q; } catch(e){} return String(n).replace(/ (di|in|sul|al|nel) .*$/i, ''); };
+  const mio = T.paeseMio && T.paeseMio(), nome = q => { let n = q; try { n = (TG.PrimoMinuto && TG.PrimoMinuto.nomeComune(q)) || q; } catch(e){} if (n === q) n = String(q).replace(/-/g, ' ').replace(/(^| )\S/g, m => m.toUpperCase()); return String(n).replace(/ (di|in|sul|al|nel) .*$/i, ''); };
   let righe = cl.slice(0, 3).map((r, i) => [i + 1, r]); const pm = cl.findIndex(r => r[0] === mio);
   if (pm >= 3) righe.push([pm + 1, cl[pm]]); else if (pm < 0 && mio) righe.push([0, [mio, 0]]);
   const h = '<div class="t">🏆 TERRENI</div>' + righe.map(([n, [q, k]]) => `<div class="${q === mio ? 'me' : ''}"><i style="background:${T.colore(q)}"></i><span>${nome(q)}</span><b>${k}</b></div>`).join('');

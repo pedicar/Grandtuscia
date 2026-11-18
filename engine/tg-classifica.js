@@ -7,7 +7,7 @@
 'use strict';
 const TG = window.TG = window.TG || {};
 const ev = (t, c) => { try { TG.Stats && TG.Stats.ev(t, c || ''); } catch(e){} };
-const nome = p => { try { return ((TG.PrimoMinuto && TG.PrimoMinuto.nomeComune(p)) || p).replace(/ (di|in|sul|al|nel) .*$/i, ''); } catch(e){ return p; } };
+const nome = p => { try { return ((TG.PrimoMinuto && TG.PrimoMinuto.nomeComune(p)) || p).replace(/ (di|in|sul|al|nel) .*$/i, '').replace(/^([a-z])([a-z]*)-([a-z])/, (m, a, b, c) => a.toUpperCase() + b + ' ' + c.toUpperCase()); } catch(e){ return p; } };
 const st = document.createElement('style'); st.textContent = `
 #clOv{position:fixed;inset:0;z-index:97;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(10,14,13,.8);font-family:Figtree,system-ui,sans-serif;color:#f3e7cb}#clOv[hidden]{display:none}
 #clOv .c{width:min(420px,100%);max-height:100%;overflow:auto;padding:18px 16px 14px;border-radius:22px;background:#1b2423;border:2px solid rgba(242,199,78,.55)}

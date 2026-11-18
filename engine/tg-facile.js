@@ -215,15 +215,15 @@ const st2 = document.createElement('style'); st2.textContent = `
 body:not(.playing) #tfCons,body:has(#mapOv:not([hidden])) #tfCons{display:none!important}`;
 document.head.appendChild(st2);
 const zitti = {}; let cAperta = null, cChiusa = 0, cInizio = 0;
-const nomeP = p => { try { return ((TG.PrimoMinuto && TG.PrimoMinuto.nomeComune(p)) || p).replace(/ (di|in|sul|al|nel) .*$/i, ''); } catch(e){ return p; } };
-const breve = t => String(t || 'o campo').replace(/^(noccioleto|castagneto|campo|podere)\s+(di|de|del|della)\s+/i, (m, a) => a.toLowerCase() + ' de ');
+const nomeP = p => { try { return ((TG.PrimoMinuto && TG.PrimoMinuto.nomeComune(p)) || p).replace(/ (di|in|sul|al|nel) .*$/i, '').replace(/^([a-z])([a-z]*)-([a-z])/, (m, a, b, c) => a.toUpperCase() + b + ' ' + c.toUpperCase()); } catch(e){ return p; } };
+const breve = t => String(t || 'o campo').replace(/^(noccioleto|castagneto|campo|podere)\s+(di|de|del|della)\s+/i, (m, a) => a[0].toUpperCase() + a.slice(1).toLowerCase() + ' de ');
 function mostraCons(c){
   cAperta = c; cons.querySelector('.i').textContent = c.ico; cons.querySelector('.t').textContent = c.t; cons.querySelector('.s').textContent = c.s;
   cons.querySelector('.si').textContent = c.si; cons.style.display = 'grid'; ev('consiglio', c.k.split(':')[0]);
 }
 function chiudiCons(dopo){
   if (!cAperta) return; if (dopo) zitti[cAperta.k] = Date.now() + (cAperta.k.startsWith('mezzo') ? 360e3 : 240e3);
-  else zitti[cAperta.k] = Date.now() + 60e3;
+  else zitti[cAperta.k] = Date.now() + (cAperta.k === 'poche' ? 600e3 : 60e3);
   cons.style.display = 'none'; cAperta = null; cChiusa = Date.now();
 }
 cons.querySelector('.si').onclick = () => { const c = cAperta; chiudiCons(false); if (c) { ev('consiglio_si', c.k.split(':')[0]); try { c.fai(); } catch(e){} } };
@@ -245,6 +245,12 @@ function trovaConsiglio(){
   const buono = vicini.find(({ t }) => W.stato(t.id) !== 'nostro' && W.costo(t.id) <= n);
   if (C.pieno() && buono && libero('pieno'))
     return { k: 'pieno', ico: '🌰', t: 'Cassone pieno!', s: `Compra un terreno: ${breve(buono.t.nome)} costa ${W.costo(buono.t.id)}. Te ce porto?`, si: '🛵 PORTAMECE', fai: () => vaiCampo(buono.t) };
+  // 3b. sei dentro un campo che costa troppo → o campo più vicino che te pòi permette
+  const qui = W.terraIn(c.x, c.z);
+  if (qui && W.stato(qui.id) !== 'nostro' && W.costo(qui.id) > n && buono && libero('caro:' + qui.id))
+    return { k: 'caro:' + qui.id, ico: '💸', t: `Questo costa ${W.costo(qui.id)}: troppo`, s: `Tu c'hai ${n} nocchie. ${breve(buono.t.nome)} costa ${W.costo(buono.t.id)}: te ce porto?`, si: '🛵 PORTAMECE', fai: () => vaiCampo(buono.t) };
+  if (qui && W.stato(qui.id) !== 'nostro' && W.costo(qui.id) > n && !buono && libero('poche'))
+    return { k: 'poche', ico: '🌰', t: "Raccoji ancora un po'", s: `Questo costa ${W.costo(qui.id)}, tu c'hai ${n} nocchie. Passa sopra e nocchie ne i campi: o cassone se riempie.`, si: '👍 VA BENE', fai: () => {} };
   // 4. un campo qui vicino che te pòi comprà
   if (buono && buono.d < 220 && !inCampo() && libero('vicino:' + buono.t.id)) {
     const pd = W.padrone(buono.t.id);
