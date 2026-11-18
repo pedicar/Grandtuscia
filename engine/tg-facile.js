@@ -174,7 +174,20 @@ function vaiTick(){
   vai.textContent = meta && meta.perche === 'campo' ? '🛵 Te ce porto…' : '🛵 PORTAME A O CAMPO';
   if (passo() === 2 && !meta) controllaCompra();
 }
-vai.onclick = () => { const d = meta2(); if (!d) return; Pilota.vai(d.x, d.z, null, 'campo'); ev('pilota_campo', d.name || ''); };
+vai.onclick = () => { const d = meta2(); if (!d) return; porta(d.x, d.z, d.name); ev('pilota_campo', d.name || ''); };
+/* PORTAMECE: a guida da sola verso un campo lontano se incastrava tra case e muri; mo' è un viaggio:
+   schermo scuro mezzo secondo, a Vespa riappare dentro o campo e esce subito «Questo campo diventa vostro? SÌ». */
+function porta(x, z, nome){
+  Pilota.ferma(); const T = D(); if (!T || !T.placeCar) return;
+  const v = document.createElement('div'); v.style.cssText = 'position:fixed;inset:0;z-index:58;background:#17201f;opacity:0;transition:opacity .3s;display:flex;align-items:center;justify-content:center;color:#f3e7cb;font:900 22px Figtree,system-ui,sans-serif;pointer-events:none';
+  v.textContent = '🛵 Te ce porto' + (nome ? ': ' + nome : '') + '…'; document.body.appendChild(v); requestAnimationFrame(() => v.style.opacity = '1');
+  setTimeout(() => {
+    const c = T.car, yaw = Math.atan2(x - c.x, z - c.z);
+    try { T.placeCar(x, z, yaw); T.world && T.world.prewarm && T.world.prewarm(x, z, 14); } catch(e){}
+    setTimeout(() => { v.style.opacity = '0'; setTimeout(() => v.remove(), 350); controllaCompra(true); }, 450);
+  }, 340);
+  ev('portamece', nome || '');
+}
 function controllaCompra(forza){
   if ((passo() !== 2 && !forza) || compra.style.display === 'flex') return;
   const t = inCampo(); if (!t || (no.has(t.id) && !forza)) return;
@@ -216,7 +229,7 @@ function chiudiCons(dopo){
 cons.querySelector('.si').onclick = () => { const c = cAperta; chiudiCons(false); if (c) { ev('consiglio_si', c.k.split(':')[0]); try { c.fai(); } catch(e){} } };
 cons.querySelector('.no').onclick = () => { if (cAperta) ev('consiglio_dopo', cAperta.k.split(':')[0]); chiudiCons(true); };
 const libero = k => !(zitti[k] > Date.now());
-function vaiCampo(t){ Pilota.vai(t.x, t.z, null, 'campo'); try { TG.debug.setDest({ x: t.x, z: t.z, name: breve(t.nome) }); } catch(e){} }
+function vaiCampo(t){ porta(t.x, t.z, breve(t.nome)); }
 function trovaConsiglio(){
   const T = D(), W = TG.Terre, C = TG.Cassone; if (!T || !W || !W.lista || !C) return null;
   const c = T.car, n = C.n, p = passo();
