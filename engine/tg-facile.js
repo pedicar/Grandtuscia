@@ -166,7 +166,7 @@ function campoVicino(){
   for (const t of W.lista()) { if (t.x == null || W.stato(t.id) === 'nostro' || W.costo(t.id) > C.n) continue; const d = Math.hypot(t.x - c.x, t.z - c.z); if (d < bd) { bd = d; best = t; } }
   return best && { x: best.x, z: best.z, name: best.nome };
 }
-const meta2 = () => (D().NAV && D().NAV.dest) || campoVicino();
+const meta2 = () => campoVicino() || (D().NAV && D().NAV.dest);   // o centro de o campo (a freccia a volte punta a l'ingresso, fori da o campo)
 function vaiTick(){
   if (compra.style.display === 'flex') { const t = inCampo(); if (!t || t.id !== compra.dataset.t) compra.style.display = 'none'; }
   const T = D(); const ok = passo() === 2 && T && document.body.classList.contains('playing') && !inCampo() && compra.style.display !== 'flex' && meta2();

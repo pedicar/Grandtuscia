@@ -15,6 +15,13 @@ const st = document.createElement('style'); st.textContent = `
 #clOv .r{display:grid;grid-template-columns:34px 16px 1fr auto;gap:10px;align-items:center;padding:10px 8px;border-radius:12px;font:800 19px Figtree,sans-serif}
 #clOv .r.me{background:rgba(255,214,90,.14);outline:2px solid rgba(255,214,90,.6)}#clOv .r i{width:16px;height:16px;border-radius:50%}#clOv .r em{font-style:normal;opacity:.7;text-align:right}#clOv .r b{font-size:21px}
 /* cose vecchie che nun se usano più: via da a vista (o codice resta) */
+/* a schermo o meno possibile: via a scritta de a radio in alto (a radio se sente uguale), a classifica sotto a a minimappa,
+   e ne o riquadro (da o passo 3) a barra e a riga de sotto: restano solo titolo e una riga */
+#radio,#trCl,html body.touch #hud .where.rot>#radio.rotOn.rotOn,html body.touch #hud .where.rot>#mission.rotOn.rotOn,html body #hud .where>#mission#mission{display:none!important}
+html.tg-scarica:not(.tg-lt3) #obi{display:none!important}
+html:not(.tg-lt3) #obi .b,html:not(.tg-lt3) #obi .r{display:none!important}
+html body #hud .where{width:max-content!important;min-width:0!important;max-width:calc(100vw - 130px)!important}
+#trTop{font-size:20px!important}#trTop b{font-weight:900}
 #pmRiga,#bCodex,#bMe,#bInvito,#pInvito,#segComandi,h4:has(+#segComandi){display:none!important}
 #clOv button{display:block;width:100%;margin-top:14px;padding:15px;border:0;border-radius:16px;background:#f2c74e;color:#1b2423;font:900 19px Figtree,sans-serif}`;
 document.head.appendChild(st);

@@ -46,6 +46,8 @@ function conta(){ const W = TG.Terre, t = {}; if (!W) return t; for (const T of 
 function alto(){
   const sc = document.getElementById('score'); if (!sc || !TG.Terre) return;
   let el = document.getElementById('trTop'); if (!el) { el = document.createElement('div'); el.id = 'trTop'; sc.appendChild(el); }
+  // in alto solo e nocchie che c'hai: o resto (terreni, posizione, derby) sta in Classifica
+  { const n = TG.Cassone ? TG.Cassone.n : 0, h = `<span>🌰 <b>${n}</b></span>`; if (el._h !== h) { el._h = h; el.innerHTML = h; } return; }
   const S = SF();
   if (S && (S.p.includes(paese()) || Math.floor(Date.now() / 4500) % 2)) { const t = {}; for (const T of TG.Terre.lista()) { if (!TG.Terre.derby(T.id)) continue; const q = TG.Terre.padrone(T.id); if (q) t[q] = (t[q] || 0) + 1; }
     const [a, b] = S.p, p = paese(), nm = q => q === p ? `<b style="color:#fff">${S.nome(q)}</b>` : `<span class="alt">${S.nome(q)}</span>`;
@@ -137,7 +139,7 @@ function avvia(){
   // o riquadro sta sempre sotto a barra in alto, anche quando a barra cresce pe' un messaggio
   try { const wh = document.querySelector('#hud .where'); let alto = 0, quando = 0; const su = () => { const b = Math.round(wh.getBoundingClientRect().bottom); if (b <= 0) return; const ora = Date.now(); if (b > alto || ora - quando > 4000) { if (b >= alto) quando = ora; alto = b; document.documentElement.style.setProperty('--obiTop', (b + 8) + 'px'); } }; /* scende subito se a barra cresce, risale solo dopo 4 s */ new ResizeObserver(su).observe(wh); let ult = -1; const giro = () => { const b = Math.round(wh.getBoundingClientRect().bottom); if (b !== ult) { ult = b; su(); } requestAnimationFrame(giro); }; requestAnimationFrame(giro); } catch(e){}
   sblocca(+(ls.get('tg-presi') || 0));
-  setInterval(alto, 1500); setInterval(prossimo, 2500); setInterval(obiettivo, 500); alto();
+  setInterval(alto, 400); setInterval(prossimo, 2500); setInterval(obiettivo, 500); alto();
   const tt = () => { if (document.body.classList.contains('playing')) setTimeout(tutorial, 2500); else setTimeout(tt, 1500); }; tt();
   // a battaglia de o giorno: detta una volta, quando se comincia a giocà
   const dici = () => { try { const b = TG.Terre.battaglia(), T = b && TG.Terre.lista().find(x => x.id === b); if (!T || ls.get('tg-battaglia-detta') === oggi() + b) return; if (!document.body.classList.contains('playing')) return setTimeout(dici, 3000); ls.set('tg-battaglia-detta', oggi() + b); setTimeout(() => TG.msg('⚔ Battaglia de oggi', breve(T.nome) + ': ogni nocchia vale doppio', 5), 8000); } catch(e){} };
