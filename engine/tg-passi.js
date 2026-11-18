@@ -56,7 +56,7 @@ TG.Passi = {
     if (dentro && W) { const st = W.stato(dentro.id), c = W.costo(dentro.id);
       if (st !== 'nostro' && n >= c) return `<div class="t">👉 Premi COMPRA</div><div class="s">Qui, a destra in basso</div>`;
       if (st !== 'nostro') return `<div class="t">Questo costa ${c}</div><div class="s">Raccoji ancora ${c - n} nocchie</div>${b(n, c, '#e2b765')}`; }
-    return `<div class="t">🚩 Compra un terreno</div><div class="s">Segui a freccia fino a o campo</div>`;
+    return `<div class="t">🚩 Compra un terreno</div><div class="s">Tocca o pulsante arancione: te ce porta a Vespa</div>`;
   }
 };
 })();
