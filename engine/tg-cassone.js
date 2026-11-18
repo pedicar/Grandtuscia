@@ -30,6 +30,7 @@ const C = TG.Cassone = {
     return k;
   },
   togli(a){ n = Math.max(0, n - a); salva(); },
+  compraMezzo: id => compraMezzo(id), prossimoMezzo: () => prossimoMezzo(),
   // viaggio veloce verso i terreni (da a mappa) pe' chi c'ha o trattore o a semovente
   veloce(){ try { const m = TG.Contadino.stato(TG.Profile.data).mezzi || {}; return !!(m.trattore || m.semovente); } catch(e){ return false; } },
   avvisa(){ if (Date.now() - avvisoPieno < 25000) return; avvisoPieno = Date.now(); msg('Cassone pieno', 'Vai a scaricà su un terreno: apri a mappa e scegli', 3.5); }
@@ -125,13 +126,18 @@ function bottega(){
     return `<div style="display:flex;align-items:center;gap:10px;padding:10px 4px;border-top:1px solid rgba(255,255,255,.08)"><span style="font-size:28px">${m.ico}</span><div style="flex:1"><b style="font-size:16px">${m.nome}</b><br><small style="color:#c9bfa8">${m.cosa} · cassone ${CAPIENZA[m.id]}</small></div>${bt}</div>`;
   }).join('');
   L.querySelectorAll('[data-usa]').forEach(b => b.onclick = () => { try { TG.debug.setVehicle(b.dataset.usa); } catch(e){} chiudiMezzi(); });
-  L.querySelectorAll('[data-compra]').forEach(b => b.onclick = () => {
-    const m = MEZZI.find(x => x.id === b.dataset.compra); if (!m || n < prezzoM(m)) return;
-    C.togli(prezzoM(m)); st.mezzi[m.id] = Date.now(); try { TG.Profile.salva(); } catch(e){}
-    ev('acquisto_mezzo', m.id, m.prezzo); try { TG.debug.setVehicle(m.id); } catch(e){}
-    chiudiMezzi(); msg(`${m.ico} ${m.nome} comprata!`, `Cassone da ${CAPIENZA[m.id]}${m.id === 'semovente' ? ' e ogni nocchia vale 3' : ''}`, 4);
-  });
+  L.querySelectorAll('[data-compra]').forEach(b => b.onclick = () => { if (compraMezzo(b.dataset.compra)) chiudiMezzi(); });
 }
+// compra un mezzo co' e nocchie e ce sale sopra (usato da a bottega e da i consigli de tg-facile.js)
+function compraMezzo(id){
+  const st = stCont(), m = MEZZI.find(x => x.id === id); if (!st || !m || n < prezzoM(m)) return false; st.mezzi = st.mezzi || {};
+  C.togli(prezzoM(m)); st.mezzi[m.id] = Date.now(); try { TG.Profile.salva(); } catch(e){}
+  ev('acquisto_mezzo', m.id, m.prezzo); try { TG.debug.setVehicle(m.id); } catch(e){}
+  msg(`${m.ico} ${m.nome} comprata!`, `Cassone da ${CAPIENZA[m.id]}${m.id === 'semovente' ? ' e ogni nocchia vale 3' : ''}`, 4);
+  return true;
+}
+// o prossimo mezzo da comprà (in ordine), co' o prezzo de adesso
+function prossimoMezzo(){ const st = stCont(); if (!st) return null; const h = st.mezzi || {}; const m = MEZZI.find(x => x.prezzo > 0 && !h[x.id]); return m ? Object.assign({}, m, { costo: prezzoM(m), capienza: CAPIENZA[m.id] }) : null; }
 function chiudiMezzi(){ const o = $('vehOv'); if (!o) return; const x = o.querySelector('[data-close]'); if (x) x.click(); else o.hidden = true; }
 function osservaMezzi(){
   const o = $('vehOv'); if (!o) return setTimeout(osservaMezzi, 1500);

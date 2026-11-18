@@ -61,7 +61,7 @@ const Pilota = TG.Pilota = {
 };
 function arrivato(){
   const m = meta; meta = null; segnaMeta();
-  if (m && m.perche === 'campo') setTimeout(controllaCompra, 400);
+  if (m && m.perche === 'campo') setTimeout(() => controllaCompra(true), 400);
 }
 function segnaMeta(){
   const T = D(); if (!T || !T.scene || !window.THREE) return;
@@ -168,16 +168,16 @@ function campoVicino(){
 }
 const meta2 = () => (D().NAV && D().NAV.dest) || campoVicino();
 function vaiTick(){
-  if (compra.style.display === 'flex') { const t = inCampo(); if (!t || t.id !== compra.dataset.t || passo() !== 2) compra.style.display = 'none'; }
+  if (compra.style.display === 'flex') { const t = inCampo(); if (!t || t.id !== compra.dataset.t) compra.style.display = 'none'; }
   const T = D(); const ok = passo() === 2 && T && document.body.classList.contains('playing') && !inCampo() && compra.style.display !== 'flex' && meta2();
   vai.style.display = ok ? 'block' : 'none';
   vai.textContent = meta && meta.perche === 'campo' ? '🛵 Te ce porto…' : '🛵 PORTAME A O CAMPO';
   if (passo() === 2 && !meta) controllaCompra();
 }
 vai.onclick = () => { const d = meta2(); if (!d) return; Pilota.vai(d.x, d.z, null, 'campo'); ev('pilota_campo', d.name || ''); };
-function controllaCompra(){
-  if (passo() !== 2 || compra.style.display === 'flex') return;
-  const t = inCampo(); if (!t || no.has(t.id)) return;
+function controllaCompra(forza){
+  if ((passo() !== 2 && !forza) || compra.style.display === 'flex') return;
+  const t = inCampo(); if (!t || (no.has(t.id) && !forza)) return;
   const W = TG.Terre, pa = (W.paeseMio && W.paeseMio()) || '';
   let nome = 'o paese tuo'; try { nome = ((TG.PrimoMinuto && TG.PrimoMinuto.nomeComune(pa)) || nome).replace(/ (di|in|sul|al|nel) .*$/i, ''); } catch(e){}
   compra.querySelector('.t').textContent = '🌳 Questo campo diventa de ' + nome + '?';
@@ -187,4 +187,65 @@ function controllaCompra(){
 compra.querySelector('.si').onclick = () => { compra.style.display = 'none'; const b = document.getElementById('scBtn'); ev('compra_tocco', compra.dataset.t); if (b) b.click(); };
 compra.querySelector('.no').onclick = () => { compra.style.display = 'none'; no.add(compra.dataset.t); };
 setInterval(vaiTick, 400);
+
+/* ---------------------------------------------------------------- 5. I CONSIGLI (da o passo 3): tutto guidato
+   Una carta sola alla vorta, in basso: «se pò fa' questo, lo famo?» co' SÌ grande e «Dopo». Ogni SÌ fa a cosa da solo.
+   In ordine: riprendi un terreno de casa (metà prezzo) → mezzo novo → cassone pieno → campo libero qui vicino.
+   «Dopo» = nun se ripropone pe' 4 minuti (o mezzo pe' 6). */
+const cons = el('div', 'tfCons', '<div class="i"></div><div class="tx"><div class="t"></div><div class="s"></div></div><div class="bb"><button class="si"></button><button class="no">Dopo</button></div>');
+const st2 = document.createElement('style'); st2.textContent = `
+#tfCons{position:fixed;z-index:55;left:0;right:0;margin:0 auto;bottom:calc(16px + env(safe-area-inset-bottom,0px));width:min(430px,calc(100vw - 24px));display:none;grid-template-columns:auto 1fr;gap:6px 12px;align-items:center;padding:14px 14px 12px;border-radius:22px;background:#1f2a2a;border:3px solid #ff8a3c;color:#fff;font-family:Figtree,system-ui,sans-serif;box-shadow:0 14px 36px rgba(0,0,0,.45);animation:tfSu .35s ease-out}
+#tfCons .i{font-size:40px;line-height:1}#tfCons .t{font:900 19px/1.15 Figtree,sans-serif}#tfCons .s{margin-top:3px;font:700 15px/1.3 Figtree,sans-serif;opacity:.9}
+#tfCons .bb{grid-column:1/-1;display:flex;gap:10px;margin-top:6px}#tfCons button{border:0;border-radius:16px;font:900 18px Figtree,sans-serif;padding:14px 10px;touch-action:manipulation}
+#tfCons .si{flex:1;background:#3fbf5f;color:#fff;box-shadow:0 4px 0 #23863c}#tfCons .no{flex:none;width:96px;background:rgba(255,255,255,.12);color:#dfe7e3}
+@keyframes tfSu{from{transform:translateY(30px);opacity:0}}
+body:not(.playing) #tfCons,body:has(#mapOv:not([hidden])) #tfCons{display:none!important}`;
+document.head.appendChild(st2);
+const zitti = {}; let cAperta = null, cChiusa = 0, cInizio = 0;
+const nomeP = p => { try { return ((TG.PrimoMinuto && TG.PrimoMinuto.nomeComune(p)) || p).replace(/ (di|in|sul|al|nel) .*$/i, ''); } catch(e){ return p; } };
+const breve = t => String(t || 'o campo').replace(/^(noccioleto|castagneto|campo|podere)\s+(di|de|del|della)\s+/i, (m, a) => a.toLowerCase() + ' de ');
+function mostraCons(c){
+  cAperta = c; cons.querySelector('.i').textContent = c.ico; cons.querySelector('.t').textContent = c.t; cons.querySelector('.s').textContent = c.s;
+  cons.querySelector('.si').textContent = c.si; cons.style.display = 'grid'; ev('consiglio', c.k.split(':')[0]);
+}
+function chiudiCons(dopo){
+  if (!cAperta) return; if (dopo) zitti[cAperta.k] = Date.now() + (cAperta.k.startsWith('mezzo') ? 360e3 : 240e3);
+  else zitti[cAperta.k] = Date.now() + 60e3;
+  cons.style.display = 'none'; cAperta = null; cChiusa = Date.now();
+}
+cons.querySelector('.si').onclick = () => { const c = cAperta; chiudiCons(false); if (c) { ev('consiglio_si', c.k.split(':')[0]); try { c.fai(); } catch(e){} } };
+cons.querySelector('.no').onclick = () => { if (cAperta) ev('consiglio_dopo', cAperta.k.split(':')[0]); chiudiCons(true); };
+const libero = k => !(zitti[k] > Date.now());
+function vaiCampo(t){ Pilota.vai(t.x, t.z, null, 'campo'); try { TG.debug.setDest({ x: t.x, z: t.z, name: breve(t.nome) }); } catch(e){} }
+function trovaConsiglio(){
+  const T = D(), W = TG.Terre, C = TG.Cassone; if (!T || !W || !W.lista || !C) return null;
+  const c = T.car, n = C.n, p = passo();
+  const vicini = W.lista().filter(t => t.x != null).map(t => ({ t, d: Math.hypot(t.x - c.x, t.z - c.z) })).sort((a, b) => a.d - b.d);
+  // 1. un terreno de casa tua in mano a n'antro paese: a metà prezzo
+  for (const { t, d } of vicini) { if (d > 900) break; if (W.riconquista && W.riconquista(t.id) && W.costo(t.id) <= n && libero('ric:' + t.id))
+    return { k: 'ric:' + t.id, ico: '🏠', t: `${breve(t.nome)} è de casa tua`, s: `Mo' ce sta ${nomeP(W.padrone(t.id))}. Ripijatelo a metà: ${W.costo(t.id)} nocchie.`, si: '🛵 PORTAMECE', fai: () => vaiCampo(t) }; }
+  // 2. o mezzo novo
+  const m = p >= 4 && C.prossimoMezzo && C.prossimoMezzo();
+  if (m && n >= m.costo && libero('mezzo:' + m.id))
+    return { k: 'mezzo:' + m.id, ico: m.ico, t: `Te pòi comprà ${m.id === 'ape' ? "l'Ape" : m.id === 'trattore' ? 'o trattore' : 'a semovente'}!`, s: `Ce entrano ${m.capienza} nocchie invece de ${C.cap()}${m.id !== 'ape' ? '. ' + m.cosa : ''}. Costa ${m.costo}.`, si: '🌰 SÌ, COMPRA', fai: () => C.compraMezzo(m.id) };
+  // 3. cassone pieno → o campo più vicino che te pòi comprà
+  const buono = vicini.find(({ t }) => W.stato(t.id) !== 'nostro' && W.costo(t.id) <= n);
+  if (C.pieno() && buono && libero('pieno'))
+    return { k: 'pieno', ico: '🌰', t: 'Cassone pieno!', s: `Compra un terreno: ${breve(buono.t.nome)} costa ${W.costo(buono.t.id)}. Te ce porto?`, si: '🛵 PORTAMECE', fai: () => vaiCampo(buono.t) };
+  // 4. un campo qui vicino che te pòi comprà
+  if (buono && buono.d < 220 && !inCampo() && libero('vicino:' + buono.t.id)) {
+    const pd = W.padrone(buono.t.id);
+    return { k: 'vicino:' + buono.t.id, ico: '🚩', t: pd ? `Pòi pijà ${breve(buono.t.nome)}` : 'Campo libero qui vicino', s: `${pd ? 'Mo\' è de ' + nomeP(pd) + '. ' : ''}Costa ${W.costo(buono.t.id)} nocchie: ce l'hai. Ce annamo?`, si: '🛵 PORTAMECE', fai: () => vaiCampo(buono.t) };
+  }
+  return null;
+}
+setInterval(() => {
+  const T = D(); if (!T || passo() < 3 || !document.body.classList.contains('playing')) { if (cAperta && !document.body.classList.contains('playing')) cons.style.display = 'none'; return; }
+  if (!cInizio) cInizio = Date.now();
+  if (cAperta) { if (cons.style.display !== 'grid') cons.style.display = 'grid'; return; }
+  if (meta || compra.style.display === 'flex' || Date.now() - cInizio < 15000 || Date.now() - cChiusa < 8000) return;
+  if (T.S && T.S.paused) return;
+  const c = trovaConsiglio(); if (c) mostraCons(c);
+}, 1200);
+TG.Consigli = { trova: trovaConsiglio, chiudi: () => chiudiCons(true) };
 })();
