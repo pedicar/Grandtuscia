@@ -118,10 +118,10 @@ function mappa(){
 const MEZZI = [   // se comprano co' e nocchie (20/11): così e nocchie servono a du' cose, campi pe' o paese e mezzi pe' te
   { id: 'vespa', nome: 'Vespa', ico: '🛵', prezzo: 0, cosa: 'Veloce e agile' },
   { id: 'ape', nome: 'Ape', ico: '🛺', prezzo: 800, cosa: 'Robusta, va ovunque' },
-  { id: 'trattore', nome: 'Trattore', ico: '🚜', prezzo: 1500, cosa: 'Passa ovunque' },
-  { id: 'semovente', nome: 'Semovente', ico: '🌾', prezzo: 2500, cosa: 'Raccoje 3 pe\' nocchia, spazzola larga' },
-  { id: 'supercar', nome: 'Supercar', ico: '🏎️', prezzo: 5000, cosa: 'Velocissima' },
-  { id: 'aereo', nome: 'Aereo', ico: '✈️', prezzo: 10000, cosa: 'Voli sopra a Tuscia e atterri dove vòi' }
+  { id: 'trattore', nome: 'Trattore', ico: '🚜', prezzo: 5000, cosa: 'Passa ovunque' },
+  { id: 'semovente', nome: 'Semovente', ico: '🌾', prezzo: 12000, cosa: 'Raccoje 3 pe\' nocchia, spazzola larga' },
+  { id: 'supercar', nome: 'Supercar', ico: '🏎️', prezzo: 30000, cosa: 'Velocissima' },
+  { id: 'aereo', nome: 'Aereo', ico: '✈️', prezzo: 50000, cosa: 'Voli sopra a Tuscia e atterri dove vòi' }
 ];
 const prezzoM = m => Math.round(m.prezzo * (TG.Coop && TG.Coop.mio() >= 4 ? .8 : 1));   // cooperativa liv 4: mezzi −20%
 const stCont = () => { try { return TG.Contadino.stato(TG.Profile.data); } catch(e){ return null; } };
