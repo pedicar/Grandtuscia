@@ -9,6 +9,8 @@
 (function(){
 'use strict';
 const TG = window.TG = window.TG || {};
+// moto e supercar: niente aiuto in curva né freno automatico de e curve (mondo/app.js), così se pò fà i matti
+TG.liberi = Object.assign(TG.liberi || {}, { moto: 1, supercar: 1 });
 const ev = (t, c, n) => { try { TG.Stats && TG.Stats.ev(t, c || '', n); } catch(e){} };
 const TRICK = [
   { nome: 'Backflip', dur: .75, p: 15, f: (T, u) => { T.x = -u * Math.PI * 2; } },
