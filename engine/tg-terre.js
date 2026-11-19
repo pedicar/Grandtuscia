@@ -297,16 +297,16 @@ function festa(T, prima, p, quanti, sottotitolo){
   fanfara(); fuochi(T, col);
   let tot = 0; for (const X of TERRE) if (padrone(X.id) === p || X.id === T.id) tot++;
   if (!document.getElementById('trFestaCss')) { const st = document.createElement('style'); st.id = 'trFestaCss'; st.textContent = `
-#trFesta{position:fixed;inset:0;z-index:95;display:flex;align-items:flex-start;justify-content:center;padding-top:max(84px,14vh);pointer-events:none;font-family:Figtree,"Segoe UI",system-ui,sans-serif;color:#fff;overflow:hidden}
-#trFesta .fl{position:absolute;inset:0;background:radial-gradient(circle at 50% 45%,var(--c) 0,transparent 70%);animation:trFl 1.1s ease-out forwards;opacity:0}
-#trFesta .bx{position:relative;text-align:center;padding:18px 26px 16px;border-radius:22px;background:rgba(14,18,16,.86);border:3px solid var(--c);box-shadow:0 0 0 6px rgba(0,0,0,.25),0 0 60px var(--c);animation:trIn .55s cubic-bezier(.2,1.6,.4,1) both;max-width:88vw}
-#trFesta .k{font:900 13px/1 Figtree,sans-serif;letter-spacing:.24em;color:var(--c);text-transform:uppercase}
-#trFesta h2{margin:8px 0 4px;font:900 clamp(24px,7vw,40px)/1.05 Figtree,sans-serif;letter-spacing:.02em;text-shadow:0 3px 0 rgba(0,0,0,.45);animation:trPulse .9s .55s ease-in-out 2}
-#trFesta .n{font:800 17px/1.25 Figtree,sans-serif;color:#f3e7cb}
+#trFesta{position:fixed;left:0;right:0;top:calc(env(safe-area-inset-top,0px) + 104px);z-index:95;display:flex;justify-content:center;pointer-events:none;font-family:Figtree,"Segoe UI",system-ui,sans-serif;color:#fff;overflow:hidden}
+#trFesta .fl{display:none;position:absolute;inset:0;background:radial-gradient(circle at 50% 45%,var(--c) 0,transparent 70%);animation:trFl 1.1s ease-out forwards;opacity:0}
+#trFesta .bx{position:relative;display:flex;align-items:center;gap:8px;text-align:left;padding:7px 14px;border-radius:999px;background:rgba(14,18,16,.82);border:2px solid var(--c);box-shadow:0 2px 10px rgba(0,0,0,.3);animation:trIn .55s cubic-bezier(.2,1.6,.4,1) both;max-width:88vw}
+#trFesta .k{display:none;font:900 13px/1 Figtree,sans-serif;letter-spacing:.24em;color:var(--c);text-transform:uppercase}
+#trFesta h2{margin:0;font:900 16px/1.2 Figtree,sans-serif;white-space:nowrap}
+#trFesta .n{display:none}
 #trFesta .s{margin-top:6px;font:700 14px/1.3 Figtree,sans-serif;color:#d9cfb6}
 #trFesta .s b{color:var(--c)}
 #trFesta button{margin-top:12px;all:unset;display:inline-block;margin-top:12px;padding:9px 16px;border-radius:999px;background:var(--c);color:#fff;font:800 14px Figtree,sans-serif;cursor:pointer;box-shadow:0 3px 0 rgba(0,0,0,.35)}
-#trFesta i.nc{position:absolute;top:-40px;font-style:normal;font-size:26px;animation:trNc linear forwards;pointer-events:none}
+#trFesta i.nc{display:none;position:absolute;top:-40px;font-style:normal;font-size:26px;animation:trNc linear forwards;pointer-events:none}
 #trFesta.via{animation:trVia .35s ease-in forwards}
 @keyframes trFl{0%{opacity:0}15%{opacity:.7}100%{opacity:0}}
 @keyframes trIn{0%{transform:scale(.2) rotate(-8deg);opacity:0}100%{transform:scale(1) rotate(0);opacity:1}}
@@ -315,7 +315,7 @@ function festa(T, prima, p, quanti, sottotitolo){
 @keyframes trVia{to{opacity:0;transform:scale(1.04)}}`; document.head.appendChild(st); }
   const old = document.getElementById('trFesta'); if (old) old.remove();
   const d = document.createElement('div'); d.id = 'trFesta'; d.style.setProperty('--c', col);
-  d.innerHTML = `<div class="fl"></div><div class="bx"><div class="k">🚩 ${corto(p)}</div><h2>${quanti > 1 ? 'Hai conquistato ' + quanti + ' terreni!' : 'Hai conquistato un terreno!'}</h2><div class="n">${nome}</div></div>`;
+  d.innerHTML = `<div class="fl"></div><div class="bx"><div class="k">🚩 ${corto(p)}</div><h2>🚩 ${quanti > 1 ? 'Hai conquistato ' + quanti + ' terreni!' : 'Hai conquistato un terreno!'}</h2><div class="n">${nome}</div></div>`;
   for (let i = 0; i < 34; i++) { const n = document.createElement('i'); n.className = 'nc'; n.textContent = T.frutto === 'c' ? '🌰' : (i % 5 ? '🌰' : '✨'); n.style.left = Math.random() * 100 + 'vw'; n.style.animationDuration = (1.6 + Math.random() * 1.6) + 's'; n.style.animationDelay = (Math.random() * .6) + 's'; n.style.setProperty('--r', (Math.random() * 720 - 360) + 'deg'); d.appendChild(n); }
   document.body.appendChild(d);
   let chiuso = false; const chiudi = () => { if (chiuso) return; chiuso = true; d.classList.add('via'); setTimeout(() => d.remove(), 360); };
