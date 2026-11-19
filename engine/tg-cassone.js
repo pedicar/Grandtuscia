@@ -16,7 +16,7 @@ const CAPIENZA = { piedi: 60, vespa: 100, ape: 150, trattore: 250, semovente: 40
 const MINIMO = 10;
 let n = Math.max(0, +(ls.get('tg-cassone') || 0) || 0), avvisoPieno = 0, prima10 = !ls.get('tg-cassone-10');
 const mezzo = () => { try { return TG.debug.VEH.cur.id; } catch(e){ return 'vespa'; } };
-const cap = () => Math.round((CAPIENZA[mezzo()] || 100) * (TG.Coop && TG.Coop.mio() >= 1 ? 1.1 : 1));   // cooperativa liv 1: cassone +10%
+const cap = () => 99999;   // regola unica (19/11): o cassone nun se riempie mai, e nocchie se accumulano e basta
 const salva = () => ls.set('tg-cassone', String(n));
 const C = TG.Cassone = {
   get n(){ return n; }, cap, MINIMO,
@@ -58,15 +58,19 @@ html body.touch #prompt#prompt{left:calc(172px + env(safe-area-inset-left,0px))!
 #prompt.tgVinci{box-shadow:0 0 0 3px rgba(242,199,78,.8)}#prompt .tgVinci{display:block!important;color:#f2c74e;font-weight:800;font-size:13px;white-space:nowrap}
 #scVolo{position:fixed;z-index:34;pointer-events:none;font-size:22px;transition:transform .7s cubic-bezier(.3,.6,.4,1),opacity .7s}`;
 document.head.appendChild(st);
-let btn = null, occupato = false;
+let btn = null, occupato = false; const provato = {};
 function bottone(){
   const W = TG.Terre, D = TG.debug; if (!W || !D || !D.car) return;
   if (!btn) { btn = document.createElement('button'); btn.id = 'scBtn'; btn.type = 'button'; btn.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); scarica(); }); btn.onclick = e => { e.stopPropagation(); }; /* pointerdown: parte subito, nun se perde */ document.body.appendChild(btn); }
   const car = D.car, T = W.terraIn(car.x, car.z), p = W.paeseMio && W.paeseMio();
   const ok = T && p && !(W.derby && W.derby(T.id) && !(W.sfida() || { p: [] }).p.includes(p));
   document.documentElement.classList.toggle('tg-scarica', !!ok);
-  if (!ok || occupato) { btn.style.display = occupato ? 'flex' : 'none'; return; }
-  btn.style.display = 'flex';
+  if (!ok || occupato) { btn.style.display = 'none'; return; }
+  // REGOLA UNICA: niente bottone. Entri ne o campo co' abbastanza nocchie → è tuo (una prova ogni 4 s pe' campo)
+  btn.style.display = 'none';
+  { const s0 = W.stato(T.id), c0 = W.costo(T.id), ora = Date.now();
+    if (s0 !== 'nostro' && n >= c0 && !(W.blocco && W.blocco()) && !(provato[T.id] > ora - 4000)) { provato[T.id] = ora; scarica(); }
+    return; }
   const s = W.stato(T.id), c = W.costo(T.id), tasto = matchMedia('(pointer:fine)').matches ? ' · tasto E' : '';
   const nostro = s === 'nostro', pago = !nostro && n >= c;
   const pr = W.prezzo(T.id), max = W.alMassimo && W.alMassimo(T.id), mette = Math.min(n, 300, Math.max(0, 300 - pr)), rq = W.riconquista && W.riconquista(T.id);
@@ -84,15 +88,15 @@ async function scarica(){
   const nostro = W.stato(T.id) === 'nostro', c = W.costo(T.id);
   if (W.blocco && W.blocco()) { msg('🐢 Limite orario raggiunto', `Al massimo 3.000 nocchie spese in un'ora: riprova fra ${W.blocco()} min`, 3.5); return; }
   if (nostro && W.alMassimo && W.alMassimo(T.id)) { msg('✅ È già al massimo', 'Vale 300: rinforza un antro terreno vostro', 3); return; }
-  if (nostro && n < MINIMO) { msg('È già vostro', 'Raccoji nocchie pe\' rinforzallo', 2.5); return; }
+  if (nostro) return;   // regola unica: o campo vostro nun se tocca
   if (!nostro && n < c) { msg(`Costa ${c}: te ne mancano ${c - n}`, 'Raccoji ancora e torna (o cerca un terreno che costa meno)', 3.5); return; }
   occupato = true; btn._h = '…'; btn.innerHTML = '…'; volo();
-  try { const r = await W.deposita(T, nostro ? Math.min(n, 300, Math.max(1, 300 - W.prezzo(T.id))) : n); if (r && r.aggiunti) { ls.set('tg-primo-scarico', '1'); const g = $('scGrande'); g && g.remove(); C.togli(r.aggiunti); try { TG.Semplice && TG.Semplice.libera && TG.Semplice.libera(); } catch(e){} } else if (r && r.tetto) msg('Pe\' oggi basta', 'Hai speso tanto: riprova domani', 3.5); else if (!(r && (r.manca || r.tetto_ora || r.al_massimo))) msg('Nun è riuscito', 'Controlla a connessione e riprova', 3); }
+  try { const r = await W.deposita(T, c); if (r && r.aggiunti) { ls.set('tg-primo-scarico', '1'); const g = $('scGrande'); g && g.remove(); C.togli(r.aggiunti); try { TG.Semplice && TG.Semplice.libera && TG.Semplice.libera(); } catch(e){} } else if (r && r.tetto) msg('Pe\' oggi basta', 'Hai speso tanto: riprova domani', 3.5); else if (!(r && (r.manca || r.tetto_ora || r.al_massimo))) msg('Nun è riuscito', 'Controlla a connessione e riprova', 3); }
   catch(e){ msg('Nun è riuscito', 'Controlla a connessione e riprova', 3); }
   occupato = false; bottone();
 }
 function volo(){
-  if (!btn) return; const r = btn.getBoundingClientRect();
+  if (!btn) return; let r = btn.getBoundingClientRect(); if (!r.width) r = { left: innerWidth / 2 - 30, top: innerHeight * .62, width: 60 };
   for (let i = 0; i < 9; i++) { const s = document.createElement('div'); s.id = 'scVolo'; s.textContent = '🌰'; s.style.left = (r.left + r.width / 2 - 11) + 'px'; s.style.top = (r.top + 6) + 'px'; document.body.appendChild(s);
     requestAnimationFrame(() => { s.style.transform = `translate(${(-innerWidth * .3) + (Math.random() - .5) * 160}px, ${-r.top * .45 + (Math.random() - .5) * 80}px) scale(.6)`; s.style.opacity = '0'; });
     setTimeout(() => s.remove(), 800 + i * 30); }

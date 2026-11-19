@@ -118,9 +118,10 @@ async function manutMia(){
   if (document.body.classList.contains('playing')) setTimeout(dire, 3000); else new MutationObserver((x, o) => { if (document.body.classList.contains('playing')) { o.disconnect(); setTimeout(dire, 9000); } })   /* dopo o benvenuto */.observe(document.body, { attributes: true, attributeFilter: ['class'] });
 }
 function avvisaManut(){ const m = manutenzione(), p = paese(); if (manutDetto || !m || m.pct < 15 || !document.body.classList.contains('playing')) return; const k = 'tg-manut-' + new Date().toISOString().slice(0, 10); try { if (localStorage.getItem(k)) { manutDetto = true; return; } localStorage.setItem(k, '1'); } catch(e){} manutDetto = true; msg(`🧾 Manutenzione: ${m.terreni} terreni`, `Più terreni tenete, più costa: stanotte quelli fori casa perdono o ${m.pct}%. Rinforzate quelli che contano`, 6); }
-const riconquista = id => { const pd = padrone(id), p = paese(); return !!(pd && p && DI[id] === p && pd !== p); };
-const costo = id => { const c = padrone(id) ? Math.min(prezzo(id), TETTO) + 10 : 10; return riconquista(id) ? Math.ceil(c / 2) : c; };
-const alMassimo = id => prezzo(id) >= TETTO;
+// REGOLA UNICA (19/11): libero 10, de n'antro paese 20, sempre (server: tg_terra_compra2). Niente metà prezzo, niente «al massimo».
+const riconquista = id => false;
+const costo = id => padrone(id) ? 20 : 10;
+const alMassimo = id => false;
 // TERRENI DE CASA: ogni paese parte padrone de i terreni suoi (prezzo 10) finché nun li compra quarcun altro
 const casa = id => { const l = classifica[id]; return !!(l && l[0] && l[0].casa); };
 function stato(id){ const l = righe(id).filter(r => r.punti > 0), p = paese(), pd = padrone(id); if (!l.length) return 'libero'; if (!pd) return 'conteso'; return pd === p ? 'nostro' : 'loro'; }
@@ -151,6 +152,7 @@ function contaGuerra(t, a){
 }
 const affAcc = {}, affDa = {}; let affVisto = null;
 function affitto(T, u){
+  return 0;   // regola unica: niente affitto pe' chi passa (se raccoje e basta)
   const p = paese(); if (!p || stato(T.id) !== 'loro') return 0;
   const pd0 = padrone(T.id), div = TG.Coop && TG.Coop.liv(pd0) >= 3 ? 4 : 5;   // cooperativa liv 3 de o padrone: 1 su 4
   affAcc[T.id] = (affAcc[T.id] || 0) + u / div; const k = Math.floor(affAcc[T.id]); affAcc[T.id] -= k;

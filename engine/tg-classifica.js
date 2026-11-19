@@ -18,7 +18,10 @@ const st = document.createElement('style'); st.textContent = `
 /* a schermo o meno possibile: via a scritta de a radio in alto (a radio se sente uguale), a classifica sotto a a minimappa,
    e ne o riquadro (da o passo 3) a barra e a riga de sotto: restano solo titolo e una riga */
 #radio,#trCl,html body.touch #hud .where.rot>#radio.rotOn.rotOn,html body.touch #hud .where.rot>#mission.rotOn.rotOn,html body #hud .where>#mission#mission{display:none!important}
-html.tg-scarica:not(.tg-lt3) #obi{display:none!important}
+/* REGOLA UNICA: a schermo solo 🌰 e 🏆; o riquadro solo pe' i primi due passi; niente minimappa, bottone COMPRA, cooperativa, cartelli de i giochi */
+html:not(.tg-lt3) #obi,#mini,#scBtn,#coBtn,[data-coop],#tgCartello{display:none!important}
+/* o joystick se vede solo quanno ce metti o dito */
+html body.touch #joy:not(.act){opacity:0!important}
 html:not(.tg-lt3) #obi .b,html:not(.tg-lt3) #obi .r{display:none!important}
 html body #hud .where{width:max-content!important;min-width:0!important;max-width:calc(100vw - 130px)!important}
 #trTop{font-size:20px!important}#trTop b{font-weight:900}
@@ -44,7 +47,7 @@ function apri(){
 }
 TG.Classifica = { apri };
 // rete de sicurezza: niente più lire, stima o Trono ne i messaggi
-const VECCHIO = /\blire\b|\bstima\b|♥|Trono de|Trono di/i;
+const VECCHIO = /\blire\b|\bstima\b|♥|Trono de|Trono di|affitt|manutenz|cooperativ|rinforz|al massimo|metà prezzo|cassone pieno|limite orario/i;
 (function filtro(){
   if (!TG.msg || TG.msg._vecchio) return setTimeout(filtro, 400);
   const o = TG.msg, n = function(t, s){ if (VECCHIO.test(String(t) + ' ' + (s || ''))) return; return o.apply(this, arguments); };

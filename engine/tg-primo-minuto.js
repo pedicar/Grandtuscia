@@ -96,7 +96,7 @@ async function chiediPaese(){
   const ord = comuni.slice().sort((a, b) => rank(a) - rank(b) || a.nome.localeCompare(b.nome, 'it'));
   const primi = ord.slice(0, 6), fuori = ord.find(c => c.id === 'fuori');
   o.innerHTML = `<div class="pmBox"><div class="pmEye">⚔ A GUERRA DE I PAESI</div><h2>De 'ndo sei?</h2>
-  <p>${(CAMP && FRASI_ARRIVO[CAMP]) || "Raccoi e nocchie e compra i terreni pe' o paese tuo."} ${guerra || "Scegli o comune e parti: a classifica è pubblica."}</p>
+  <p>${(CAMP && FRASI_ARRIVO[CAMP]) || "Passa sopra e nocchie: co' 10, o campo dove stai diventa de o paese tuo."} </p>
   <div class="pmGrid">${primi.map(c => `<button data-p="${c.id}">${c.nome}</button>`).join('')}</div>
   <input class="pmCerca" id="pmCerca" type="search" autocomplete="off" autocorrect="off" spellcheck="false" placeholder="Scrivi o paese tuo (so' ${comuni.length - (fuori ? 1 : 0)} comuni de a Tuscia)…" aria-label="Cerca il tuo comune">
   <div class="pmTrovati" id="pmTrovati" hidden></div>

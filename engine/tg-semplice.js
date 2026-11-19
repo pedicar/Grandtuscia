@@ -47,7 +47,9 @@ function alto(){
   const sc = document.getElementById('score'); if (!sc || !TG.Terre) return;
   let el = document.getElementById('trTop'); if (!el) { el = document.createElement('div'); el.id = 'trTop'; sc.appendChild(el); }
   // in alto solo e nocchie che c'hai: o resto (terreni, posizione, derby) sta in Classifica
-  { const n = TG.Cassone ? TG.Cassone.n : 0, h = `<span>🌰 <b>${n}</b></span>`; if (el._h !== h) { el._h = h; el.innerHTML = h; } return; }
+  { const n = TG.Cassone ? TG.Cassone.n : 0, p = paese(); let pos = '';
+    if (p && TG.Terre && TG.Terre.lista) { const t = conta(), cl = Object.entries(t).sort((a, b) => b[1] - a[1]), i = cl.findIndex(r => r[0] === p); pos = `<span class="alt">🏆 ${corto(p)} ${i >= 0 ? (i + 1) + 'ª' : ''}</span>`; }
+    const h = `<span>🌰 <b>${n}</b></span>${pos}`; if (el._h !== h) { el._h = h; el.innerHTML = h; } return; }
   const S = SF();
   if (S && (S.p.includes(paese()) || Math.floor(Date.now() / 4500) % 2)) { const t = {}; for (const T of TG.Terre.lista()) { if (!TG.Terre.derby(T.id)) continue; const q = TG.Terre.padrone(T.id); if (q) t[q] = (t[q] || 0) + 1; }
     const [a, b] = S.p, p = paese(), nm = q => q === p ? `<b style="color:#fff">${S.nome(q)}</b>` : `<span class="alt">${S.nome(q)}</span>`;
@@ -128,7 +130,7 @@ function tutorial(){
 }
 
 /* ---------- i mezzi se sbloccano prendendo terreni ---------- */
-const SOGLIE = [];   // 2.1: i mezzi se comprano co' e nocchie (tg-cassone.js, pannello de i mezzi)
+const SOGLIE = [[5, 'ape', "🛺 L'Ape è tua: va più veloce ne i campi"], [15, 'trattore', '🚜 O trattore è tuo: passa ovunque'], [30, 'semovente', '🌾 A semovente è tua: raccoje 3 nocchie pe\' volta']];   // regola unica: i mezzi arrivano in regalo coi terreni presi
 function sblocca(tot){
   try { const L = TG.Contadino.stato(TG.Profile.data); for (const [n, id, cosa] of SOGLIE) if (tot >= n && !L.mezzi[id]) { L.mezzi[id] = Date.now(); TG.Profile.salva && TG.Profile.salva(); setTimeout(() => { try { TG.msg('🚜 Mezzo nuovo!', cosa + ` (${n} terreni presi)`, 4); TG.debug.setVehicle && TG.debug.setVehicle(id); } catch(e){} }, 5600); } } catch(e){}
 }

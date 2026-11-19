@@ -189,6 +189,7 @@ function porta(x, z, nome){
   ev('portamece', nome || '');
 }
 function controllaCompra(forza){
+  return;   // regola unica: o campo se compra da solo entrando (tg-cassone.js)
   if ((passo() !== 2 && !forza) || compra.style.display === 'flex') return;
   const t = inCampo(); if (!t || (no.has(t.id) && !forza)) return;
   const W = TG.Terre, pa = (W.paeseMio && W.paeseMio()) || '';
@@ -235,32 +236,14 @@ cons.querySelector('.no').onclick = () => { if (cAperta) ev('consiglio_dopo', cA
 const libero = k => !(zitti[k] > Date.now()) && !(zitti['T:' + k.split(':')[0]] > Date.now());
 function vaiCampo(t){ porta(t.x, t.z, breve(t.nome)); }
 function trovaConsiglio(){
+  // REGOLA UNICA: una carta sola. Quanno c'hai nocchie pe' un campo e nun ce stai dentro: «te ce porto?»
   const T = D(), W = TG.Terre, C = TG.Cassone; if (!T || !W || !W.lista || !C) return null;
-  const c = T.car, n = C.n, p = passo();
-  const vicini = W.lista().filter(t => t.x != null).map(t => ({ t, d: Math.hypot(t.x - c.x, t.z - c.z) })).sort((a, b) => a.d - b.d);
-  // 1. un terreno de casa tua in mano a n'antro paese: a metà prezzo
-  for (const { t, d } of vicini) { if (d > 900) break; if (W.riconquista && W.riconquista(t.id) && W.costo(t.id) <= n && libero('ric:' + t.id))
-    return { k: 'ric:' + t.id, ico: '🏠', t: `${breve(t.nome)} è de casa tua`, s: `Mo' ce sta ${nomeP(W.padrone(t.id))}. Ripijatelo a metà: ${W.costo(t.id)} nocchie.`, si: '🛵 PORTAMECE', fai: () => vaiCampo(t) }; }
-  // 2. o mezzo novo
-  const m = p >= 4 && C.prossimoMezzo && C.prossimoMezzo();
-  if (m && n >= m.costo && libero('mezzo:' + m.id))
-    return { k: 'mezzo:' + m.id, ico: m.ico, t: `Te pòi comprà ${m.id === 'ape' ? "l'Ape" : m.id === 'trattore' ? 'o trattore' : 'a semovente'}!`, s: `Ce entrano ${m.capienza} nocchie invece de ${C.cap()}${m.id !== 'ape' ? '. ' + m.cosa : ''}. Costa ${m.costo}.`, si: '🌰 SÌ, COMPRA', fai: () => C.compraMezzo(m.id) };
-  // 3. cassone pieno → o campo più vicino che te pòi comprà
-  const buono = vicini.find(({ t }) => W.stato(t.id) !== 'nostro' && W.costo(t.id) <= n);
-  if (C.pieno() && buono && libero('pieno'))
-    return { k: 'pieno', ico: '🌰', t: 'Cassone pieno!', s: `Compra un terreno: ${breve(buono.t.nome)} costa ${W.costo(buono.t.id)}. Te ce porto?`, si: '🛵 PORTAMECE', fai: () => vaiCampo(buono.t) };
-  // 3b. sei dentro un campo che costa troppo → o campo più vicino che te pòi permette
-  const qui = W.terraIn(c.x, c.z);
-  if (qui && W.stato(qui.id) !== 'nostro' && W.costo(qui.id) > n && buono && libero('caro:' + qui.id) && !visti['caro:' + qui.id])
-    return { k: 'caro:' + qui.id, ico: '💸', t: `Questo costa ${W.costo(qui.id)}: troppo`, s: `Tu c'hai ${n} nocchie. ${breve(buono.t.nome)} costa ${W.costo(buono.t.id)}: te ce porto?`, si: '🛵 PORTAMECE', fai: () => vaiCampo(buono.t) };
-  if (qui && W.stato(qui.id) !== 'nostro' && W.costo(qui.id) > n && !buono && libero('poche'))
-    return { k: 'poche', ico: '🌰', t: "Raccoji ancora un po'", s: `Questo costa ${W.costo(qui.id)}, tu c'hai ${n} nocchie. Passa sopra e nocchie ne i campi: o cassone se riempie.`, si: '👍 VA BENE', fai: () => {} };
-  // 4. un campo qui vicino che te pòi comprà
-  if (buono && buono.d < 220 && !inCampo() && libero('vicino:' + buono.t.id)) {
-    const pd = W.padrone(buono.t.id);
-    return { k: 'vicino:' + buono.t.id, ico: '🚩', t: pd ? `Pòi pijà ${breve(buono.t.nome)}` : 'Campo libero qui vicino', s: `${pd ? 'Mo\' è de ' + nomeP(pd) + '. ' : ''}Costa ${W.costo(buono.t.id)} nocchie: ce l'hai. Ce annamo?`, si: '🛵 PORTAMECE', fai: () => vaiCampo(buono.t) };
-  }
-  return null;
+  const c = T.car, n = C.n; if (n < 10 || inCampo()) return null;
+  let best = null, bd = 1e9;
+  for (const t of W.lista()) { if (t.x == null || W.stato(t.id) === 'nostro' || W.costo(t.id) > n) continue; const d = Math.hypot(t.x - c.x, t.z - c.z); if (d < bd) { bd = d; best = t; } }
+  if (!best || bd < 40 || !libero('vicino')) return null;
+  const pd = W.padrone(best.id), mio = (W.paeseMio && W.paeseMio()) || '';
+  return { k: 'vicino', ico: '🚩', t: `C'hai ${n} nocchie!`, s: `${breve(best.nome)}${pd ? ' (mo\' è de ' + nomeP(pd) + ')' : ''}: entraci e diventa de ${nomeP(mio) || 'o paese tuo'}. Te ce porto?`, si: '🛵 PORTAMECE', fai: () => vaiCampo(best) };
 }
 setInterval(() => {
   const T = D(); if (!T || passo() < 3 || !document.body.classList.contains('playing')) { if (cAperta && !document.body.classList.contains('playing')) cons.style.display = 'none'; return; }

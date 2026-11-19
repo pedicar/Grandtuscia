@@ -52,9 +52,9 @@ TG.Passi = {
   riquadro(dentro){
     const C = TG.Cassone, W = TG.Terre; if (!C || passo > 2) return null;
     const n = C.n, b = (k, m, col) => `<div class="b"><i style="width:${Math.max(3, Math.min(100, k / m * 100))}%;background:${col}"></i></div><div class="n10">🌰 ${Math.min(k, m)}/${m}</div>`;
-    if (passo === 1) return `<div class="t">🌰 Passa sopra e nocchie</div><div class="s">Ne servono 10 pe' comprà un terreno</div>${b(n, 10, '#e2b765')}`;
+    if (passo === 1) return `<div class="t">🌰 Passa sopra e nocchie</div><div class="s">Co' 10, o campo dove stai diventa tuo</div>${b(n, 10, '#e2b765')}`;
     if (dentro && W) { const st = W.stato(dentro.id), c = W.costo(dentro.id);
-      if (st !== 'nostro' && n >= c) return `<div class="t">👉 Premi COMPRA</div><div class="s">Qui, a destra in basso</div>`;
+      if (st !== 'nostro' && n >= c) return `<div class="t">🎉 Ce sei!</div><div class="s">O campo sta a diventà tuo</div>`;
       if (st !== 'nostro') return `<div class="t">Questo costa ${c}</div><div class="s">Raccoji ancora ${c - n} nocchie</div>${b(n, c, '#e2b765')}`; }
     return `<div class="t">🚩 Compra un terreno</div><div class="s">Tocca o pulsante arancione: te ce porta a Vespa</div>`;
   }
