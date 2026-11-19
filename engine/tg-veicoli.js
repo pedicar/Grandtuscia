@@ -16,4 +16,38 @@ const tubo=(p1,p2,rr)=>{const A=new THREE.Vector3(...p1),B=new THREE.Vector3(...
 for(const sx of[-1,1]){tubo([0,1.42,2.2],[sx*5.2,1.42-.3,-1.2],.04);tubo([0,1.4,.5],[sx*.75,-.18,.35],.03)}tubo([0,1.47,2.2],[0,1.47,-1.1],.04);tubo([-2.6,1.44,.4],[2.6,1.44,.4],.035);tubo([-.75,-.18,.35],[.75,-.18,.35],.035);tubo([0,1.4,.1],[0,.45,-.25],.02);
 const pil=new THREE.Group;pil.position.set(0,.25,-.35),r.add(pil);t(pil,.42,.32,1.5,l.tuta,0,0,-.2);t(pil,.38,.3,.5,a.dark,0,.02,-1.1);E(pil,new THREE.IcosahedronGeometry(.17,1),a.skin,0,.05,.68);E(pil,new THREE.SphereGeometry(.2,10,6,0,Math.PI*2,0,1.6),d("#d8432a",30),0,.08,.66,Math.PI/2.4);for(const sx of[-1,1])t(pil,.09,.09,.6,l.tuta,sx*.24,.12,.55,-.5);
 let i=0;return{id:"deltaplano",group:o,body:r,prop:new THREE.Object3D,update(e,n){i+=e;const c=Math.abs(n.speed||0);r.rotation.set(-(n.pitch||0)*.6,0,-(n.roll||0)),pil.rotation.z=(n.roll||0)*.25+Math.sin(i*1.3)*.02*Math.min(1,c/10),pil.rotation.x=Math.sin(i*2.1)*.015}}};
+g.Veicoli.bici=function(b){const w=x(b),{box:t,MAT:a,M:d}=w,tel=d("#2a9fd6",80),o=new THREE.Group,r=new THREE.Group;o.add(r);
+const tubo=(p1,p2,rr,m)=>{const A=new THREE.Vector3(...p1),B=new THREE.Vector3(...p2),D=B.clone().sub(A),q=new THREE.Mesh(new THREE.CylinderGeometry(rr,rr,D.length(),6),m||tel);q.position.copy(A).add(B).multiplyScalar(.5),q.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),D.normalize()),q.castShadow=!0,r.add(q)};
+const f=[];for(const z of[.58,-.58]){const H=w.wheel(.36,.09);H.position.set(0,.36,z),r.add(H),f.push(H)}
+const RH=[0,.36,-.58],BB=[0,.34,-.02],ST=[0,.84,-.22],HT=[0,.92,.36],HB=[0,.66,.42],FH=[0,.36,.58];
+tubo(BB,ST,.04);tubo(ST,HT,.04);tubo(BB,HB,.045);tubo(BB,RH,.03);tubo(ST,RH,.03);tubo(HB,FH,.035,a.chrome);tubo(HT,[0,1.02,.32],.03,a.dark);t(r,.66,.04,.05,a.dark,0,1.03,.32);t(r,.13,.05,.28,a.seat,0,.88,-.25);
+const T=w.driver(r,0,.66,-.2,{helmet:d("#f0652b",40),shirt:d("#2a9fd6",5),shirt2:d("#1f7fb0",5)});
+let c=0,y=0;return{id:"bici",group:o,body:r,update(e,n){c+=(n.speed||0)*e;for(const G of f)G.rotation.x=c/.36;const u=P(-(n.steer||0)*Math.min(1,Math.abs(n.speed||0)/10)*.45,-.45,.45);y+=(u-y)*Math.min(1,e*6),r.rotation.set(n.pitch||0,0,(n.roll||0)*.3+y),T.head.rotation.y=-(n.steer||0)*.3}}};
+g.Veicoli.cavallo=function(b){const w=x(b),{box:t,add:E,MAT:a,M:d}=w,co=d("#7a4a2a",25),sc=d("#3a2416",10),o=new THREE.Group,r=new THREE.Group;o.add(r);
+E(r,new THREE.SphereGeometry(.5,10,8),co,0,1.35,0).scale.set(.85,.8,1.75);
+const nk=new THREE.Group;nk.position.set(0,1.45,.72),nk.rotation.x=.42,r.add(nk);t(nk,.34,.8,.42,co,0,.36,0);t(nk,.08,.75,.14,sc,0,.4,-.23);
+const hd=new THREE.Group;hd.position.set(0,.74,.05),hd.rotation.x=.3,nk.add(hd);t(hd,.3,.32,.7,co,0,-.05,.25);t(hd,.26,.2,.2,sc,0,-.12,.58);for(const sx of[-1,1])t(hd,.06,.16,.06,co,sx*.1,.16,-.02);
+const gm=[];for(const[sx,sz]of[[-1,1],[1,1],[-1,-1],[1,-1]]){const L=new THREE.Group;L.position.set(sx*.24,1.15,sz*.58),r.add(L),t(L,.15,1.08,.17,co,0,-.54,0),t(L,.18,.12,.2,sc,0,-1.1,.02),gm.push({L:L,f:sz>0,s:sx})}
+const cd=new THREE.Group;cd.position.set(0,1.5,-.85),cd.rotation.x=.5,r.add(cd);t(cd,.12,.75,.12,sc,0,-.35,0);
+t(r,.64,.1,.62,d("#5b3a22",20),0,1.8,-.05);t(r,.66,.04,.3,d("#d8432a",10),0,1.76,-.05);
+const T=w.driver(r,0,1.82,-.12,{shirt:d("#e6b65e",5),shirt2:d("#c99a3a",5)});
+let ph=0,i=0;return{id:"cavallo",group:o,body:r,update(e,n){i+=e;const v=Math.abs(n.speed||0),k=Math.min(1,v/6);ph+=e*(2+v*.32);for(const G of gm){const q=G.f?ph:ph+Math.PI*.9;G.L.rotation.x=Math.sin(q+(G.s>0?.4:0))*.7*k}r.position.y=Math.abs(Math.sin(ph))*.12*k;nk.rotation.x=.42+Math.sin(ph*2)*.07*k+(1-k)*Math.sin(i*.6)*.05;cd.rotation.x=.5+k*.5+Math.sin(i*3)*.08;r.rotation.set((n.pitch||0)+Math.sin(ph*2)*.03*k,0,(n.roll||0)*.4-(n.steer||0)*k*.12),T.head.rotation.y=-(n.steer||0)*.3}}};
+g.Veicoli.carrettino=function(b){const w=x(b),{box:t,MAT:a,M:d}=w,le=d("#b48650",5),ls=d("#7a5634",5),ro=d("#e06f9a",40),o=new THREE.Group,r=new THREE.Group;o.add(r);
+t(r,.74,.08,2.1,le,0,.34,0);for(const sx of[-1,1])t(r,.05,.16,1.4,ls,sx*.35,.45,-.2);t(r,.74,.18,.06,ro,0,.46,1.02);t(r,.6,.42,.06,le,0,.62,-.78,-.15);t(r,.36,.2,.02,a.lens,0,.48,1.06);
+const f=[],fr=new THREE.Group;fr.position.set(0,.2,.82),r.add(fr);t(fr,.96,.06,.08,ls,0,.04,0);for(const sx of[-1,1]){const H=w.wheel(.2,.12);H.position.set(sx*.5,0,0),fr.add(H),f.push(H)}
+t(r,.96,.06,.08,ls,0,.24,-.82);for(const sx of[-1,1]){const H=w.wheel(.22,.12);H.position.set(sx*.5,.22,-.82),r.add(H),f.push(H)}
+const cd=new THREE.Mesh(new THREE.CylinderGeometry(.012,.012,1,4),d("#e9dcc0",5));cd.position.set(0,.6,.55),cd.rotation.x=1.05,r.add(cd);
+t(r,.025,1.2,.025,ls,-.3,1.0,-.85);const fl=new THREE.Group;fl.position.set(-.3,1.5,-.85),r.add(fl);t(fl,.02,.3,.42,ro,0,0,-.21);
+const T=w.driver(r,0,.38,-.4,{helmet:ro,shirt:d("#f6f1e1",5),shirt2:d("#e06f9a",5)});
+let c=0,i=0;return{id:"carrettino",group:o,body:r,update(e,n){i+=e,c+=(n.speed||0)*e;for(const G of f)G.rotation.x=c/.21;fr.rotation.y=-(n.steer||0)*.45;const v=Math.abs(n.speed||0);fl.rotation.y=Math.sin(i*(4+v*.3))*.35*Math.min(1,v/8+.2);r.rotation.set((n.pitch||0)+Math.sin(i*41)*.004*Math.min(1,v/8),0,(n.roll||0)),T.head.rotation.y=-(n.steer||0)*.3}}};
+g.Veicoli.barca=function(b){const w=x(b),{box:t,cyl:R,MAT:a,M:d}=w,sc=d("#f6f1e1",60),le=d("#a0784a",10),o=new THREE.Group,r=new THREE.Group;o.add(r);
+{const e=new THREE.Shape;e.moveTo(-.8,-1.9),e.lineTo(.8,-1.9),e.lineTo(.88,.5),e.quadraticCurveTo(.6,1.7,0,2.3),e.quadraticCurveTo(-.6,1.7,-.88,.5),e.closePath();const n=new THREE.ExtrudeGeometry(e,{depth:.55,bevelEnabled:!0,bevelThickness:.06,bevelSize:.06,bevelSegments:1,curveSegments:5});n.rotateX(Math.PI/2);const u=new THREE.Mesh(w.flat(n),sc);u.position.y=.45,u.castShadow=!0,r.add(u)}
+t(r,1.5,.03,3.4,le,0,.48,-.05);t(r,1.82,.08,.06,d("#5fb7c4",40),0,.32,-1.94);
+R(r,.05,.06,5.4,6,sc,0,3.1,.45);const vg=new THREE.Group;vg.position.set(0,0,.45),r.add(vg);
+const vela=(pts,m,dx)=>{const e=new THREE.Shape;e.moveTo(pts[0][0],pts[0][1]);for(const q of pts.slice(1))e.lineTo(q[0],q[1]);e.closePath();const n=new THREE.ShapeGeometry(e);n.rotateY(Math.PI/2);const u=new THREE.Mesh(n,m);u.position.x=dx||0,u.castShadow=!0,vg.add(u);return u};
+const bi=new THREE.MeshPhongMaterial({color:w.col("#fbf8ef"),side:THREE.DoubleSide,flatShading:!0,shininess:10});
+vela([[0,.85],[0,5.6],[2.3,.9]],bi);vela([[.05,.95],[.05,2],[1.6,1]],new THREE.MeshPhongMaterial({color:w.col("#f0652b"),side:THREE.DoubleSide,flatShading:!0}),.01);
+R(vg,.03,.03,2.4,6,a.dark,0,.86,-1.15,Math.PI/2);vela([[0,.75],[0,4.4],[-1.75,.75]],bi).position.z=0;
+const T=w.driver(r,.25,.5,-1.25,{shirt:d("#5fb7c4",5),shirt2:d("#3d8f9b",5)});
+let i=0,y=0;return{id:"barca",group:o,body:r,prop:new THREE.Object3D,update(e,n){i+=e;const v=Math.abs(n.speed||0),u=-(n.roll||0)*.5-Math.min(1,v/12)*.06;y+=(u-y)*Math.min(1,e*3),r.rotation.set((n.pitch||0)+Math.sin(i*1.6)*.025,0,y+Math.sin(i*1.1)*.03),vg.rotation.y=(n.roll||0)*.6+Math.sin(i*.7)*.06,T.head.rotation.y=Math.sin(i*.5)*.4}}};
 function P(b,w,t){return b<w?w:b>t?t:b}})();

@@ -264,5 +264,5 @@ TG.liberoOk = (x, z) => {
   try { if (W.isWater(x, z)) return false; } catch(e){}
   return true;
 };
-TG.Consigli = { trova: trovaConsiglio, chiudi: () => chiudiCons(true) };
+TG.Consigli = { trova: trovaConsiglio, chiudi: () => chiudiCons(true), porta };
 })();
