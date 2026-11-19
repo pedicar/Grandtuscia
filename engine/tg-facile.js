@@ -214,21 +214,25 @@ const st2 = document.createElement('style'); st2.textContent = `
 @keyframes tfSu{from{transform:translateY(30px);opacity:0}}
 body:not(.playing) #tfCons,body:has(#mapOv:not([hidden])) #tfCons{display:none!important}`;
 document.head.appendChild(st2);
-const zitti = {}; let cAperta = null, cChiusa = 0, cInizio = 0;
+const zitti = {}; let cAperta = null, cChiusa = 0, cInizio = 0, cPausa = 0;
 const nomeP = p => { try { return ((TG.PrimoMinuto && TG.PrimoMinuto.nomeComune(p)) || p).replace(/ (di|in|sul|al|nel) .*$/i, '').replace(/^([a-z])([a-z]*)-([a-z])/, (m, a, b, c) => a.toUpperCase() + b + ' ' + c.toUpperCase()); } catch(e){ return p; } };
 const breve = t => String(t || 'o campo').replace(/^(noccioleto|castagneto|campo|podere)\s+(di|de|del|della)\s+/i, (m, a) => a[0].toUpperCase() + a.slice(1).toLowerCase() + ' de ');
+const visti = {};
 function mostraCons(c){
-  cAperta = c; cons.querySelector('.i').textContent = c.ico; cons.querySelector('.t').textContent = c.t; cons.querySelector('.s').textContent = c.s;
+  visti[c.k] = 1; cAperta = c; cons.querySelector('.i').textContent = c.ico; cons.querySelector('.t').textContent = c.t; cons.querySelector('.s').textContent = c.s;
   cons.querySelector('.si').textContent = c.si; cons.style.display = 'grid'; ev('consiglio', c.k.split(':')[0]);
 }
 function chiudiCons(dopo){
-  if (!cAperta) return; if (dopo) zitti[cAperta.k] = Date.now() + (cAperta.k.startsWith('mezzo') ? 360e3 : 240e3);
-  else zitti[cAperta.k] = Date.now() + (cAperta.k === 'poche' ? 600e3 : 60e3);
+  if (!cAperta) return; const k = cAperta.k, tipo = k.split(':')[0];
+  // ritmo calmo (dati de o 18/11: uno da Facebook se n'è visto 14 in 6 minuti e ha detto «Dopo» a 13):
+  // «Dopo» zittisce quel tipo de carta pe' 5 minuti (o mezzo e o «troppo caro» pe' 15) e tutte e carte pe' 90 secondi
+  if (dopo) { zitti[k] = Date.now() + 600e3; zitti['T:' + tipo] = Date.now() + (tipo === 'mezzo' || tipo === 'caro' ? 900e3 : 300e3); cPausa = Date.now() + 90e3; }
+  else { zitti[k] = Date.now() + (k === 'poche' ? 600e3 : 60e3); cPausa = Date.now() + 25e3; }
   cons.style.display = 'none'; cAperta = null; cChiusa = Date.now();
 }
 cons.querySelector('.si').onclick = () => { const c = cAperta; chiudiCons(false); if (c) { ev('consiglio_si', c.k.split(':')[0]); try { c.fai(); } catch(e){} } };
 cons.querySelector('.no').onclick = () => { if (cAperta) ev('consiglio_dopo', cAperta.k.split(':')[0]); chiudiCons(true); };
-const libero = k => !(zitti[k] > Date.now());
+const libero = k => !(zitti[k] > Date.now()) && !(zitti['T:' + k.split(':')[0]] > Date.now());
 function vaiCampo(t){ porta(t.x, t.z, breve(t.nome)); }
 function trovaConsiglio(){
   const T = D(), W = TG.Terre, C = TG.Cassone; if (!T || !W || !W.lista || !C) return null;
@@ -247,7 +251,7 @@ function trovaConsiglio(){
     return { k: 'pieno', ico: '🌰', t: 'Cassone pieno!', s: `Compra un terreno: ${breve(buono.t.nome)} costa ${W.costo(buono.t.id)}. Te ce porto?`, si: '🛵 PORTAMECE', fai: () => vaiCampo(buono.t) };
   // 3b. sei dentro un campo che costa troppo → o campo più vicino che te pòi permette
   const qui = W.terraIn(c.x, c.z);
-  if (qui && W.stato(qui.id) !== 'nostro' && W.costo(qui.id) > n && buono && libero('caro:' + qui.id))
+  if (qui && W.stato(qui.id) !== 'nostro' && W.costo(qui.id) > n && buono && libero('caro:' + qui.id) && !visti['caro:' + qui.id])
     return { k: 'caro:' + qui.id, ico: '💸', t: `Questo costa ${W.costo(qui.id)}: troppo`, s: `Tu c'hai ${n} nocchie. ${breve(buono.t.nome)} costa ${W.costo(buono.t.id)}: te ce porto?`, si: '🛵 PORTAMECE', fai: () => vaiCampo(buono.t) };
   if (qui && W.stato(qui.id) !== 'nostro' && W.costo(qui.id) > n && !buono && libero('poche'))
     return { k: 'poche', ico: '🌰', t: "Raccoji ancora un po'", s: `Questo costa ${W.costo(qui.id)}, tu c'hai ${n} nocchie. Passa sopra e nocchie ne i campi: o cassone se riempie.`, si: '👍 VA BENE', fai: () => {} };
@@ -262,7 +266,7 @@ setInterval(() => {
   const T = D(); if (!T || passo() < 3 || !document.body.classList.contains('playing')) { if (cAperta && !document.body.classList.contains('playing')) cons.style.display = 'none'; return; }
   if (!cInizio) cInizio = Date.now();
   if (cAperta) { if (cons.style.display !== 'grid') cons.style.display = 'grid'; return; }
-  if (meta || compra.style.display === 'flex' || Date.now() - cInizio < 15000 || Date.now() - cChiusa < 8000) return;
+  if (meta || compra.style.display === 'flex' || Date.now() - cInizio < 15000 || Date.now() - cChiusa < 8000 || Date.now() < cPausa) return;
   if (T.S && T.S.paused) return;
   const c = trovaConsiglio(); if (c) mostraCons(c);
 }, 1200);
