@@ -16,38 +16,103 @@ const tubo=(p1,p2,rr)=>{const A=new THREE.Vector3(...p1),B=new THREE.Vector3(...
 for(const sx of[-1,1]){tubo([0,1.42,2.2],[sx*5.2,1.42-.3,-1.2],.04);tubo([0,1.4,.5],[sx*.75,-.18,.35],.03)}tubo([0,1.47,2.2],[0,1.47,-1.1],.04);tubo([-2.6,1.44,.4],[2.6,1.44,.4],.035);tubo([-.75,-.18,.35],[.75,-.18,.35],.035);tubo([0,1.4,.1],[0,.45,-.25],.02);
 const pil=new THREE.Group;pil.position.set(0,.25,-.35),r.add(pil);t(pil,.42,.32,1.5,l.tuta,0,0,-.2);t(pil,.38,.3,.5,a.dark,0,.02,-1.1);E(pil,new THREE.IcosahedronGeometry(.17,1),a.skin,0,.05,.68);E(pil,new THREE.SphereGeometry(.2,10,6,0,Math.PI*2,0,1.6),d("#d8432a",30),0,.08,.66,Math.PI/2.4);for(const sx of[-1,1])t(pil,.09,.09,.6,l.tuta,sx*.24,.12,.55,-.5);
 let i=0;return{id:"deltaplano",group:o,body:r,prop:new THREE.Object3D,update(e,n){i+=e;const c=Math.abs(n.speed||0);r.rotation.set(-(n.pitch||0)*.6,0,-(n.roll||0)),pil.rotation.z=(n.roll||0)*.25+Math.sin(i*1.3)*.02*Math.min(1,c/10),pil.rotation.x=Math.sin(i*2.1)*.015}}};
-g.Veicoli.bici=function(b){const w=x(b),{box:t,MAT:a,M:d}=w,tel=d("#2a9fd6",80),o=new THREE.Group,r=new THREE.Group;o.add(r);
-const tubo=(p1,p2,rr,m)=>{const A=new THREE.Vector3(...p1),B=new THREE.Vector3(...p2),D=B.clone().sub(A),q=new THREE.Mesh(new THREE.CylinderGeometry(rr,rr,D.length(),6),m||tel);q.position.copy(A).add(B).multiplyScalar(.5),q.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),D.normalize()),q.castShadow=!0,r.add(q)};
-const f=[];for(const z of[.58,-.58]){const H=w.wheel(.36,.09);H.position.set(0,.36,z),r.add(H),f.push(H)}
-const RH=[0,.36,-.58],BB=[0,.34,-.02],ST=[0,.84,-.22],HT=[0,.92,.36],HB=[0,.66,.42],FH=[0,.36,.58];
-tubo(BB,ST,.04);tubo(ST,HT,.04);tubo(BB,HB,.045);tubo(BB,RH,.03);tubo(ST,RH,.03);tubo(HB,FH,.035,a.chrome);tubo(HT,[0,1.02,.32],.03,a.dark);t(r,.66,.04,.05,a.dark,0,1.03,.32);t(r,.13,.05,.28,a.seat,0,.88,-.25);
-const T=w.driver(r,0,.66,-.2,{helmet:d("#f0652b",40),shirt:d("#2a9fd6",5),shirt2:d("#1f7fb0",5)});
-let c=0,y=0;return{id:"bici",group:o,body:r,update(e,n){c+=(n.speed||0)*e;for(const G of f)G.rotation.x=c/.36;const u=P(-(n.steer||0)*Math.min(1,Math.abs(n.speed||0)/10)*.45,-.45,.45);y+=(u-y)*Math.min(1,e*6),r.rotation.set(n.pitch||0,0,(n.roll||0)*.3+y),T.head.rotation.y=-(n.steer||0)*.3}}};
-g.Veicoli.cavallo=function(b){const w=x(b),{box:t,add:E,MAT:a,M:d}=w,co=d("#7a4a2a",25),sc=d("#3a2416",10),o=new THREE.Group,r=new THREE.Group;o.add(r);
-E(r,new THREE.SphereGeometry(.5,10,8),co,0,1.35,0).scale.set(.85,.8,1.75);
-const nk=new THREE.Group;nk.position.set(0,1.45,.72),nk.rotation.x=.42,r.add(nk);t(nk,.34,.8,.42,co,0,.36,0);t(nk,.08,.75,.14,sc,0,.4,-.23);
-const hd=new THREE.Group;hd.position.set(0,.74,.05),hd.rotation.x=.3,nk.add(hd);t(hd,.3,.32,.7,co,0,-.05,.25);t(hd,.26,.2,.2,sc,0,-.12,.58);for(const sx of[-1,1])t(hd,.06,.16,.06,co,sx*.1,.16,-.02);
-const gm=[];for(const[sx,sz]of[[-1,1],[1,1],[-1,-1],[1,-1]]){const L=new THREE.Group;L.position.set(sx*.24,1.15,sz*.58),r.add(L),t(L,.15,1.08,.17,co,0,-.54,0),t(L,.18,.12,.2,sc,0,-1.1,.02),gm.push({L:L,f:sz>0,s:sx})}
-const cd=new THREE.Group;cd.position.set(0,1.5,-.85),cd.rotation.x=.5,r.add(cd);t(cd,.12,.75,.12,sc,0,-.35,0);
-t(r,.64,.1,.62,d("#5b3a22",20),0,1.8,-.05);t(r,.66,.04,.3,d("#d8432a",10),0,1.76,-.05);
-const T=w.driver(r,0,1.82,-.12,{shirt:d("#e6b65e",5),shirt2:d("#c99a3a",5)});
-let ph=0,i=0;return{id:"cavallo",group:o,body:r,update(e,n){i+=e;const v=Math.abs(n.speed||0),k=Math.min(1,v/6);ph+=e*(2+v*.32);for(const G of gm){const q=G.f?ph:ph+Math.PI*.9;G.L.rotation.x=Math.sin(q+(G.s>0?.4:0))*.7*k}r.position.y=Math.abs(Math.sin(ph))*.12*k;nk.rotation.x=.42+Math.sin(ph*2)*.07*k+(1-k)*Math.sin(i*.6)*.05;cd.rotation.x=.5+k*.5+Math.sin(i*3)*.08;r.rotation.set((n.pitch||0)+Math.sin(ph*2)*.03*k,0,(n.roll||0)*.4-(n.steer||0)*k*.12),T.head.rotation.y=-(n.steer||0)*.3}}};
-g.Veicoli.carrettino=function(b){const w=x(b),{box:t,MAT:a,M:d}=w,le=d("#b48650",5),ls=d("#7a5634",5),ro=d("#e06f9a",40),o=new THREE.Group,r=new THREE.Group;o.add(r);
-t(r,.74,.08,2.1,le,0,.34,0);for(const sx of[-1,1])t(r,.05,.16,1.4,ls,sx*.35,.45,-.2);t(r,.74,.18,.06,ro,0,.46,1.02);t(r,.6,.42,.06,le,0,.62,-.78,-.15);t(r,.36,.2,.02,a.lens,0,.48,1.06);
-const f=[],fr=new THREE.Group;fr.position.set(0,.2,.82),r.add(fr);t(fr,.96,.06,.08,ls,0,.04,0);for(const sx of[-1,1]){const H=w.wheel(.2,.12);H.position.set(sx*.5,0,0),fr.add(H),f.push(H)}
-t(r,.96,.06,.08,ls,0,.24,-.82);for(const sx of[-1,1]){const H=w.wheel(.22,.12);H.position.set(sx*.5,.22,-.82),r.add(H),f.push(H)}
-const cd=new THREE.Mesh(new THREE.CylinderGeometry(.012,.012,1,4),d("#e9dcc0",5));cd.position.set(0,.6,.55),cd.rotation.x=1.05,r.add(cd);
-t(r,.025,1.2,.025,ls,-.3,1.0,-.85);const fl=new THREE.Group;fl.position.set(-.3,1.5,-.85),r.add(fl);t(fl,.02,.3,.42,ro,0,0,-.21);
-const T=w.driver(r,0,.38,-.4,{helmet:ro,shirt:d("#f6f1e1",5),shirt2:d("#e06f9a",5)});
-let c=0,i=0;return{id:"carrettino",group:o,body:r,update(e,n){i+=e,c+=(n.speed||0)*e;for(const G of f)G.rotation.x=c/.21;fr.rotation.y=-(n.steer||0)*.45;const v=Math.abs(n.speed||0);fl.rotation.y=Math.sin(i*(4+v*.3))*.35*Math.min(1,v/8+.2);r.rotation.set((n.pitch||0)+Math.sin(i*41)*.004*Math.min(1,v/8),0,(n.roll||0)),T.head.rotation.y=-(n.steer||0)*.3}}};
-g.Veicoli.barca=function(b){const w=x(b),{box:t,cyl:R,MAT:a,M:d}=w,sc=d("#f6f1e1",60),le=d("#a0784a",10),o=new THREE.Group,r=new THREE.Group;o.add(r);
-{const e=new THREE.Shape;e.moveTo(-.8,-1.9),e.lineTo(.8,-1.9),e.lineTo(.88,.5),e.quadraticCurveTo(.6,1.7,0,2.3),e.quadraticCurveTo(-.6,1.7,-.88,.5),e.closePath();const n=new THREE.ExtrudeGeometry(e,{depth:.55,bevelEnabled:!0,bevelThickness:.06,bevelSize:.06,bevelSegments:1,curveSegments:5});n.rotateX(Math.PI/2);const u=new THREE.Mesh(w.flat(n),sc);u.position.y=.45,u.castShadow=!0,r.add(u)}
-t(r,1.5,.03,3.4,le,0,.48,-.05);t(r,1.82,.08,.06,d("#5fb7c4",40),0,.32,-1.94);
-R(r,.05,.06,5.4,6,sc,0,3.1,.45);const vg=new THREE.Group;vg.position.set(0,0,.45),r.add(vg);
-const vela=(pts,m,dx)=>{const e=new THREE.Shape;e.moveTo(pts[0][0],pts[0][1]);for(const q of pts.slice(1))e.lineTo(q[0],q[1]);e.closePath();const n=new THREE.ShapeGeometry(e);n.rotateY(Math.PI/2);const u=new THREE.Mesh(n,m);u.position.x=dx||0,u.castShadow=!0,vg.add(u);return u};
-const bi=new THREE.MeshPhongMaterial({color:w.col("#fbf8ef"),side:THREE.DoubleSide,flatShading:!0,shininess:10});
-vela([[0,.85],[0,5.6],[2.3,.9]],bi);vela([[.05,.95],[.05,2],[1.6,1]],new THREE.MeshPhongMaterial({color:w.col("#f0652b"),side:THREE.DoubleSide,flatShading:!0}),.01);
-R(vg,.03,.03,2.4,6,a.dark,0,.86,-1.15,Math.PI/2);vela([[0,.75],[0,4.4],[-1.75,.75]],bi).position.z=0;
-const T=w.driver(r,.25,.5,-1.25,{shirt:d("#5fb7c4",5),shirt2:d("#3d8f9b",5)});
-let i=0,y=0;return{id:"barca",group:o,body:r,prop:new THREE.Object3D,update(e,n){i+=e;const v=Math.abs(n.speed||0),u=-(n.roll||0)*.5-Math.min(1,v/12)*.06;y+=(u-y)*Math.min(1,e*3),r.rotation.set((n.pitch||0)+Math.sin(i*1.6)*.025,0,y+Math.sin(i*1.1)*.03),vg.rotation.y=(n.roll||0)*.6+Math.sin(i*.7)*.06,T.head.rotation.y=Math.sin(i*.5)*.4}}};
+/* aiuti comuni pe' i mezzi novi: tubo tra due punti, ruota liscia co' i raggi, omino snodato (anche e braccia), gamba a due pezzi che arriva a un punto */
+function U(w,r){
+  const V=(a)=>new THREE.Vector3(a[0],a[1],a[2]);
+  const tubo=(p,a,b,ra,rb,m,lati)=>{const A=V(a),B=V(b),D=B.clone().sub(A),q=new THREE.Mesh(w.flat(new THREE.CylinderGeometry(rb==null?ra:rb,ra,D.length(),lati||6)),m);q.position.copy(A).add(B).multiplyScalar(.5),q.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),D.normalize()),q.castShadow=!0,p.add(q);return q};
+  const ruota=(rad,lar,mGomma,mCerchio,raggi,mRaggi)=>{const g=new THREE.Group;
+    const T=new THREE.Mesh(new THREE.TorusGeometry(rad-lar*.45,lar*.5,6,22),mGomma);T.rotation.y=Math.PI/2,T.castShadow=!0,g.add(T);
+    const C=new THREE.Mesh(new THREE.TorusGeometry(rad-lar*1.05,lar*.18,4,22),mCerchio);C.rotation.y=Math.PI/2,g.add(C);
+    const H=new THREE.Mesh(new THREE.CylinderGeometry(lar*.35,lar*.35,lar*1.4,8),mCerchio);H.rotation.z=Math.PI/2,g.add(H);
+    for(let k=0;k<raggi;k++){const s=new THREE.Mesh(new THREE.BoxGeometry(.012,rad-lar*1.05,.012),mRaggi||mCerchio);const a=k/raggi*Math.PI*2;s.position.set((k%2?.5:-.5)*lar*.4,Math.cos(a)*(rad-lar)*.5,Math.sin(a)*(rad-lar)*.5),s.rotation.x=a,g.add(s)}
+    return g};
+  // omino: o bacino sta in (0,0,0) de o gruppo; torso.rotation.x>0 = piegato in avanti
+  const omino=(p,o)=>{o=o||{};const M=w.MAT,g=new THREE.Group;p.add(g);
+    const pelle=M.skin,mag=o.maglia||M.shirt,pan=o.pantaloni||M.trousers,sc=o.scarpe||M.dark;
+    w.box(g,.34,.16,.24,pan,0,0,0);
+    const to=new THREE.Group;to.position.y=.06,g.add(to);w.box(to,.38,.5,.24,mag,0,.26,0);if(o.fascia)w.box(to,.39,.08,.25,o.fascia,0,.36,0);
+    const te=new THREE.Group;te.position.y=.6,to.add(te);w.box(te,.1,.08,.1,pelle,0,-.05,0);
+    w.add(te,new THREE.IcosahedronGeometry(.13,1),pelle,0,.08,.01).scale.set(1,1.12,1);w.box(te,.13,.03,.04,M.hair,0,.03,.12);
+    if(o.casco){w.add(te,new THREE.SphereGeometry(.16,10,6,0,Math.PI*2,0,1.55),o.casco,0,.11,-.01);w.box(te,.22,.04,.08,o.casco,0,.13,.15,-.25)}
+    else if(o.cappello)w.add(te,new THREE.CylinderGeometry(.15,.15,.08,10),o.cappello,0,.2,0),w.add(te,new THREE.CylinderGeometry(.24,.24,.015,12),o.cappello,0,.16,0);
+    else w.add(te,new THREE.SphereGeometry(.14,8,5,0,Math.PI*2,0,1.3),M.hair,0,.11,-.02);
+    const br=[];for(const s of[-1,1]){const sp=new THREE.Group;sp.position.set(s*.23,.46,0),to.add(sp);w.box(sp,.1,.3,.11,mag,0,-.14,0);const go=new THREE.Group;go.position.y=-.28,sp.add(go);w.box(go,.09,.28,.1,mag,0,-.13,0);w.box(go,.08,.08,.09,pelle,0,-.3,0);br.push({sp,go})}
+    const ga=[];for(const s of[-1,1]){const an=new THREE.Group;an.position.set(s*.1,0,0),g.add(an);w.box(an,.14,.42,.16,pan,0,-.21,0);const gi=new THREE.Group;gi.position.y=-.42,an.add(gi);w.box(gi,.12,.42,.13,pan,0,-.21,0);w.box(gi,.13,.08,.26,sc,0,-.43,.06);ga.push({an,gi})}
+    return{g,to,te,br,ga}};
+  // gamba (an+gi, 0.42+0.42) che arriva col piede a (ty,tz) ne o sistema de l'anca: an.rotation.x<0 = coscia in avanti
+  const ik=(G,ty,tz,L1,L2)=>{L1=L1||.42,L2=L2||.44;let d=Math.hypot(ty,tz);d=Math.min(d,L1+L2-.001);const a=Math.atan2(tz,-ty),b=Math.acos(Math.max(-1,Math.min(1,(d*d+L1*L1-L2*L2)/(2*d*L1)))),k=Math.acos(Math.max(-1,Math.min(1,(L1*L1+L2*L2-d*d)/(2*L1*L2))));G.an.rotation.x=-(a+b),G.gi.rotation.x=Math.PI-k};
+  return{tubo,ruota,omino,ik,V}}
+
+g.Veicoli.bici=function(b){const w=x(b),{box:t,MAT:a,M:d}=w,o=new THREE.Group,r=new THREE.Group;o.add(r);const u=U(w,r);
+  const tel=d("#1f8fd0",90),tel2=d("#f0652b",60),gom=d("#26241f",4),cer=d("#2e3133",80),ner=d("#1c1c1e",20);
+  const RA=.37,f=[];for(const z of[.6,-.56]){const H=u.ruota(RA,.075,gom,cer,16,a.chrome);H.position.set(0,RA,z),r.add(H),f.push(H)}
+  const RH=[0,RA,-.56],BB=[0,.4,-.02],ST=[0,.9,-.2],HT=[0,1,.36],HB=[0,.78,.42],FH=[0,RA,.6];
+  u.tubo(r,BB,ST,.04,.035,tel);u.tubo(r,ST,HT,.045,.04,tel);u.tubo(r,BB,HB,.055,.045,tel);
+  for(const s of[-1,1]){u.tubo(r,[s*.05,BB[1],BB[2]],[s*.06,RH[1],RH[2]],.022,null,tel);u.tubo(r,[s*.04,ST[1]-.04,ST[2]],[s*.06,RH[1]+.02,RH[2]+.02],.02,null,tel);
+    u.tubo(r,[s*.07,HB[1]+.02,HB[2]],[s*.07,.55,.53],.04,null,tel2);u.tubo(r,[s*.07,.56,.53],[s*.07,FH[1],FH[2]],.026,null,a.chrome)}
+  u.tubo(r,[0,.3,-.38],[0,.6,-.28],.05,.05,tel2);
+  u.tubo(r,HB,[0,1.1,.33],.035,null,ner);t(r,.72,.035,.04,ner,0,1.12,.33);for(const s of[-1,1])t(r,.07,.05,.05,ner,s*.34,1.12,.33);
+  u.tubo(r,ST,[0,1.02,-.24],.025,null,a.chrome);t(r,.12,.05,.27,a.seat,0,1.04,-.25);
+  const cr=new THREE.Group;cr.position.set(0,BB[1],BB[2]),r.add(cr);w.cyl(cr,.09,.09,.02,12,cer,.06,0,0,0,0,Math.PI/2);const pe=[];for(const s of[-1,1]){const k=new THREE.Group;k.rotation.x=s>0?0:Math.PI,cr.add(k);t(k,.02,.03,.17,cer,s*.08,0,.085);t(k,.1,.03,.07,ner,s*.12,0,.17);pe.push(s)}
+  const ri=u.omino(r,{casco:d("#f0652b",50),maglia:d("#1f8fd0",8),fascia:d("#f6f1e1",8),pantaloni:d("#2b2b2e",6)});ri.g.position.set(0,1.1,-.24);ri.to.rotation.x=.75;
+  for(const B of ri.br)B.sp.rotation.x=-1.25,B.go.rotation.x=-.25,B.sp.rotation.z=0;ri.te.rotation.x=-.55;
+  let c=0,y=0,cp=0;const ped=()=>{for(let i=0;i<2;i++){const q=cp+(i?Math.PI:0),fy=BB[1]+Math.cos(q)*.17-1.1,fz=BB[2]+Math.sin(q)*.17+.24;u.ik(ri.ga[i],fy,fz)}cr.rotation.x=cp};ped();
+  return{id:"bici",group:o,body:r,update(e,n){const v=n.speed||0;c+=v*e;cp+=v*e/.9;for(const G of f)G.rotation.x=c/RA;ped();const s=P(-(n.steer||0)*Math.min(1,Math.abs(v)/8)*.45,-.45,.45);y+=(s-y)*Math.min(1,e*6),r.rotation.set(n.pitch||0,0,(n.roll||0)*.3+y),ri.te.rotation.y=-(n.steer||0)*.3}}};
+
+g.Veicoli.cavallo=function(b){const w=x(b),{box:t,add:E,MAT:a,M:d}=w,o=new THREE.Group,r=new THREE.Group;o.add(r);const u=U(w,r);
+  const co=d("#8a5530",30),cs=d("#6e4224",20),cr=d("#2b1a10",12),zo=d("#3a3a3a",30),bi=d("#f2ece0",10);
+  E(r,new THREE.SphereGeometry(.5,12,9),co,0,1.5,-.05).scale.set(.95,.95,1.6);E(r,new THREE.SphereGeometry(.46,10,8),co,0,1.58,.62).scale.set(1,1.05,.95);E(r,new THREE.SphereGeometry(.47,10,8),co,0,1.6,-.68).scale.set(1.05,1.02,1);
+  const nk=new THREE.Group;nk.position.set(0,1.75,.82),r.add(nk);u.tubo(nk,[0,0,0],[0,.62,.42],.3,.2,co,7);for(let k=0;k<6;k++)t(nk,.07,.14,.16,cr,0,.16+k*.1,-.1+k*.068,-.6);
+  const hd=new THREE.Group;hd.position.set(0,.66,.46),nk.add(hd);u.tubo(hd,[0,0,0],[0,-.32,.48],.19,.13,co,6);E(hd,new THREE.SphereGeometry(.14,8,6),cs,0,-.34,.5).scale.set(.95,.9,1.1);
+  for(const s of[-1,1]){u.tubo(hd,[s*.07,.08,-.02],[s*.09,.27,-.06],.05,.01,co,4);E(hd,new THREE.SphereGeometry(.035,6,4),cr,s*.13,-.06,.16);u.tubo(hd,[s*.15,-.3,.4],[s*.16,-.05,-.4],.012,null,cr,4)}
+  t(hd,.06,.22,.06,cr,0,.12,-.05);
+  const gm=[];for(const[s,av]of[[-1,1],[1,1],[-1,0],[1,0]]){const L=new THREE.Group;L.position.set(s*.27,1.45,av?.62:-.7),r.add(L);
+    u.tubo(L,[0,0,0],[0,-.55,0],av?.14:.17,.09,co,6);const K=new THREE.Group;K.position.y=-.55,L.add(K);E(K,new THREE.SphereGeometry(.08,6,4),cs,0,0,0);u.tubo(K,[0,0,0],[0,-.52,0],.07,.06,cs,6);t(K,.15,.12,.17,cr,0,-.56,.02);t(K,.13,.08,.15,bi,0,-.47,.01);gm.push({L,K,av,s})}
+  const cd=new THREE.Group;cd.position.set(0,1.75,-1.12),r.add(cd);u.tubo(cd,[0,0,0],[0,-.45,-.25],.09,.05,cr,5);u.tubo(cd,[0,-.4,-.22],[0,-.85,-.25],.1,.03,cr,5);
+  t(r,.66,.06,.66,d("#1f6e8c",10),0,2.02,-.05);t(r,.5,.1,.5,d("#5b3a22",30),0,2.08,-.05);t(r,.5,.14,.08,d("#5b3a22",30),0,2.15,-.3);for(const s of[-1,1])u.tubo(r,[s*.3,2,-.05],[s*.36,1.5,-.02],.012,null,zo,4),t(r,.08,.04,.14,zo,s*.37,1.48,-.02);
+  const ri=u.omino(r,{cappello:d("#3a2c22",10),maglia:d("#e6b65e",8),pantaloni:d("#efe4c8",6),scarpe:cr});ri.g.position.set(0,2.24,-.08);ri.to.rotation.x=.12;
+  for(const[i,s]of[-1,1].entries()){ri.ga[i].an.rotation.set(-.6,0,s*.45),ri.ga[i].gi.rotation.x=1.15;ri.br[i].sp.rotation.x=-.75,ri.br[i].go.rotation.x=-.7}for(const[k,s]of[-1,1].entries())ri.ga[k].an.rotation.set(-.3,0,s*1.05),ri.ga[k].gi.rotation.set(.75,0,-s*.75);
+  let ph=0,i=0;return{id:"cavallo",group:o,body:r,update(e,n){i+=e;const v=Math.abs(n.speed||0),k=Math.min(1,v/6);ph+=e*(1.5+v*.3);
+    for(const G of gm){const q=ph+(G.av?0:2.2)+(G.s>0?.55:0),sw=Math.sin(q),bd=Math.max(0,Math.sin(q+1.2));G.L.rotation.x=(G.av?-sw*.55:sw*.45)*k;G.K.rotation.x=(G.av?bd*1.3:-bd*.9)*k}
+    r.position.y=Math.abs(Math.sin(ph))*.13*k;nk.rotation.x=Math.sin(ph*2)*.08*k+(1-k)*(Math.sin(i*.5)*.06+.05);hd.rotation.y=(1-k)*Math.sin(i*.3)*.25-(n.steer||0)*.3;cd.rotation.x=k*.6+Math.sin(i*2.5)*.1;cd.rotation.z=Math.sin(i*1.7)*.15*(1-k*.5);
+    ri.g.position.y=2.24-Math.abs(Math.sin(ph))*.06*k;ri.to.rotation.x=.12+k*.25;r.rotation.set((n.pitch||0)+Math.sin(ph*2)*.035*k,0,(n.roll||0)*.4-(n.steer||0)*k*.1);ri.te.rotation.y=-(n.steer||0)*.3}}};
+
+g.Veicoli.carrettino=function(b){const w=x(b),{box:t,MAT:a,M:d}=w,o=new THREE.Group,r=new THREE.Group;o.add(r);const u=U(w,r);
+  const le=d("#c39360",6),ls=d("#8a6038",6),ro=d("#e06f9a",50),me=d("#9aa0a4",90),gom=d("#2a2724",4);
+  for(let k=0;k<5;k++)t(r,.16,.06,2.1,k%2?le:d("#b8864f",6),-.32+k*.16,.34,0);t(r,.8,.08,.1,ls,0,.29,.9);t(r,.8,.08,.1,ls,0,.29,-.9);
+  for(const s of[-1,1])t(r,.05,.2,1.5,ls,s*.4,.46,-.2);t(r,.82,.24,.05,ro,0,.48,1.04);t(r,.3,.16,.02,d("#f6f1e1",10),0,.5,1.07);t(r,.07,.1,.025,d("#1b1b1b",5),-.04,.5,1.085);t(r,.07,.1,.025,d("#1b1b1b",5),.06,.5,1.085);
+  const ruo=()=>u.ruota(.17,.1,gom,me,8,me);const f=[];const fr=new THREE.Group;fr.position.set(0,.2,.82),r.add(fr);t(fr,1.04,.07,.09,ls,0,.04,0);w.cyl(fr,.04,.04,.12,8,me,0,.1,0);
+  for(const s of[-1,1]){const H=ruo();H.position.set(s*.52,-.03,0),fr.add(H),f.push(H)}t(r,1.04,.07,.09,ls,0,.24,-.82);for(const s of[-1,1]){const H=ruo();H.position.set(s*.52,.17,-.82),r.add(H),f.push(H)}
+  u.tubo(r,[-.36,.5,-.85],[-.36,1.75,-.85],.015,null,ls,4);const fl=new THREE.Group;fl.position.set(-.36,1.66,-.85),r.add(fl);t(fl,.015,.22,.36,ro,0,0,-.18);t(fl,.016,.07,.36,d("#f6f1e1",10),0,0,-.18);
+  const ri=u.omino(r,{casco:ro,maglia:d("#f6f1e1",6),fascia:ro,pantaloni:d("#3d6d8e",6)});ri.g.position.set(0,.5,.02);ri.to.rotation.x=-.15;
+  t(r,.66,.46,.05,le,0,.64,-.3,-.18);
+  for(const B of ri.br)B.sp.rotation.x=-.9,B.go.rotation.x=-.85;u.ik(ri.ga[0],-.25,.76);u.ik(ri.ga[1],-.25,.76);
+  for(const s of[-1,1])u.tubo(fr,[s*.42,.06,0],[s*.23,.7,-.36],.01,null,d("#e9dcc0",4),3);
+  let c=0,i=0;
+  return{id:"carrettino",group:o,body:r,update(e,n){i+=e,c+=(n.speed||0)*e;for(const G of f)G.rotation.x=c/.17;fr.rotation.y=-(n.steer||0)*.45;const v=Math.abs(n.speed||0);fl.rotation.y=Math.sin(i*(4+v*.3))*.35*Math.min(1,v/8+.2);
+    r.rotation.set((n.pitch||0)+Math.sin(i*41)*.004*Math.min(1,v/8),0,(n.roll||0));ri.te.rotation.y=-(n.steer||0)*.3}}};
+
+g.Veicoli.barca=function(b){const w=x(b),{box:t,MAT:a,M:d}=w,o=new THREE.Group,r=new THREE.Group;o.add(r);const u=U(w,r);
+  const sc=d("#fbf8ef",80),bl=d("#1f6e8c",60),le=d("#b48650",10),ne=d("#2a2a2c",30);
+  const scafo=(sx,dep,m,y)=>{const e=new THREE.Shape;e.moveTo(-.74*sx,-2),e.lineTo(.74*sx,-2),e.quadraticCurveTo(.95*sx,-.4,.88*sx,.6),e.quadraticCurveTo(.62*sx,1.8,0,2.45),e.quadraticCurveTo(-.62*sx,1.8,-.88*sx,.6),e.quadraticCurveTo(-.95*sx,-.4,-.74*sx,-2);
+    const n=new THREE.ExtrudeGeometry(e,{depth:dep,bevelEnabled:!0,bevelThickness:.05,bevelSize:.05,bevelSegments:2,curveSegments:8});n.rotateX(Math.PI/2);const q=new THREE.Mesh(w.flat(n),m);q.position.y=y,q.castShadow=!0,r.add(q);return q};
+  scafo(1,.3,sc,.5);scafo(.93,.28,bl,.2).scale.set(1,1,.97);E2();function E2(){w.add(r,new THREE.ConeGeometry(.35,.5,4),bl,0,-.18,-.4,Math.PI,Math.PI/4)}
+  t(r,1.5,.04,1.9,le,0,.53,.55);t(r,1.2,.2,1.5,ne,0,.45,-1.05);for(const s of[-1,1])t(r,.16,.04,1.6,le,s*.66,.55,-1.05);t(r,.06,.04,.7,le,0,.62,-1.65,.05);
+  const H=t(r,.18,.7,.04,le,0,.2,-2.04);
+  const ALB=[0,0,.55];u.tubo(r,[0,.5,.55],[0,6,.55],.06,.04,d("#d7dadb",90),8);
+  u.tubo(r,[0,5.9,.55],[0,.56,2.45],.008,null,ne,3);for(const s of[-1,1])u.tubo(r,[0,5.6,.55],[s*.85,.56,.5],.006,null,ne,3);
+  const vg=new THREE.Group;vg.position.set(0,0,.55),r.add(vg);
+  const vb=new THREE.MeshPhongMaterial({color:w.col("#fffaf0"),side:THREE.DoubleSide,flatShading:!0,shininess:20}),vr=new THREE.MeshPhongMaterial({color:w.col("#f0652b"),side:THREE.DoubleSide,flatShading:!0});
+  const vela=(par,m,zx)=>{const e=new THREE.Shape;par(e);const n=new THREE.ShapeGeometry(e,6);n.rotateY(Math.PI/2);const q=new THREE.Mesh(n,m);q.position.x=zx||0,q.castShadow=!0,vg.add(q);return q};
+  vela(e=>{e.moveTo(.04,1.05),e.lineTo(.04,5.85),e.quadraticCurveTo(1.6,3.2,2.55,1.08),e.closePath()},vb);
+  vela(e=>{e.moveTo(.06,1.15),e.lineTo(.06,2.3),e.lineTo(1.85,1.15),e.closePath()},vr,.012);vela(e=>{e.moveTo(.06,1.15),e.lineTo(.06,2.3),e.lineTo(1.85,1.15),e.closePath()},vr,-.012);
+  for(const[yy,ll]of[[2.6,1.75],[3.6,1.2],[4.6,.65]])t(vg,.025,.03,ll,d("#d8d2c4",10),0,yy,-ll/2-.05);
+  u.tubo(vg,[0,1.02,0],[0,1.02,-2.6],.04,.03,d("#d7dadb",90),6);
+  const fi=new THREE.Group;fi.position.set(0,0,0),r.add(fi);
+  const fq=new THREE.Mesh(new THREE.ShapeGeometry((()=>{const e=new THREE.Shape;e.moveTo(2.35,.66),e.lineTo(1.01,4.6),e.lineTo(.75,.78),e.closePath();return e})(),4).rotateY(-Math.PI/2),vb);fq.castShadow=!0,fi.add(fq);
+  const ri=u.omino(r,{maglia:d("#ffd23a",8),pantaloni:d("#1f6e8c",6),cappello:d("#f6f1e1",10)});ri.g.position.set(.62,.72,-1.15);ri.g.rotation.y=-Math.PI/2;
+  ri.to.rotation.x=-.25;u.ik(ri.ga[0],-.2,.45);u.ik(ri.ga[1],-.2,.45);ri.br[0].sp.rotation.x=-1.2;ri.br[1].sp.rotation.x=-.4;ri.br[1].sp.rotation.z=-.4;
+  let i=0,y=0;return{id:"barca",group:o,body:r,prop:new THREE.Object3D,update(e,n){i+=e;const v=Math.abs(n.speed||0),s=-(n.roll||0)*.5-Math.min(1,v/12)*.07;y+=(s-y)*Math.min(1,e*3);
+    r.rotation.set((n.pitch||0)+Math.sin(i*1.6)*.025,0,y+Math.sin(i*1.1)*.03);vg.rotation.y=(n.roll||0)*.6+.35+Math.sin(i*.7)*.05;fi.rotation.y=(n.roll||0)*.2;H.rotation.y=(n.roll||0)*.5;ri.to.rotation.x=-.25-Math.min(1,v/14)*.35;ri.te.rotation.y=-.6+Math.sin(i*.5)*.3}}};
+
 function P(b,w,t){return b<w?w:b>t?t:b}})();
