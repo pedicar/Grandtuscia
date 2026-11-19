@@ -131,9 +131,9 @@ function tutorial(){
 }
 
 /* ---------- i mezzi se sbloccano prendendo terreni ---------- */
-const SOGLIE = [[5, 'ape', "🛺 L'Ape è tua: va più veloce ne i campi"], [15, 'trattore', '🚜 O trattore è tuo: passa ovunque'], [30, 'semovente', '🌾 A semovente è tua: raccoje 3 nocchie pe\' volta'], [50, 'supercar', '🏎️ A Supercar è tua: velocissima!'], [80, 'aereo', '✈️ L\'aereo è tuo: MENU → Mezzi → Vola, e atterri dove vòi']];   // regola unica: i mezzi arrivano in regalo coi terreni presi
+const SOGLIE = [[5, 'ape', "🛺 L'Ape è tua: va più veloce ne i campi"], [15, 'trattore', '🚜 O trattore è tuo: passa ovunque'], [20, 'deltaplano', '🪂 O deltaplano è tuo: MENU → Cambia mezzo → Vola, e parti da o Lago de Vico'], [30, 'semovente', '🌾 A semovente è tua: raccoje 3 nocchie pe\' volta'], [50, 'supercar', '🏎️ A Supercar è tua: velocissima!'], [80, 'aereo', '✈️ L\'aereo è tuo: MENU → Mezzi → Vola, e atterri dove vòi']];   // regola unica: i mezzi arrivano in regalo coi terreni presi
 function sblocca(tot){
-  try { const L = TG.Contadino.stato(TG.Profile.data); for (const [n, id, cosa] of SOGLIE) if (tot >= n && !L.mezzi[id]) { L.mezzi[id] = Date.now(); TG.Profile.salva && TG.Profile.salva(); setTimeout(() => { try { TG.msg('🎁 Mezzo novo in regalo!', cosa + ` (${n} campi presi)`, 5); if (id !== 'aereo') TG.debug.setVehicle && TG.debug.setVehicle(id); } catch(e){} }, 5600); } } catch(e){}
+  try { const L = TG.Contadino.stato(TG.Profile.data); for (const [n, id, cosa] of SOGLIE) if (tot >= n && !L.mezzi[id]) { L.mezzi[id] = Date.now(); TG.Profile.salva && TG.Profile.salva(); setTimeout(() => { try { TG.msg('🎁 Mezzo novo in regalo!', cosa + ` (${n} campi presi)`, 5); if (id !== 'aereo' && id !== 'deltaplano') TG.debug.setVehicle && TG.debug.setVehicle(id); } catch(e){} }, 5600); } } catch(e){}
 }
 addEventListener('tg-presa', e => { sblocca(e.detail.tot); setTimeout(prossimo, 6000); });
 

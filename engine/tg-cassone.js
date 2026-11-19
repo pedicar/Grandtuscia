@@ -119,6 +119,7 @@ const MEZZI = [   // regola unica: arrivano in regalo coi campi presi (campi = q
   { id: 'vespa', nome: 'Vespa', ico: '🛵', prezzo: 0, campi: 0, cosa: 'Veloce e agile' },
   { id: 'ape', nome: 'Ape', ico: '🛺', prezzo: 0, campi: 5, cosa: 'Robusta, va ovunque' },
   { id: 'trattore', nome: 'Trattore', ico: '🚜', prezzo: 0, campi: 15, cosa: 'Passa ovunque' },
+  { id: 'deltaplano', nome: 'Deltaplano', ico: '🪂', prezzo: 0, campi: 20, cosa: 'Parti da o Lago de Vico, voli piano e atterri dove vòi' },
   { id: 'semovente', nome: 'Semovente', ico: '🌾', prezzo: 0, campi: 30, cosa: 'Raccoje 3 pe\' nocchia, spazzola larga' },
   { id: 'supercar', nome: 'Supercar', ico: '🏎️', prezzo: 0, campi: 50, cosa: 'Velocissima' },
   { id: 'aereo', nome: 'Aereo', ico: '✈️', prezzo: 0, campi: 80, cosa: 'Voli sopra a Tuscia e atterri dove vòi' }
@@ -130,10 +131,10 @@ function bottega(){
   const cur = mezzo(), presi = +(ls.get('tg-presi') || 0);
   L.innerHTML = `<p class="prog" style="margin:0 0 6px">Scegli o mezzo: quelli novi arrivano in regalo coi campi che prendi (tu ne hai presi <b style="color:#f2c74e">${presi}</b>)</p>` + MEZZI.map(m => {
     const ce = m.campi === 0 || st.mezzi[m.id] || presi >= m.campi, usa = cur === m.id;
-    const bt = usa ? '<span style="color:#8cbf52;font-weight:800">In uso</span>' : ce ? `<button class="tg-btn" data-usa="${m.id}">${m.id === 'aereo' ? 'Vola' : 'Usa'}</button>` : `<span style="color:#9aa39c;font-weight:700">🔒 al ${m.campi}° campo</span>`;
+    const bt = usa ? '<span style="color:#8cbf52;font-weight:800">In uso</span>' : ce ? `<button class="tg-btn" data-usa="${m.id}">${m.id === 'aereo' || m.id === 'deltaplano' ? 'Vola' : 'Usa'}</button>` : `<span style="color:#9aa39c;font-weight:700">🔒 al ${m.campi}° campo</span>`;
     return `<div style="display:flex;align-items:center;gap:10px;padding:10px 4px;border-top:1px solid rgba(255,255,255,.08)"><span style="font-size:28px">${m.ico}</span><div style="flex:1"><b style="font-size:16px">${m.nome}</b><br><small style="color:#c9bfa8">${m.cosa}</small></div>${bt}</div>`;
   }).join('');
-  L.querySelectorAll('[data-usa]').forEach(b => b.onclick = () => { const id = b.dataset.usa; st.mezzi[id] = st.mezzi[id] || Date.now(); try { TG.Profile.salva(); } catch(e){} chiudiMezzi(); setTimeout(() => { try { if (id === 'aereo') TG.debug.vola(); else TG.debug.setVehicle(id); } catch(e){} }, 250); ev('mezzo_scelto', id); });
+  L.querySelectorAll('[data-usa]').forEach(b => b.onclick = () => { const id = b.dataset.usa; st.mezzi[id] = st.mezzi[id] || Date.now(); try { TG.Profile.salva(); } catch(e){} chiudiMezzi(); setTimeout(() => { try { if (id === 'aereo' || id === 'deltaplano') TG.debug.vola(id); else TG.debug.setVehicle(id); } catch(e){} }, 250); ev('mezzo_scelto', id); });
 }
 function chiudiMezzi(){ const o = $('vehOv'); if (!o) return; const x = o.querySelector('[data-close]'); if (x) x.click(); else o.hidden = true; }
 function osservaMezzi(){
