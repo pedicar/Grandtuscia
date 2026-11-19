@@ -72,6 +72,32 @@ function giro(){
     if (u > .86) { const spinta = Math.min(26, avanti * .42 + R.H * 1.6); if (c.vy < spinta) { c.vy = spinta; ev('rampa', R.parco); } }
   }
 }
+
+/* SFOLTISCI — tolie da a vista (scala 0) l'erba, i sassi e i cespi che spuntano su na pista, e alberi e chiome troppo vicini
+   (che coprono a telecamera), e sposta via i loro ostacoli. punti = [{x,z}], vic = raggio pe' tutto, chi = raggio pe' alberi.
+   Riprova ogni 5 s (o mondo pò ricostruì pezzi). */
+const SF = [];
+function sfoltisci(punti, vic, chi){ SF.push({ punti, vic, chi, cell: null }); passaSF(); }
+const fatti = new WeakMap();
+function passaSF(){
+  const D = TG.debug; if (!D || !D.scene || !SF.length) return;
+  const M = new THREE.Matrix4(), v = new THREE.Vector3(), QQ = new THREE.Quaternion(), SS = new THREE.Vector3(), Z = new THREE.Matrix4().makeScale(0, 0, 0);
+  for (const S of SF) if (!S.cell) { S.cell = new Map(); for (const p of S.punti) { const k = Math.floor(p.x / 20) + ',' + Math.floor(p.z / 20); let a = S.cell.get(k); if (!a) S.cell.set(k, a = []); a.push(p); } }
+  const dist = (S, x, z) => { let b = 1e9; const cx = Math.floor(x / 20), cz = Math.floor(z / 20); for (let i = -1; i <= 1; i++) for (let j = -1; j <= 1; j++) { const a = S.cell.get((cx + i) + ',' + (cz + j)); if (a) for (const p of a) { const d = (p.x - x) ** 2 + (p.z - z) ** 2; if (d < b) b = d; } } return Math.sqrt(b); };
+  D.scene.updateMatrixWorld();
+  D.scene.traverse(o => {
+    if (!o.isInstancedMesh || o.userData.tgMio || !o.count) return;
+    const firma = o.count + ':' + o.id; if (fatti.get(o) === firma) return; fatti.set(o, firma);
+    const g = o.geometry.type, albG = /Icosahedron|Dodecahedron/.test(g) || /^(25140a|1a0d07|524d40|020401)$/.test(o.material && o.material.color ? o.material.color.getHexString() : '');
+    let cambiato = false;
+    for (let i = 0; i < o.count; i++) { o.getMatrixAt(i, M); M.decompose(v, QQ, SS); const alb = albG || Math.max(SS.x, SS.y, SS.z) > 2.5; v.applyMatrix4(o.matrixWorld);   // alberi: chiome, tronchi e ombre (e tutto quello che è grosso)
+      for (const S of SF) { const d = dist(S, v.x, v.z); if (d < S.vic || (alb && d < S.chi)) { o.setMatrixAt(i, Z); cambiato = true; break; } } }
+    if (cambiato) o.instanceMatrix.needsUpdate = true;
+  });
+  // ostacoli de i alberi tolti: via lontano
+  try { const E = D.world; for (const S of SF) for (let k = 0; k < S.punti.length; k += 3) { const p = S.punti[k]; for (const r of E.collidersNear(p.x, p.z)) if (r.x < 1e8 && Math.hypot(r.x - p.x, r.z - p.z) < S.chi) { r.x = 1e9; r.z = 1e9; } } } catch(e){}
+}
+setInterval(passaSF, 5000);
 costruisci(); requestAnimationFrame(giro);
-TG.Rampe = { lista: () => rampe, PARCHI, aggiungi, visti: k => { visti[k] = 1; } };
+TG.Rampe = { lista: () => rampe, PARCHI, aggiungi, sfoltisci, visti: k => { visti[k] = 1; } };
 })();

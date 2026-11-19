@@ -13,6 +13,7 @@ const ls = { get: k => { try { return localStorage.getItem(k); } catch(e){ retur
 const OFF = { x: 300, z: -400 };   // da e Pantanacce: o pezzo più piano e libero vicino (sondato 19/11: 10 m de dislivello su 200x140, niente acqua né case né campi)
 const PUNTI = [[-90, -50], [-20, -62], [60, -55], [96, -18], [86, 32], [40, 56], [2, 24], [-30, 60], [-86, 50], [-98, 0]];
 const LARGO = 9;
+const suolo = (E, x, z) => { let g = E.ground(x, z); try { if (E.surfH) g = Math.max(g, E.surfH(x, z)); } catch(e){} return g; };   // a superficie che se vede (ground + rilievo)
 let C = null, pista = [], porte = [], arco = null, pronto = false;
 const fmt = t => { const m = Math.floor(t / 60), s = t - m * 60; return m + ':' + (s < 10 ? '0' : '') + s.toFixed(1).replace('.', ','); };
 function costruisci(){
@@ -23,20 +24,20 @@ function costruisci(){
   for (let i = 0; i <= N; i++) {
     const u = i / N, p = curva.getPointAt(u), t = curva.getTangentAt(u), nx = t.z, nz = -t.x;   // normale orizzontale
     pista.push({ x: p.x, z: p.z, tx: t.x, tz: t.z, u });
-    for (const s of [-1, 1]) { const x = p.x + nx * s * LARGO / 2, z = p.z + nz * s * LARGO / 2; pos.push(x, E.ground(x, z) + .12, z); }
+    for (const s of [-1, 1]) { const x = p.x + nx * s * LARGO / 2, z = p.z + nz * s * LARGO / 2; pos.push(x, suolo(E, x, z) + .12, z); }
     if (i < N) { const a = i * 2; idx.push(a, a + 1, a + 2, a + 1, a + 3, a + 2); }
   }
-  const col = h => { const c = new THREE.Color(h); try { c.convertSRGBToLinear(); } catch(e){} return c; };
+const col = h => { const c = new THREE.Color(h); try { c.convertSRGBToLinear(); } catch(e){} return c; };
   const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setIndex(idx); g.computeVertexNormals();
   const terra = new THREE.Mesh(g, new THREE.MeshLambertMaterial({ color: col('#8a6038'), side: THREE.DoubleSide, flatShading: true })); terra.receiveShadow = true; D.scene.add(terra);
   // paletti ai lati, uno ogni 4 campioni, bianchi e rossi alternati
   const gp = new THREE.CylinderGeometry(.12, .12, 1.1, 5); gp.translate(0, .55, 0);
   const pal = new THREE.InstancedMesh(gp, new THREE.MeshLambertMaterial({ color: 0xffffff }), Math.ceil(N / 4) * 2 + 4); pal.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(pal.count * 3), 3);
   const M4 = new THREE.Matrix4(); let k = 0;
-  for (let i = 0; i < N; i += 4) { const P = pista[i]; for (const s of [-1, 1]) { const x = P.x + P.tz * s * (LARGO / 2 + .6), z = P.z - P.tx * s * (LARGO / 2 + .6); M4.makeTranslation(x, E.ground(x, z), z); pal.setMatrixAt(k, M4); pal.setColorAt(k, col((i / 4) % 2 ? '#d8432a' : '#f6f1e1')); k++; } }
-  pal.count = k; D.scene.add(pal);
+  for (let i = 0; i < N; i += 4) { const P = pista[i]; for (const s of [-1, 1]) { const x = P.x + P.tz * s * (LARGO / 2 + .6), z = P.z - P.tx * s * (LARGO / 2 + .6); M4.makeTranslation(x, suolo(E, x, z), z); pal.setMatrixAt(k, M4); pal.setColorAt(k, col((i / 4) % 2 ? '#d8432a' : '#f6f1e1')); k++; } }
+  pal.count = k; pal.userData.tgMio = 1; D.scene.add(pal);
   // arco de partenza a scacchi
-  { const P = pista[0], ang = Math.atan2(P.tx, P.tz), y = E.ground(P.x, P.z), grp = new THREE.Group(); grp.position.set(P.x, y, P.z); grp.rotation.y = ang;
+  { const P = pista[0], ang = Math.atan2(P.tx, P.tz), y = suolo(E, P.x, P.z), grp = new THREE.Group(); grp.position.set(P.x, y, P.z); grp.rotation.y = ang;
     const ner = new THREE.MeshLambertMaterial({ color: col('#1d1e20') }), bia = new THREE.MeshLambertMaterial({ color: col('#f6f1e1') }), ar = new THREE.MeshLambertMaterial({ color: col('#f0652b') });
     for (const s of [-1, 1]) { const c = new THREE.Mesh(new THREE.BoxGeometry(.5, 6, .5), ar); c.position.set(s * (LARGO / 2 + .8), 3, 0); grp.add(c); }
     for (let i = 0; i < 12; i++) for (let j = 0; j < 2; j++) { const q = new THREE.Mesh(new THREE.BoxGeometry((LARGO + 2) / 12, .5, .3), (i + j) % 2 ? ner : bia); q.position.set(-(LARGO + 2) / 2 + (i + .5) * (LARGO + 2) / 12, 5.5 + j * .5, 0); grp.add(q); }
@@ -47,6 +48,7 @@ function costruisci(){
   const SALTI = [[.09, { L: 8, W: 6, H: 2 }], [.22, { L: 10, W: 6, H: 3 }], [.4, { L: 7, W: 6, H: 1.6 }], [.55, { L: 10, W: 6, H: 3.2 }], [.7, { L: 8, W: 6, H: 2.2 }], [.85, { L: 9, W: 6, H: 2.6 }]];
   for (const [u, M] of SALTI) { const P = pista[Math.round(u * N)]; TG.Rampe.aggiungi(P.x, P.z, Math.atan2(P.tx, P.tz), M, 'Crossodromo'); }
   TG.Rampe.visti('Crossodromo');   // l'avviso o dà o crossodromo, no e rampe
+  try { TG.Rampe.sfoltisci(pista, LARGO / 2 + 1, 8); } catch(e){}   // via l'erba che spunta da a pista
   porte = [.25, .5, .7, .9].map(u => pista[Math.round(u * N)]);
   pronto = true;
 }
