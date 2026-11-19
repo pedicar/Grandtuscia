@@ -131,17 +131,20 @@ function tutorial(){
 }
 
 /* ---------- i mezzi se sbloccano prendendo terreni ---------- */
-const SOGLIE = [[5, 'ape', "🛺 L'Ape è tua: va più veloce ne i campi"], [15, 'trattore', '🚜 O trattore è tuo: passa ovunque'], [30, 'semovente', '🌾 A semovente è tua: raccoje 3 nocchie pe\' volta'], [50, 'supercar', '🏎️ A Supercar è tua: velocissima!'], [80, 'aereo', '✈️ L\'aereo è tuo: MENU → Mezzi → Vola, e atterri dove vòi']];   // regola unica: i mezzi arrivano in regalo coi terreni presi
-function sblocca(tot){
-  try { const L = TG.Contadino.stato(TG.Profile.data); for (const [n, id, cosa] of SOGLIE) if (tot >= n && !L.mezzi[id]) { L.mezzi[id] = Date.now(); TG.Profile.salva && TG.Profile.salva(); setTimeout(() => { try { TG.msg('🎁 Mezzo novo in regalo!', cosa + ` (${n} campi presi)`, 5); if (id !== 'aereo' && id !== 'deltaplano') TG.debug.setVehicle && TG.debug.setVehicle(id); } catch(e){} }, 5600); } } catch(e){}
+// i mezzi se comprano co' e nocchie (tg-cassone.js): quanno n'hai abbastanza pe' uno che nun c'hai, te lo dice na volta sola, senza fermà o gioco
+function sblocca(){
+  try { const C = TG.Cassone, L = TG.Contadino.stato(TG.Profile.data); if (!C || !C.MEZZI) return; L.mezzi = L.mezzi || {};
+    const M = C.MEZZI().concat(TG.Scoperte ? TG.Scoperte.LISTA.filter(m => TG.Scoperte.trovato(m.id)) : []);
+    for (const m of M) if (m.prezzo && !L.mezzi[m.id] && C.n >= m.prezzo && !ls.get('tg-avv-' + m.id)) { ls.set('tg-avv-' + m.id, '1'); TG.msg(`${m.ico} ${m.nome}: o pòi comprà!`, `Costa ${m.prezzo} 🌰: MENU → Cambia mezzo`, 4); break; }
+  } catch(e){}
 }
-addEventListener('tg-presa', e => { sblocca(e.detail.tot); setTimeout(prossimo, 6000); });
+setInterval(sblocca, 3000);
+addEventListener('tg-presa', () => { setTimeout(prossimo, 6000); });
 
 function avvia(){
   if (!TG.Terre || !TG.debug || !TG.debug.car) return setTimeout(avvia, 1000);
   // o riquadro sta sempre sotto a barra in alto, anche quando a barra cresce pe' un messaggio
   try { const wh = document.querySelector('#hud .where'); let alto = 0, quando = 0; const su = () => { const b = Math.round(wh.getBoundingClientRect().bottom); if (b <= 0) return; const ora = Date.now(); if (b > alto || ora - quando > 4000) { if (b >= alto) quando = ora; alto = b; document.documentElement.style.setProperty('--obiTop', (b + 8) + 'px'); } }; /* scende subito se a barra cresce, risale solo dopo 4 s */ new ResizeObserver(su).observe(wh); let ult = -1; const giro = () => { const b = Math.round(wh.getBoundingClientRect().bottom); if (b !== ult) { ult = b; su(); } requestAnimationFrame(giro); }; requestAnimationFrame(giro); } catch(e){}
-  sblocca(+(ls.get('tg-presi') || 0));
   setInterval(alto, 400); setInterval(prossimo, 2500); setInterval(obiettivo, 500); alto();
   const tt = () => { if (document.body.classList.contains('playing')) setTimeout(tutorial, 2500); else setTimeout(tt, 1500); }; tt();
   // a battaglia de o giorno: detta una volta, quando se comincia a giocà
