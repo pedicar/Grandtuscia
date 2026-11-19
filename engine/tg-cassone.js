@@ -116,24 +116,25 @@ function mappa(){
 
 /* ---------- I MEZZI SE COMPRANO CO' E NOCCHIE: o pannello «Cambia mezzo» diventa a bottega ----------
    Ogni mezzo porta un cassone più grande; a semovente raccoje 3 pe' nocchia e va veloce. */
-const MEZZI = [   // se comprano co' e nocchie (20/11): così e nocchie servono a du' cose, campi pe' o paese e mezzi pe' te
-  { id: 'vespa', nome: 'Vespa', ico: '🛵', prezzo: 0, cosa: 'Veloce e agile' },
-  { id: 'ape', nome: 'Ape', ico: '🛺', prezzo: 0, regalo: 'a 10 nocchie', cosa: 'Robusta, più veloce de a Vespa' },
-  { id: 'pandino', nome: '4x4 de campagna', ico: '🚙', prezzo: 0, regalo: 'ar primo campo', cosa: 'Piccola, alta, va dappertutto' },
-  { id: 'trattore', nome: 'Trattore', ico: '🚜', prezzo: 5000, cosa: 'Passa ovunque' },
-  { id: 'semovente', nome: 'Semovente', ico: '🌾', prezzo: 12000, cosa: 'Raccoje 3 pe\' nocchia, spazzola larga' },
-  { id: 'supercar', nome: 'Supercar', ico: '🏎️', prezzo: 30000, cosa: 'Velocissima' },
-  { id: 'aereo', nome: 'Aereo', ico: '✈️', prezzo: 50000, cosa: 'Voli sopra a Tuscia e atterri dove vòi' }
+const MEZZI = [   // se comprano co' e nocchie (20/11); i primi (Vespa, Ape, 4x4) arrivano in regalo (tg-scala.js). tipo: corsa o lavoro
+  { id: 'vespa', nome: 'Vespa', ico: '🛵', prezzo: 0, tipo: 'corsa', cosa: 'Veloce e agile' },
+  { id: 'ape', nome: 'Ape', ico: '🛺', prezzo: 0, regalo: 'a 10 nocchie', tipo: 'corsa', cosa: 'In curva va su due ruote: vale nocchie' },
+  { id: 'pandino', nome: '4x4 de campagna', ico: '🚙', prezzo: 0, regalo: 'ar primo campo', tipo: 'corsa', cosa: 'Piccola, alta, va dappertutto' },
+  { id: 'moto', nome: 'Moto da cross', ico: '🏍️', prezzo: 3000, tipo: 'corsa', cosa: 'Salta tanto e fa i trick: valgono nocchie' },
+  { id: 'supercar', nome: 'Supercar', ico: '🏎️', prezzo: 30000, tipo: 'corsa', cosa: 'Velocissima' },
+  { id: 'aereo', nome: 'Aereo', ico: '✈️', prezzo: 50000, tipo: 'corsa', cosa: 'Voli sopra a Tuscia e atterri dove vòi' },
+  { id: 'trattore', nome: 'Trattore', ico: '🚜', prezzo: 5000, tipo: 'lavoro', cosa: 'Lento, ma ogni nocchia vale DOPPIO' },
+  { id: 'semovente', nome: 'Semovente', ico: '🌾', prezzo: 12000, tipo: 'lavoro', cosa: 'Lenta, spazzola larga, ogni nocchia vale TRIPLO' }
 ];
 const prezzoM = m => Math.round(m.prezzo * (TG.Coop && TG.Coop.mio() >= 4 ? .8 : 1));   // cooperativa liv 4: mezzi −20%
 const stCont = () => { try { return TG.Contadino.stato(TG.Profile.data); } catch(e){ return null; } };
 function bottega(){
   const L = $('vehList'), st = stCont(); if (!L || !st) return; st.mezzi = st.mezzi || {};
   const cur = mezzo();
-  L.innerHTML = `<p class="prog" style="margin:0 0 6px;font-weight:800">🌰 Hai <b style="color:#f2c74e">${mila(n)}</b> nocchie · 🎨 = cambia colore</p><p class="prog" style="margin:8px 0 4px;color:#f2c74e;font-weight:800">🛒 Da comprà co' e nocchie</p>` + MEZZI.map(m => {
+  L.innerHTML = `<p class="prog" style="margin:0 0 6px;font-weight:800">🌰 Hai <b style="color:#f2c74e">${mila(n)}</b> nocchie · 🎨 = cambia colore</p><p class="prog" style="margin:8px 0 4px;color:#f2c74e;font-weight:800">🏎️ Pe' corre</p>` + MEZZI.map((m, i) => (i && m.tipo !== MEZZI[i - 1].tipo ? `<p class="prog" style="margin:14px 0 4px;color:#f2c74e;font-weight:800">🚜 Pe' guadagnà: lenti, ma e nocchie valgono de più</p>` : '') + ((m) => {
     const ce = (!m.prezzo && !m.regalo) || st.mezzi[m.id], usa = cur === m.id;
     return riga(m.ico, m.nome, m.cosa, (ce && m.id !== 'aereo' ? PENNELLO(m.id) : '') + (usa ? IN_USO : ce ? `<button class="tg-btn" data-usa="${m.id}">${m.id === 'aereo' ? 'Vola' : 'Usa'}</button>` : m.regalo ? `<span style="color:#f2c74e;font-weight:800;white-space:nowrap">🎁 ${m.regalo}</span>` : bottoneCompra(m.id, m.prezzo)), false);
-  }).join('') + scoperteHtml(st, cur);
+  })(m)).join('') + scoperteHtml(st, cur);
   L.querySelectorAll('[data-usa]').forEach(b => b.onclick = () => { const id = b.dataset.usa; st.mezzi[id] = st.mezzi[id] || Date.now(); try { TG.Profile.salva(); } catch(e){} chiudiMezzi(); setTimeout(() => { try { if (id === 'aereo') TG.debug.vola(id); else TG.debug.setVehicle(id); } catch(e){} }, 250); ev('mezzo_scelto', id); });
   L.querySelectorAll('[data-sco]').forEach(b => b.onclick = () => { const id = b.dataset.sco; chiudiMezzi(); TG.Scoperte.usa(id); ev('mezzo_scelto', id); });
   L.querySelectorAll('[data-skin]').forEach(b => b.onclick = () => TG.Skin.apri(b.dataset.skin));

@@ -126,4 +126,17 @@ g.Veicoli.pandino=function(b){const w=x(b),{box:t,cyl:R,MAT:a,M:d}=w,o=new THREE
   const ruo=()=>u.ruota(.38,.26,a.tire,d("#bfc3c6",80),6,d("#9aa0a4",70));const f=[],fr=[];for(const[s,z]of[[-1,1.08],[1,1.08],[-1,-1.08],[1,-1.08]]){const G=new THREE.Group;G.position.set(s*.78,.38,z),r.add(G);const H=ruo();G.add(H),f.push(H),z>0&&fr.push(G);t(r,.12,.1,.9,pl,s*.8,.8,z)}
   const T=w.driver(r,-.36,.82,-.1,{shirt:d("#2f5873",5),shirt2:d("#244560",5)});
   let c=0,i=0,y=0;return{id:"pandino",group:o,body:r,exhaustTip:new THREE.Vector3(.5,.4,-1.7),update(e,n){i+=e,c+=(n.speed||0)*e;for(const G of f)G.rotation.x=c/.38;for(const G of fr)G.rotation.y=-(n.steer||0)*.42;const v=Math.abs(n.speed||0),s=P((n.steer||0)*v*.004,-.07,.07);y+=(s-y)*Math.min(1,e*5),r.rotation.set((n.pitch||0)+Math.sin(i*29)*.004*Math.min(1,v/10),0,(n.roll||0)+y),T.head.rotation.y=-(n.steer||0)*.3}}};
+g.Veicoli.moto=function(b){const w=x(b),{box:t,add:E,MAT:a,M:d}=w,o=new THREE.Group,tr=new THREE.Group,r=new THREE.Group;tr.position.y=.8,r.position.y=-.8,o.add(tr),tr.add(r);const u=U(w,r);
+  const ar=d("#f0652b",80),ne=d("#1d1e20",20),gr=d("#9aa0a4",90),gom=d("#232220",3);
+  const f=[];for(const z of[.72,-.66]){const H=u.ruota(.42,.12,gom,gr,12,a.chrome);H.position.set(0,.42,z),r.add(H),f.push(H);for(let k=0;k<14;k++){const q=k/14*Math.PI*2,K=new THREE.Mesh(new THREE.BoxGeometry(.14,.05,.07),gom);K.position.set(0,.42+Math.cos(q)*.42,z+Math.sin(q)*.42),K.rotation.x=q,r.add(K)}}
+  u.tubo(r,[0,.42,-.66],[0,.62,-.12],.04,null,gr);u.tubo(r,[0,.62,-.12],[0,1.0,.38],.05,null,ne);u.tubo(r,[0,.6,0],[0,.62,.42],.05,null,ne);
+  for(const s of[-1,1])u.tubo(r,[s*.08,1.08,.5],[s*.08,.42,.74],.045,null,gr);
+  t(r,.36,.32,.62,ne,0,.62,.02);t(r,.42,.24,.6,ar,0,.98,.2);t(r,.3,.08,.9,ne,0,1.1,-.25,.08);t(r,.34,.06,.6,ar,0,1.05,-.72,-.25);
+  t(r,.3,.05,.5,ar,0,.92,.92,.35);t(r,.36,.32,.06,d("#f6f1e1",40),0,1.02,.62,-.3);t(r,.16,.12,.04,ne,0,1.04,.66,-.3);
+  t(r,.7,.04,.05,ne,0,1.24,.46);for(const s of[-1,1])t(r,.1,.06,.06,ne,s*.34,1.24,.46);u.tubo(r,[.14,.5,-.1],[.18,.72,-.75],.05,.04,gr);
+  const ri=u.omino(r,{casco:d("#1f8fd0",60),maglia:d("#f0652b",8),fascia:d("#1d1e20",8),pantaloni:d("#26272a",6),scarpe:d("#e9e2d0",10)});ri.g.position.set(0,1.32,-.2);ri.to.rotation.x=.55;ri.te.rotation.x=-.4;
+  for(const B of ri.br)B.sp.rotation.x=-1.55,B.go.rotation.x=-.3;for(const[k,s]of[-1,1].entries())ri.ga[k].an.rotation.set(-.35,0,s*.18),ri.ga[k].gi.rotation.x=1.2;
+  const trick={x:0,y:0,z:0,su:0};let c=0,y=0;
+  return{id:"moto",group:o,body:r,trick,rider:ri,exhaustTip:new THREE.Vector3(.18,.72,-.8),update(e,n){c+=(n.speed||0)*e;for(const G of f)G.rotation.x=c/.42;const v=Math.abs(n.speed||0),s=P(-(n.steer||0)*Math.min(1,v/10)*.5,-.5,.5);y+=(s-y)*Math.min(1,e*6);
+    tr.rotation.set(trick.x,trick.y,trick.z);r.rotation.set((n.pitch||0)-trick.su*.25,0,(n.roll||0)*.3+y);ri.g.position.y=1.32+trick.su*.35;for(const B of ri.br)B.sp.rotation.x=-1.55+trick.su*.4;ri.te.rotation.y=-(n.steer||0)*.3}}};
 function P(b,w,t){return b<w?w:b>t?t:b}})();
