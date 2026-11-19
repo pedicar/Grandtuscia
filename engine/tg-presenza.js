@@ -169,6 +169,7 @@ function aggiornaConteggio(){
 TG.Presenza = { invia: d => { try { if (canale && pronto) canale.send({ type: 'broadcast', event: 'guerra', payload: Object.assign({ dev: dev(), t: Date.now() }, d) }); } catch(e){} }, etichetta: (t, c) => etichetta(t, c), altri: () => altri, conteggio: () => Object.keys(altri).length, ombre: () => ombre, manda, ricarica: () => caricaOmbre(), _dbg: () => ({ me, pronto, altri }) };
 function avvia(){
   if (!TG.debug || !TG.PrimoMinuto) return setTimeout(avvia, 1000);
+  if (window.TG_TRUCCO) { giro(); giroMini(); caricaOmbre(); return; }   // coi trucchi vedi l'altri, ma loro nun vedono te
   collega(); setInterval(() => { if (!canale) collega(); manda(false); registra(); }, 1000); giro(); giroMini();
   caricaOmbre(); setInterval(caricaOmbre, 300000); setInterval(salvaTraccia, 60000); addEventListener('pagehide', salvaTraccia); addEventListener('visibilitychange', () => { if (document.hidden) salvaTraccia(); });
   addEventListener('pagehide', () => { try { canale && canale.untrack(); } catch(e){} });

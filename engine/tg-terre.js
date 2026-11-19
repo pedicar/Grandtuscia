@@ -123,12 +123,13 @@ const riconquista = id => false;
 // PREZZI CHE SALGONO (20/11, server tg_terra_compra3): libero 100 (i primi 3 campi tuoi 10), de casa de n'antro paese 150,
 // comprato da n'antro paese: quanto l'ha pagato x 1,5 (arrotondato a 10, minimo 150, massimo 5.000). Lunedì se riparte.
 const PRIMI = 3, BASE = 100, CASA_ALTRI = 150, MAX = 5000;
+let TRUCCO = {}; try { TRUCCO = JSON.parse(localStorage.getItem('tg-trucco-campi') || '{}') || {}; } catch(e){}
 const costo = id => { const pd = padrone(id); if (!pd) return +(ls.get('tg-presi') || 0) < PRIMI ? 10 : BASE; if (casa(id)) return CASA_ALTRI; return Math.min(MAX, Math.max(CASA_ALTRI, Math.ceil(prezzo(id) * 1.5 / 10) * 10)); };
 const alMassimo = id => false;
 // TERRENI DE CASA: ogni paese parte padrone de i terreni suoi (prezzo 10) finché nun li compra quarcun altro
 const casa = id => { const l = classifica[id]; return !!(l && l[0] && l[0].casa); };
 function stato(id){ const l = righe(id).filter(r => r.punti > 0), p = paese(), pd = padrone(id); if (!l.length) return 'libero'; if (!pd) return 'conteso'; return pd === p ? 'nostro' : 'loro'; }
-async function aggiorna(){ try { let n; try { n = await rpc('tg_terre_mappa'); } catch(e){ n = await rpc('tg_terre_padroni'); } if (n && typeof n === 'object') { classifica = n; for (const k in n) { const r = n[k] && n[k][0]; if (r && r.di) DI[k] = r.di; } locali = {}; versione++; } } catch(e){} caricato = true; try { const m = await rpc('tg_manutenzione_stato'); if (m && typeof m === 'object') MANUT = m; } catch(e){} lega(); manutMia().then(avvisaManut, avvisaManut); }
+async function aggiorna(){ try { let n; try { n = await rpc('tg_terre_mappa'); } catch(e){ n = await rpc('tg_terre_padroni'); } if (n && typeof n === 'object') { classifica = n; if (window.TG_TRUCCO) for (const id in TRUCCO) classifica[id] = [{ paese: TRUCCO[id], punti: 100 }]; for (const k in n) { const r = n[k] && n[k][0]; if (r && r.di) DI[k] = r.di; } locali = {}; versione++; } } catch(e){} caricato = true; try { const m = await rpc('tg_manutenzione_stato'); if (m && typeof m === 'object') MANUT = m; } catch(e){} lega(); manutMia().then(avvisaManut, avvisaManut); }
 async function invia(){
   const p = paese(), d = dev(); if (!p || !d) return;
   for (const id of Object.keys(daMandare)) {
@@ -185,6 +186,11 @@ async function ritiraAffitti(){
 async function deposita(T, k){
   const p = paese(), d = dev(); if (!T || !p || !d || !(k > 0)) return null;
   const prima = padrone(T.id);
+  if (window.TG_TRUCCO) {   // trucchi: o campo se pija solo sur telefono (o server e a classifica vera nun ne sanno gnente)
+    const c = costo(T.id); TRUCCO[T.id] = p; try { localStorage.setItem('tg-trucco-campi', JSON.stringify(TRUCCO)); } catch(e){}
+    classifica[T.id] = [{ paese: p, punti: c }]; versione++; festeggiati[T.id] = 1; festa(T, prima, p, 1, '🪄 trucchi');
+    return { ok: true, azione: 'compra', spesa: c, prezzo: c, paese: p, aggiunti: c };
+  }
   const r = await rpc('tg_terra_compra3', { p_dev: d, p_terra: T.id, p_paese: p, p_nocchie: Math.round(k) });
   if (!r) return r;
   if (!r.ok && r.tetto_ora) { const fra = Math.max(1, +r.fra || 10); bloccoFino = Date.now() + fra * 60000; msg('🐢 Limite orario raggiunto', `Al massimo 30.000 nocchie spese in un'ora: riprova fra ${fra} minut${fra === 1 ? 'o' : 'i'}`, 5); return r; }

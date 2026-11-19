@@ -38,7 +38,7 @@ const VERNICI = [
   { id: 'campione', nome: 'Campione', hex: '#7a3fb0', prezzo: 0, premio: 'O paese tuo primo in classifica', ok: primo }
 ];
 const hexDi = v => typeof v.hex === 'function' ? v.hex() : v.hex;
-const ce = (mz, v) => { if (v.ok) return !!v.ok(); if (!v.prezzo) return true; const s = st(); return !!(s && s.vernici[mz + ':' + v.id]); };
+const ce = (mz, v) => { if (window.TG_TRUCCO) return true; if (v.ok) return !!v.ok(); if (!v.prezzo) return true; const s = st(); return !!(s && s.vernici[mz + ':' + v.id]); };
 
 /* ---------- a carrozzeria: o materiale che copre più triangoli (no gomme, cromo, pelle, vetri, luci) ---------- */
 const orig = new WeakMap();

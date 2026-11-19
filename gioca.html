@@ -1,5 +1,6 @@
 <!doctype html>
 <html lang="it"><head>
+<script>/* trucchi: tutto illimitato su un telefono a parte (engine/tg-trucchi.js); ogni chiave de localStorage diventa «trucchi:…», così a partita vera nun se tocca */try{if(localStorage.getItem('tg-trucco')==='1'||/[?&]trucco=tuttotutto/.test(location.search))window.TG_TRUCCO=1;if(window.TG_TRUCCO){const P=Storage.prototype,g=P.getItem,s=P.setItem,r=P.removeItem,k=x=>x==='tg-trucco'?x:'trucchi:'+x;P.getItem=function(x){return g.call(this,k(x))};P.setItem=function(x,v){return s.call(this,k(x),v)};P.removeItem=function(x){return r.call(this,k(x))}}}catch(e){}</script>
 <script src="engine/tg-stats-config.js"></script><script>
 /* apertura della pagina, prima che il mondo carichi: conta anonimo (niente id), per sapere quanti arrivano e quanti aspettano */
 (function(){try{window.__tgQ=location.search;var q=new URLSearchParams(location.search),c=window.TG_STATS_CONFIG;window.__tgT0=performance.now();
@@ -1058,6 +1059,7 @@ html body.touch #hud .where.rot>#toast.rotOn .tMore{display:inline!important;mar
 <script src="engine/tg-bandiere.js"></script>
 <script src="engine/tg-scala.js"></script>
 <script src="engine/tg-trick.js"></script>
+<script src="engine/tg-trucchi.js"></script>
 <script src="engine/tg-classifica.js"></script>
 
 </body></html>

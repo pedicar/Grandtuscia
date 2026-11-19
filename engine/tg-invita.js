@@ -92,6 +92,6 @@ function apri(){
   ov.hidden = false; ev('invito', 'aperto');
 }
 TG.Invita = { apri, link };
-function avvia(){ setInterval(segnaArrivo, 3000); setInterval(premi, 60000); setTimeout(premi, 8000); }
+function avvia(){ if (window.TG_TRUCCO) return; setInterval(segnaArrivo, 3000); setInterval(premi, 60000); setTimeout(premi, 8000); }
 if (document.readyState === 'complete') avvia(); else addEventListener('load', avvia);
 })();
