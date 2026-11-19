@@ -4,7 +4,7 @@
      da fermo o in corsa; in aria o stesso bottone diventa «🤸 TRICK»: ogni tocco fa un trick (Backflip, 360, Superman, Giro de botte,
      Frontflip). Atterri dritto → nocchie de o volo x2 + i trick (2 o più trick: +50%). Atterri a metà trick → «💥 Caduto!», niente.
    - Ape: in curva veloce va su due ruote; più ce resti, più nocchie (3 al secondo, da 0,8 s in su).
-   Avvisi in alto, niente da toccà. Tastiera: Spazio = salta/trick.
+   Avvisi in alto, niente da toccà. Tastiera: J = salta/trick (Spazio è o freno).
    Usa TG.debug (car: x z y vy speed; world.ground/surfH; VEH.cur/models), TG.Cassone.aggiungi, TG.msg, TG.Stats. */
 (function(){
 'use strict';
@@ -27,7 +27,7 @@ const btn = document.createElement('button'); btn.id = 'trickBtn'; btn.type = 'b
 btn.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); premi(); });
 btn.addEventListener('click', e => e.stopPropagation());
 document.body.appendChild(btn);
-addEventListener('keydown', e => { if (e.code === 'Space' && cur() === 'moto' && document.body.classList.contains('playing')) { e.preventDefault(); premi(); } });
+addEventListener('keydown', e => { if (e.code === 'KeyJ' && cur() === 'moto' && document.body.classList.contains('playing')) { e.preventDefault(); premi(); } });
 
 const D = () => TG.debug;
 const cur = () => { try { return D().VEH.cur.id; } catch(e){ return null; } };

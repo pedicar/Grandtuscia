@@ -70,7 +70,7 @@ function bottone(){
   btn.style.display = 'none';
   { const s0 = W.stato(T.id), c0 = W.costo(T.id), ora = Date.now();
     if (s0 !== 'nostro' && n >= c0 && !(W.blocco && W.blocco()) && !(provato[T.id] > ora - 4000)) { provato[T.id] = ora; scarica(); }
-    else if (s0 !== 'nostro' && n < c0 && !(costa[T.id] > ora - 60000)) { costa[T.id] = ora; msg(`🚩 Questo campo costa ${mila(c0)} 🌰`, `Te ne mancano ${mila(c0 - n)}: raccoji e torna`, 3); }   // nun ferma gnente, solo un avviso in alto
+    else if (s0 !== 'nostro' && n < c0 && !document.documentElement.classList.contains('tg-lt3') && !(costa[T.id] > ora - 60000)) { costa[T.id] = ora; msg(`🚩 Questo campo costa ${mila(c0)} 🌰`, `Te ne mancano ${mila(c0 - n)}: raccoji e torna`, 3); }   // nun ferma gnente, solo un avviso in alto
     return; }
   const s = W.stato(T.id), c = W.costo(T.id), tasto = matchMedia('(pointer:fine)').matches ? ' · tasto E' : '';
   const nostro = s === 'nostro', pago = !nostro && n >= c;

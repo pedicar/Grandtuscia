@@ -26,6 +26,11 @@ html:not(.tg-lt3) #obi .b,html:not(.tg-lt3) #obi .r{display:none!important}
 html body #hud .where{width:max-content!important;min-width:0!important;max-width:calc(100vw - 130px)!important}
 #trTop{font-size:20px!important}#trTop b{font-weight:900}
 #pmRiga,#bCodex,#bMe,#bInvito,#pInvito,#segComandi,h4:has(+#segComandi){display:none!important}
+/* computer: o stesso bottone MENU de o telefono (Mappa, Classifica, Cambia mezzo, Invita…), a sinistra de l'icone in alto */
+body:not(.touch) #bMenuT{display:flex;align-items:center;gap:6px;position:absolute;top:calc(14px + env(safe-area-inset-top,0px));right:214px;padding:10px 16px;border-radius:999px;border:1px solid rgba(243,231,203,.35);background:rgba(20,28,27,.55);color:#f3e7cb;font:800 14px Figtree,sans-serif;letter-spacing:.04em;text-transform:uppercase;pointer-events:auto;cursor:pointer;text-shadow:0 1px 4px rgba(0,0,0,.6)}
+body:not(.touch) #bMenuT:hover{background:rgba(20,28,27,.8)}
+/* a manina e e carte de aiuto nun vanno sopra a i pannelli aperti */
+body:has(#menuTOv:not([hidden])) #tfMano,body:has(#pauseOv:not([hidden])) #tfMano,body:has(#vehOv:not([hidden])) #tfMano,body:has(#mapOv:not([hidden])) #tfMano,body:has(#invOv:not([hidden])) #tfMano,body:has(#clOv:not([hidden])) #tfMano,body:has(#skOv:not([hidden])) #tfMano{display:none!important}
 #clOv button{display:block;width:100%;margin-top:14px;padding:15px;border:0;border-radius:16px;background:#f2c74e;color:#1b2423;font:900 19px Figtree,sans-serif}`;
 document.head.appendChild(st);
 let ov = null;
