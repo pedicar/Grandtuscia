@@ -41,7 +41,15 @@ const hexDi = v => typeof v.hex === 'function' ? v.hex() : v.hex;
 const ce = (mz, v) => { if (v.ok) return !!v.ok(); if (!v.prezzo) return true; const s = st(); return !!(s && s.vernici[mz + ':' + v.id]); };
 
 /* ---------- a carrozzeria: o materiale che copre più triangoli (no gomme, cromo, pelle, vetri, luci) ---------- */
-const orig = new WeakMap();   // modello → { mat, col, shin, spec }
+const orig = new WeakMap();
+// superficie de un pezzo (no i triangoli: e nocchie ner cassone ne c'hanno tanti ma so' piccole)
+function area(o){
+  const g = o.geometry; if (!g || !g.attributes.position) return 0;
+  if (g.userData.areaTG == null) { const P = g.attributes.position, I = g.index, A = new THREE.Vector3(), B = new THREE.Vector3(), C = new THREE.Vector3(); let t = 0;
+    const n = I ? I.count : P.count; for (let i = 0; i + 2 < n; i += 3) { const a = I ? I.getX(i) : i, b = I ? I.getX(i + 1) : i + 1, c = I ? I.getX(i + 2) : i + 2; A.fromBufferAttribute(P, a); B.fromBufferAttribute(P, b); C.fromBufferAttribute(P, c); t += B.sub(A).cross(C.sub(A)).length() / 2; }
+    g.userData.areaTG = t; }
+  const sc = o.scale; return g.userData.areaTG * Math.abs(sc.x * sc.y + sc.y * sc.z + sc.x * sc.z) / 3;
+}   // modello → { mat, col, shin, spec }
 function carrozzeria(model){
   if (!model || !model.group) return null;
   if (orig.has(model)) return orig.get(model);
@@ -49,7 +57,7 @@ function carrozzeria(model){
   model.group.traverse(o => { if (!o.isMesh || !o.material || Array.isArray(o.material)) return; const m = o.material;
     if (m.transparent || (m.emissive && m.emissive.getHSL({ h: 0, s: 0, l: 0 }).l > .05) || !m.color) return;
     const hsl = m.color.getHSL({ h: 0, s: 0, l: 0 }); if (hsl.l < .06 || hsl.s < .12) return;   // gomme, cromo, grigi
-    const g = o.geometry, n = g.index ? g.index.count : (g.attributes.position ? g.attributes.position.count : 0);
+    const n = area(o);
     const r = conta.get(m) || { n: 0, mesh: [] }; r.n += n; r.mesh.push(o); conta.set(m, r); });
   let best = null, bn = 0; for (const [m, r] of conta) if (r.n > bn) { bn = r.n; best = [m, r.mesh]; }
   if (!best) return null;
@@ -118,5 +126,12 @@ function disegna(){
 }
 function chiudi(){ prova = null; if (ov) ov.hidden = true; const M = curModel(); if (M) M._verniceTG = null; applica(); }
 function nomeMezzo(id){ try { const m = (TG.Cassone.MEZZI() || []).concat(TG.Scoperte ? TG.Scoperte.LISTA : []).find(x => x.id === id); return m ? m.ico + ' ' + m.nome : id; } catch(e){ return id; } }
-TG.Skin = { apri, VERNICI, applica, chiudi };
+// pe' l'artri giocatori (tg-presenza.js): a vernice che usi sur mezzo de adesso, e come se dipinge o mezzo de n'antro
+const corrente = () => { const s = st(), id = curId(); const v = s && id && s.skin[id]; return v && v !== 'orig' ? v : ''; };
+function dipingiId(model, vid, paeseAltro){
+  const v = VERNICI.find(x => x.id === vid); if (!v || v.id === 'orig') return false;
+  if (v.id === 'paese') { let h = '#d8432a'; try { h = TG.Terre.colore(paeseAltro) || h; } catch(e){} return dipingi(model, Object.assign({}, v, { hex: h })); }
+  return dipingi(model, v);
+}
+TG.Skin = { apri, VERNICI, applica, chiudi, corrente, dipingiId };
 })();

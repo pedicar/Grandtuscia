@@ -48,7 +48,8 @@ function manda(forza){
   if (!document.body.classList.contains('playing')) { if (me) { canale.untrack(); me = null; } return; }
   const ora = Date.now(); if (!forza && ora - ultimoTrack < 1000) return; ultimoTrack = ora;
   let veh = 'vespa'; try { veh = TG.debug.VEH.cur.id; } catch(e){}
-  me = { x: Math.round(c.x), z: Math.round(c.z), yaw: +c.yaw.toFixed(2), v: Math.round(Math.abs(c.speed || 0)), veh, paese: paese() || 'fuori', nome: soprannome().slice(0, 18), t: ora };
+  let sk = ''; try { sk = TG.Skin ? TG.Skin.corrente() : ''; } catch(e){}
+  me = { x: Math.round(c.x), z: Math.round(c.z), yaw: +c.yaw.toFixed(2), v: Math.round(Math.abs(c.speed || 0)), veh, sk, paese: paese() || 'fuori', nome: soprannome().slice(0, 18), t: ora };
   canale.track(me).catch(() => {});
 }
 
@@ -66,9 +67,10 @@ function fantasma(g){
   const id = TG.Veicoli[g.dati.veh] ? g.dati.veh : 'vespa';
   let m; try { m = TG.Veicoli[id](E.col); } catch(e){ return null; }
   m.group.scale.setScalar(SCALA[id] || 1.3);
+  const sk = g.dati.sk || ''; if (sk) try { TG.Skin && TG.Skin.dipingiId(m, sk, g.dati.paese); } catch(e){}   // a vernice sua, prima de clonà i materiali
   m.group.traverse(o => { if (o.isMesh && o.material) { o.material = o.material.clone(); o.castShadow = true; /* solidi come mezzi veri */ } });
-  const grp = new THREE.Group(); grp.add(m.group); grp.add(etichetta(g.dati.nome || 'Uno de ' + corto(g.dati.paese), colore(g.dati.paese)));
-  scene.add(grp); return { grp, m, veh: id };
+  const grp = new THREE.Group(); grp.add(m.group); grp.add(etichetta((sk === 'oro' || sk === 'campione' ? '✨ ' : '') + (g.dati.nome || 'Uno de ' + corto(g.dati.paese)), colore(g.dati.paese)));
+  scene.add(grp); return { grp, m, veh: id, sk };
 }
 function togli(g){ if (g.f) { try { TG.debug.scene.remove(g.f.grp); } catch(e){} g.f = null; } }
 let ultimoGiro = 0;
@@ -84,7 +86,7 @@ function giro(){
     const g = tutti[k], d = g.dati; if (!d) continue;
     if (!d.ombra && Date.now() - g.visto > SPARISCE) { togli(g); continue; }
     if (d.ombra && !g.vicina) { togli(g); continue; }
-    if (!g.f || g.f.veh !== (TG.Veicoli[d.veh] ? d.veh : 'vespa')) { togli(g); g.f = fantasma(g); if (!g.f) continue; g.f.grp.position.set(d.x, E.ground(d.x, d.z), d.z); g.f.grp.rotation.y = d.yaw; }
+    if (!g.f || g.f.veh !== (TG.Veicoli[d.veh] ? d.veh : 'vespa') || g.f.sk !== (d.sk || '')) { togli(g); g.f = fantasma(g); if (!g.f) continue; g.f.grp.position.set(d.x, E.ground(d.x, d.z), d.z); g.f.grp.rotation.y = d.yaw; }
     const G = g.f.grp, k2 = 1 - Math.pow(.02, dt);  // interpolazione morbida verso l'ultima posizione
     G.position.x += (d.x - G.position.x) * k2; G.position.z += (d.z - G.position.z) * k2; G.position.y = E.ground(G.position.x, G.position.z) + .12;
     let dy = d.yaw - G.rotation.y; dy = Math.atan2(Math.sin(dy), Math.cos(dy)); G.rotation.y += dy * k2;
@@ -105,7 +107,7 @@ const quantoFa = s => s < 3600 ? Math.max(1, Math.round(s / 60)) + ' min fa' : s
 function registra(){
   let c; try { c = TG.debug.car; } catch(e){ return; } if (!c || !document.body.classList.contains('playing')) return;
   const ora = Date.now(); if (ora - ultimoPunto < 1000) return; ultimoPunto = ora;
-  try { vehReg = TG.debug.VEH.cur.id || vehReg; } catch(e){}
+  try { const sk = TG.Skin ? TG.Skin.corrente() : ''; vehReg = (TG.debug.VEH.cur.id || 'vespa') + (sk ? '|' + sk : ''); } catch(e){}
   const u = buf[buf.length - 1]; if (u && Math.hypot(u[0] - c.x, u[1] - c.z) < .8) return;   // fermo: non registra
   buf.push([Math.round(c.x), Math.round(c.z), Math.round(c.yaw * 100)]); if (buf.length > 240) buf.shift();
 }
@@ -120,9 +122,10 @@ async function caricaOmbre(){
   const mio = dev(), nuove = {};
   for (const r of l) { if (!r || r.dev === mio || !r.traccia) continue; const tr = r.traccia.split(';').map(q => q.split(',').map(Number)).filter(q => q.length === 3 && q.every(isFinite)); if (tr.length < 20) continue;
     const k = 'o:' + r.dev, old = ombre[k]; const nome = r.nome || 'Uno de ' + corto(r.paese);
-    if (old && old.dati.nome === nome && old.tr.length === tr.length) { nuove[k] = old; continue; }
+    if (old && old.dati.nome === nome && old.tr.length === tr.length && old.vehRaw === r.veh) { nuove[k] = old; continue; }
     if (old) togli(old);
-    nuove[k] = { id: k, tr, off: Math.random() * tr.length, dati: { ombra: true, paese: r.paese, veh: r.veh || 'vespa', nome, x: tr[0][0], z: tr[0][1], yaw: tr[0][2] / 100, v: 8 } }; }
+    const [vh, sk] = String(r.veh || 'vespa').split('|');
+    nuove[k] = { id: k, vehRaw: r.veh, tr, off: Math.random() * tr.length, dati: { ombra: true, paese: r.paese, veh: vh || 'vespa', sk: sk || '', nome, x: tr[0][0], z: tr[0][1], yaw: tr[0][2] / 100, v: 8 } }; }
   for (const k in ombre) if (!nuove[k]) togli(ombre[k]);
   ombre = nuove; aggiornaConteggio();
 }
@@ -163,7 +166,7 @@ function aggiornaConteggio(){
   const per = {}; for (const k in altri) { const p = altri[k].dati.paese; per[p] = (per[p] || 0) + 1; }
   el.innerHTML = `🟢 <b style="color:#f3e7cb">${n} in giro</b>: ` + Object.entries(per).sort((a, b) => b[1] - a[1]).map(([p, c]) => `<span style="color:${colore(p)}">${c} ${corto(p)}</span>`).join(', ') + nota;
 }
-TG.Presenza = { invia: d => { try { if (canale && pronto) canale.send({ type: 'broadcast', event: 'guerra', payload: Object.assign({ dev: dev(), t: Date.now() }, d) }); } catch(e){} }, etichetta: (t, c) => etichetta(t, c), altri: () => altri, conteggio: () => Object.keys(altri).length, ombre: () => ombre, manda, _dbg: () => ({ me, pronto, altri }) };
+TG.Presenza = { invia: d => { try { if (canale && pronto) canale.send({ type: 'broadcast', event: 'guerra', payload: Object.assign({ dev: dev(), t: Date.now() }, d) }); } catch(e){} }, etichetta: (t, c) => etichetta(t, c), altri: () => altri, conteggio: () => Object.keys(altri).length, ombre: () => ombre, manda, ricarica: () => caricaOmbre(), _dbg: () => ({ me, pronto, altri }) };
 function avvia(){
   if (!TG.debug || !TG.PrimoMinuto) return setTimeout(avvia, 1000);
   collega(); setInterval(() => { if (!canale) collega(); manda(false); registra(); }, 1000); giro(); giroMini();
