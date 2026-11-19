@@ -16,29 +16,34 @@ const PARCHI = [
 ];
 const MISURE = [{ L: 6, W: 4, H: 1.2 }, { L: 8, W: 4.4, H: 2.2 }, { L: 10, W: 5, H: 3.4 }];
 const rampe = [];
+
+// na rampa: (cx,cz) = o centro, ang = verso dove se salta, M = { L, W, H }, parco = nome (pe' l'avviso)
+let MAT = null;
+function aggiungi(cx, cz, ang, M, parco){
+  const D = TG.debug; if (!D || !D.scene || !D.world) return null;
+  if (!MAT) { const col = h => { const c = new THREE.Color(h); try { c.convertSRGBToLinear(); } catch(e){} return c; };
+    MAT = { legno: new THREE.MeshLambertMaterial({ color: col('#b48650'), flatShading: true }), scuro: new THREE.MeshLambertMaterial({ color: col('#7a5634'), flatShading: true }), ara: new THREE.MeshLambertMaterial({ color: col('#f0652b') }), bia: new THREE.MeshLambertMaterial({ color: col('#f6f1e1') }) }; }
+  const { legno, scuro, ara, bia } = MAT;
+  const fx = Math.sin(ang), fz = Math.cos(ang), sx = Math.cos(ang), sz = -Math.sin(ang);
+  const x0 = cx - fx * M.L / 2, z0 = cz - fz * M.L / 2, y0 = D.world.ground(cx, cz);
+  const g = new THREE.Group(); g.position.set(x0, y0, z0); g.rotation.y = ang;
+  const sh = new THREE.Shape(); sh.moveTo(0, -.3); sh.lineTo(M.L, -.3); sh.lineTo(M.L, M.H); sh.quadraticCurveTo(M.L * .45, M.H * .2, 0, 0); sh.closePath();
+  const ge = new THREE.ExtrudeGeometry(sh, { depth: M.W, bevelEnabled: false, curveSegments: 6 }); ge.rotateY(-Math.PI / 2); ge.translate(M.W / 2, 0, 0);
+  const m = new THREE.Mesh(ge, legno); m.castShadow = m.receiveShadow = true; g.add(m);
+  for (let k = 0; k < 4; k++) { const b = new THREE.Mesh(new THREE.BoxGeometry(.18, M.H * .9, .18), scuro); b.position.set((k % 2 ? 1 : -1) * (M.W / 2 - .2), M.H * .45 - .3, M.L * (.55 + k * .1)); g.add(b); }
+  for (let k = 0; k < 4; k++) { const s = new THREE.Mesh(new THREE.BoxGeometry(M.W / 4, .08, .5), k % 2 ? bia : ara); s.position.set(-M.W / 2 + M.W / 8 + k * M.W / 4, M.H + .02, M.L - .25); g.add(s); }
+  D.scene.add(g);
+  const R = { x0, z0, fx, fz, sx, sz, L: M.L, W: M.W, H: M.H, parco }; rampe.push(R); return R;
+}
 let pronto = false, visti = {};
 try { visti = JSON.parse(localStorage.getItem('tg-rampe-viste') || '{}') || {}; } catch(e){}
 function costruisci(){
   const D = TG.debug, G = TG.GEO; if (!D || !D.scene || !D.world || !G) return setTimeout(costruisci, 1000);
-  const col = h => { const c = new THREE.Color(h); try { c.convertSRGBToLinear(); } catch(e){} return c; };
-  const legno = new THREE.MeshLambertMaterial({ color: col('#b48650'), flatShading: true }), scuro = new THREE.MeshLambertMaterial({ color: col('#7a5634'), flatShading: true });
-  const ara = new THREE.MeshLambertMaterial({ color: col('#f0652b') }), bia = new THREE.MeshLambertMaterial({ color: col('#f6f1e1') });
   for (const P of PARCHI) {
     const c = P.dove(G); if (!c) continue;
     try { if (D.world.isWater && D.world.isWater(c.x, c.z)) continue; } catch(e){}
     const fx = Math.sin(P.ang), fz = Math.cos(P.ang), sx = Math.cos(P.ang), sz = -Math.sin(P.ang);
-    MISURE.forEach((M, i) => {
-      const off = (i - 1) * 9;   // in fila, uno accanto all'altro
-      const x0 = c.x + sx * off - fx * M.L / 2, z0 = c.z + sz * off - fz * M.L / 2, y0 = D.world.ground(x0 + fx * M.L / 2, z0 + fz * M.L / 2);
-      const g = new THREE.Group(); g.position.set(x0, y0, z0); g.rotation.y = P.ang;
-      const sh = new THREE.Shape(); sh.moveTo(0, -.3); sh.lineTo(M.L, -.3); sh.lineTo(M.L, M.H); sh.quadraticCurveTo(M.L * .45, M.H * .2, 0, 0); sh.closePath();
-      const ge = new THREE.ExtrudeGeometry(sh, { depth: M.W, bevelEnabled: false, curveSegments: 6 }); ge.rotateY(-Math.PI / 2); ge.translate(M.W / 2, 0, 0);
-      const m = new THREE.Mesh(ge, legno); m.castShadow = m.receiveShadow = true; g.add(m);
-      for (let k = 0; k < 5; k++) { const b = new THREE.Mesh(new THREE.BoxGeometry(.18, M.H * .9, .18), scuro); b.position.set((k % 2 ? 1 : -1) * (M.W / 2 - .2), M.H * .45 - .3, M.L * (.55 + k * .1)); if (k < 4) g.add(b); }
-      for (let k = 0; k < 4; k++) { const s = new THREE.Mesh(new THREE.BoxGeometry(M.W / 4, .08, .5), k % 2 ? bia : ara); s.position.set(-M.W / 2 + M.W / 8 + k * M.W / 4, M.H + .02, M.L - .25); g.add(s); }
-      D.scene.add(g);
-      rampe.push({ x0, z0, fx, fz, sx, sz, L: M.L, W: M.W, H: M.H, parco: P.nome });
-    });
+    MISURE.forEach((M, i) => { const off = (i - 1) * 9; aggiungi(c.x + sx * off, c.z + sz * off, P.ang, M, P.nome); });
     // cartello
     const cv = document.createElement('canvas'); cv.width = 512; cv.height = 128; const x = cv.getContext('2d');
     x.fillStyle = 'rgba(16,22,21,.85)'; x.beginPath(); x.roundRect(6, 6, 500, 116, 28); x.fill(); x.fillStyle = '#f0652b'; x.beginPath(); x.roundRect(6, 6, 30, 116, [28, 0, 0, 28]); x.fill();
@@ -68,5 +73,5 @@ function giro(){
   }
 }
 costruisci(); requestAnimationFrame(giro);
-TG.Rampe = { lista: () => rampe, PARCHI };
+TG.Rampe = { lista: () => rampe, PARCHI, aggiungi, visti: k => { visti[k] = 1; } };
 })();
