@@ -118,7 +118,8 @@ function mappa(){
    Ogni mezzo porta un cassone più grande; a semovente raccoje 3 pe' nocchia e va veloce. */
 const MEZZI = [   // se comprano co' e nocchie (20/11): così e nocchie servono a du' cose, campi pe' o paese e mezzi pe' te
   { id: 'vespa', nome: 'Vespa', ico: '🛵', prezzo: 0, cosa: 'Veloce e agile' },
-  { id: 'ape', nome: 'Ape', ico: '🛺', prezzo: 800, cosa: 'Robusta, va ovunque' },
+  { id: 'ape', nome: 'Ape', ico: '🛺', prezzo: 0, regalo: 'a 10 nocchie', cosa: 'Robusta, più veloce de a Vespa' },
+  { id: 'pandino', nome: '4x4 de campagna', ico: '🚙', prezzo: 0, regalo: 'ar primo campo', cosa: 'Piccola, alta, va dappertutto' },
   { id: 'trattore', nome: 'Trattore', ico: '🚜', prezzo: 5000, cosa: 'Passa ovunque' },
   { id: 'semovente', nome: 'Semovente', ico: '🌾', prezzo: 12000, cosa: 'Raccoje 3 pe\' nocchia, spazzola larga' },
   { id: 'supercar', nome: 'Supercar', ico: '🏎️', prezzo: 30000, cosa: 'Velocissima' },
@@ -130,8 +131,8 @@ function bottega(){
   const L = $('vehList'), st = stCont(); if (!L || !st) return; st.mezzi = st.mezzi || {};
   const cur = mezzo();
   L.innerHTML = `<p class="prog" style="margin:0 0 6px;font-weight:800">🌰 Hai <b style="color:#f2c74e">${mila(n)}</b> nocchie · 🎨 = cambia colore</p><p class="prog" style="margin:8px 0 4px;color:#f2c74e;font-weight:800">🛒 Da comprà co' e nocchie</p>` + MEZZI.map(m => {
-    const ce = !m.prezzo || st.mezzi[m.id], usa = cur === m.id;
-    return riga(m.ico, m.nome, m.cosa, (ce && m.id !== 'aereo' ? PENNELLO(m.id) : '') + (usa ? IN_USO : ce ? `<button class="tg-btn" data-usa="${m.id}">${m.id === 'aereo' ? 'Vola' : 'Usa'}</button>` : bottoneCompra(m.id, m.prezzo)), false);
+    const ce = (!m.prezzo && !m.regalo) || st.mezzi[m.id], usa = cur === m.id;
+    return riga(m.ico, m.nome, m.cosa, (ce && m.id !== 'aereo' ? PENNELLO(m.id) : '') + (usa ? IN_USO : ce ? `<button class="tg-btn" data-usa="${m.id}">${m.id === 'aereo' ? 'Vola' : 'Usa'}</button>` : m.regalo ? `<span style="color:#f2c74e;font-weight:800;white-space:nowrap">🎁 ${m.regalo}</span>` : bottoneCompra(m.id, m.prezzo)), false);
   }).join('') + scoperteHtml(st, cur);
   L.querySelectorAll('[data-usa]').forEach(b => b.onclick = () => { const id = b.dataset.usa; st.mezzi[id] = st.mezzi[id] || Date.now(); try { TG.Profile.salva(); } catch(e){} chiudiMezzi(); setTimeout(() => { try { if (id === 'aereo') TG.debug.vola(id); else TG.debug.setVehicle(id); } catch(e){} }, 250); ev('mezzo_scelto', id); });
   L.querySelectorAll('[data-sco]').forEach(b => b.onclick = () => { const id = b.dataset.sco; chiudiMezzi(); TG.Scoperte.usa(id); ev('mezzo_scelto', id); });

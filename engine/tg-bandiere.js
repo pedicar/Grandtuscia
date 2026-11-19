@@ -47,7 +47,7 @@ function rifai(){
 const css = document.createElement('style'); css.textContent = `
 #campoPill{position:fixed;left:50%;transform:translateX(-50%);top:calc(env(safe-area-inset-top,0px) + 104px);z-index:40;display:flex;align-items:center;gap:8px;max-width:calc(100vw - 24px);padding:6px 14px 6px 8px;border-radius:999px;background:rgba(14,18,16,.78);color:#f3e7cb;font:800 15px/1.2 Figtree,system-ui,sans-serif;white-space:nowrap;pointer-events:none;box-shadow:0 2px 10px rgba(0,0,0,.25)}
 #campoPill i{flex:none;width:16px;height:16px;border-radius:50%;border:2px solid rgba(255,255,255,.7)}#campoPill span{overflow:hidden;text-overflow:ellipsis}#campoPill b{font-weight:900}
-#campoPill[hidden],body:not(.playing) #campoPill,body.flying #campoPill,body:has(#trFesta) #campoPill,body:has(#vehOv:not([hidden])) #campoPill,body:has(#skOv:not([hidden])) #campoPill{display:none!important}`;
+#campoPill[hidden],html.tg-lt3 #campoPill,body:not(.playing) #campoPill,body.flying #campoPill,body:has(#trFesta) #campoPill,body:has(#vehOv:not([hidden])) #campoPill,body:has(#skOv:not([hidden])) #campoPill{display:none!important}`;
 document.head.appendChild(css);
 let pill = null, ultimo = '';
 function striscia(){

@@ -115,4 +115,15 @@ g.Veicoli.barca=function(b){const w=x(b),{box:t,MAT:a,M:d}=w,o=new THREE.Group,r
   let i=0,y=0;return{id:"barca",group:o,body:r,prop:new THREE.Object3D,update(e,n){i+=e;const v=Math.abs(n.speed||0),s=-(n.roll||0)*.5-Math.min(1,v/12)*.07;y+=(s-y)*Math.min(1,e*3);
     r.rotation.set((n.pitch||0)+Math.sin(i*1.6)*.025,0,y+Math.sin(i*1.1)*.03);vg.rotation.y=(n.roll||0)*.6+.35+Math.sin(i*.7)*.05;fi.rotation.y=(n.roll||0)*.2;H.rotation.y=(n.roll||0)*.5;ri.to.rotation.x=-.25-Math.min(1,v/14)*.35;ri.te.rotation.y=-.6+Math.sin(i*.5)*.3}}};
 
+g.Veicoli.pandino=function(b){const w=x(b),{box:t,cyl:R,MAT:a,M:d}=w,o=new THREE.Group,r=new THREE.Group;o.add(r);const u=U(w,r);
+  const car=d("#e8e3d6",70),ros=d("#c8321f",40),ner=d("#26272a",20),pl=d("#3a3b3e",30),gl=new THREE.MeshPhongMaterial({color:w.col("#2c3e46"),transparent:!0,opacity:.85,shininess:140,specular:w.col("#ffffff")});
+  t(r,1.62,.62,3.3,car,0,.78,0);t(r,1.56,.7,1.95,car,0,1.42,-.25);t(r,1.6,.05,1.9,car,0,1.79,-.25);
+  t(r,1.58,.52,.05,gl,0,1.44,.74,-.12);t(r,1.5,.5,.05,gl,0,1.45,-1.23,.05);for(const s of[-1,1]){t(r,.05,.46,.82,gl,s*.79,1.46,.2);t(r,.05,.46,.8,gl,s*.79,1.46,-.72);t(r,.06,.5,.06,car,s*.79,1.46,-.26)}
+  t(r,1.66,.1,.04,ros,0,.86,1.66);for(const s of[-1,1])t(r,.05,.12,3.0,ros,s*.82,.98,0);
+  t(r,1.7,.24,.16,pl,0,.5,1.68);t(r,1.7,.24,.16,pl,0,.5,-1.68);for(const s of[-1,1]){t(r,.3,.14,.04,a.lens,s*.55,.86,1.67);t(r,.16,.2,.04,a.tail,s*.66,.86,-1.66);t(r,.08,.08,3.0,pl,s*.82,.5,0)}
+  t(r,.5,.08,.04,ner,0,.68,1.67);for(let k=0;k<4;k++)t(r,.4,.03,.02,a.chrome,0,.62+k*.05,1.69);
+  for(const z of[-.95,.45])t(r,1.5,.04,.05,ner,0,1.86,z);for(const s of[-1,1])t(r,.05,.06,1.5,ner,s*.68,1.86,-.25);t(r,1.1,.18,.7,d("#8a5a2b",20),0,1.98,-.3);
+  const ruo=()=>u.ruota(.38,.26,a.tire,d("#bfc3c6",80),6,d("#9aa0a4",70));const f=[],fr=[];for(const[s,z]of[[-1,1.08],[1,1.08],[-1,-1.08],[1,-1.08]]){const G=new THREE.Group;G.position.set(s*.78,.38,z),r.add(G);const H=ruo();G.add(H),f.push(H),z>0&&fr.push(G);t(r,.12,.1,.9,pl,s*.8,.8,z)}
+  const T=w.driver(r,-.36,.82,-.1,{shirt:d("#2f5873",5),shirt2:d("#244560",5)});
+  let c=0,i=0,y=0;return{id:"pandino",group:o,body:r,exhaustTip:new THREE.Vector3(.5,.4,-1.7),update(e,n){i+=e,c+=(n.speed||0)*e;for(const G of f)G.rotation.x=c/.38;for(const G of fr)G.rotation.y=-(n.steer||0)*.42;const v=Math.abs(n.speed||0),s=P((n.steer||0)*v*.004,-.07,.07);y+=(s-y)*Math.min(1,e*5),r.rotation.set((n.pitch||0)+Math.sin(i*29)*.004*Math.min(1,v/10),0,(n.roll||0)+y),T.head.rotation.y=-(n.steer||0)*.3}}};
 function P(b,w,t){return b<w?w:b>t?t:b}})();

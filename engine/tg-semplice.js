@@ -49,7 +49,7 @@ function alto(){
   // in alto solo e nocchie che c'hai: o resto (terreni, posizione, derby) sta in Classifica
   { const n = TG.Cassone ? TG.Cassone.n : 0, p = paese(); let pos = '';
     if (p && TG.Terre && TG.Terre.lista) { const t = conta(), cl = Object.entries(t).sort((a, b) => b[1] - a[1]), i = cl.findIndex(r => r[0] === p); pos = `<span class="alt">🏆 ${corto(p)} ${i >= 0 ? (i + 1) + 'ª' : ''}</span>`; }
-    let ico = '🛵'; try { ico = { piedi: '🚶', vespa: '🛵', ape: '🛺', trattore: '🚜', semovente: '🌾', supercar: '🏎️' }[TG.debug.VEH.cur.id] || '🛵'; } catch(e){}
+    let ico = '🛵'; try { ico = { piedi: '🚶', vespa: '🛵', ape: '🛺', trattore: '🚜', semovente: '🌾', supercar: '🏎️', pandino: '🚙', bici: '🚵', cavallo: '🐎', carrettino: '🛷' }[TG.debug.VEH.cur.id] || '🛵'; } catch(e){}
     const h = `<span>🌰 <b>${n}</b></span>${pos}<span data-mezzo style="padding-left:4px">${ico}</span>`; if (el._h !== h) { el._h = h; el.innerHTML = h; } return; }
   const S = SF();
   if (S && (S.p.includes(paese()) || Math.floor(Date.now() / 4500) % 2)) { const t = {}; for (const T of TG.Terre.lista()) { if (!TG.Terre.derby(T.id)) continue; const q = TG.Terre.padrone(T.id); if (q) t[q] = (t[q] || 0) + 1; }
