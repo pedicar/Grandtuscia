@@ -120,7 +120,10 @@ async function manutMia(){
 function avvisaManut(){ const m = manutenzione(), p = paese(); if (manutDetto || !m || m.pct < 15 || !document.body.classList.contains('playing')) return; const k = 'tg-manut-' + new Date().toISOString().slice(0, 10); try { if (localStorage.getItem(k)) { manutDetto = true; return; } localStorage.setItem(k, '1'); } catch(e){} manutDetto = true; msg(`🧾 Manutenzione: ${m.terreni} terreni`, `Più terreni tenete, più costa: stanotte quelli fori casa perdono o ${m.pct}%. Rinforzate quelli che contano`, 6); }
 // REGOLA UNICA (19/11): libero 10, de n'antro paese 20, sempre (server: tg_terra_compra2). Niente metà prezzo, niente «al massimo».
 const riconquista = id => false;
-const costo = id => padrone(id) ? 20 : 10;
+// PREZZI CHE SALGONO (20/11, server tg_terra_compra3): libero 100 (i primi 3 campi tuoi 10), de casa de n'antro paese 150,
+// comprato da n'antro paese: quanto l'ha pagato x 1,5 (arrotondato a 10, minimo 150, massimo 5.000). Lunedì se riparte.
+const PRIMI = 3, BASE = 100, CASA_ALTRI = 150, MAX = 5000;
+const costo = id => { const pd = padrone(id); if (!pd) return +(ls.get('tg-presi') || 0) < PRIMI ? 10 : BASE; if (casa(id)) return CASA_ALTRI; return Math.min(MAX, Math.max(CASA_ALTRI, Math.ceil(prezzo(id) * 1.5 / 10) * 10)); };
 const alMassimo = id => false;
 // TERRENI DE CASA: ogni paese parte padrone de i terreni suoi (prezzo 10) finché nun li compra quarcun altro
 const casa = id => { const l = classifica[id]; return !!(l && l[0] && l[0].casa); };
@@ -182,9 +185,9 @@ async function ritiraAffitti(){
 async function deposita(T, k){
   const p = paese(), d = dev(); if (!T || !p || !d || !(k > 0)) return null;
   const prima = padrone(T.id);
-  const r = await rpc('tg_terra_compra2', { p_dev: d, p_terra: T.id, p_paese: p, p_nocchie: Math.round(k) });
+  const r = await rpc('tg_terra_compra3', { p_dev: d, p_terra: T.id, p_paese: p, p_nocchie: Math.round(k) });
   if (!r) return r;
-  if (!r.ok && r.tetto_ora) { const fra = Math.max(1, +r.fra || 10); bloccoFino = Date.now() + fra * 60000; msg('🐢 Limite orario raggiunto', `Al massimo 3.000 nocchie spese in un'ora: riprova fra ${fra} minut${fra === 1 ? 'o' : 'i'}`, 5); return r; }
+  if (!r.ok && r.tetto_ora) { const fra = Math.max(1, +r.fra || 10); bloccoFino = Date.now() + fra * 60000; msg('🐢 Limite orario raggiunto', `Al massimo 30.000 nocchie spese in un'ora: riprova fra ${fra} minut${fra === 1 ? 'o' : 'i'}`, 5); return r; }
   if (!r.ok && r.al_massimo) { classifica[T.id] = [{ paese: p, punti: r.prezzo }]; versione++; msg('✅ È già al massimo', `Vale ${TETTO}: chi o vò paga ${TETTO + 10}`, 3.5); return r; }
   if (!r.ok) { if (r.manca) { if (r.paese) classifica[T.id] = [{ paese: r.paese, punti: r.prezzo, casa: !!r.casa }]; else delete classifica[T.id]; versione++; msg(`Costa ${r.costo}: te ne mancano ${r.manca}`, "Qualcuno l'ha pagato de più: raccoji ancora e torna", 4); } return r; }
   classifica[T.id] = [{ paese: r.paese, punti: r.prezzo }]; versione++;

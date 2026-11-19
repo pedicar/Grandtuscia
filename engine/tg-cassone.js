@@ -58,7 +58,7 @@ html body.touch #prompt#prompt{left:calc(172px + env(safe-area-inset-left,0px))!
 #prompt.tgVinci{box-shadow:0 0 0 3px rgba(242,199,78,.8)}#prompt .tgVinci{display:block!important;color:#f2c74e;font-weight:800;font-size:13px;white-space:nowrap}
 #scVolo{position:fixed;z-index:34;pointer-events:none;font-size:22px;transition:transform .7s cubic-bezier(.3,.6,.4,1),opacity .7s}`;
 document.head.appendChild(st);
-let btn = null, occupato = false; const provato = {};
+let btn = null, occupato = false; const provato = {}, costa = {};
 function bottone(){
   const W = TG.Terre, D = TG.debug; if (!W || !D || !D.car) return;
   if (!btn) { btn = document.createElement('button'); btn.id = 'scBtn'; btn.type = 'button'; btn.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); scarica(); }); btn.onclick = e => { e.stopPropagation(); }; /* pointerdown: parte subito, nun se perde */ document.body.appendChild(btn); }
@@ -70,6 +70,7 @@ function bottone(){
   btn.style.display = 'none';
   { const s0 = W.stato(T.id), c0 = W.costo(T.id), ora = Date.now();
     if (s0 !== 'nostro' && n >= c0 && !(W.blocco && W.blocco()) && !(provato[T.id] > ora - 4000)) { provato[T.id] = ora; scarica(); }
+    else if (s0 !== 'nostro' && n < c0 && !(costa[T.id] > ora - 60000)) { costa[T.id] = ora; msg(`🚩 Questo campo costa ${mila(c0)} 🌰`, `Te ne mancano ${mila(c0 - n)}: raccoji e torna`, 3); }   // nun ferma gnente, solo un avviso in alto
     return; }
   const s = W.stato(T.id), c = W.costo(T.id), tasto = matchMedia('(pointer:fine)').matches ? ' · tasto E' : '';
   const nostro = s === 'nostro', pago = !nostro && n >= c;
