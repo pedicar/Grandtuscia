@@ -135,7 +135,7 @@ function tutorial(){
 function sblocca(){
   try { const C = TG.Cassone, L = TG.Contadino.stato(TG.Profile.data); if (!C || !C.MEZZI) return; L.mezzi = L.mezzi || {};
     const M = C.MEZZI().concat(TG.Scoperte ? TG.Scoperte.LISTA.filter(m => TG.Scoperte.trovato(m.id)) : []);
-    for (const m of M) if (m.prezzo && !L.mezzi[m.id] && C.n >= m.prezzo && !ls.get('tg-avv-' + m.id)) { ls.set('tg-avv-' + m.id, '1'); TG.msg(`${m.ico} ${m.nome}: o pòi comprà!`, `Costa ${m.prezzo} 🌰: MENU → Cambia mezzo`, 4); break; }
+    for (const m of M) if (m.prezzo && !L.mezzi[m.id] && C.n >= m.prezzo && !ls.get('tg-avv-' + m.id)) { ls.set('tg-avv-' + m.id, '1'); TG.msg(`${m.ico} ${m.nome}: o pòi comprà!`, `Costa ${String(m.prezzo).replace(/\B(?=(\d{3})+(?!\d))/g, '.')} 🌰: MENU → Cambia mezzo`, 4); break; }
   } catch(e){}
 }
 setInterval(sblocca, 3000);

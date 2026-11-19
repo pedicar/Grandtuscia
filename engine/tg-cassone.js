@@ -117,18 +117,18 @@ function mappa(){
    Ogni mezzo porta un cassone più grande; a semovente raccoje 3 pe' nocchia e va veloce. */
 const MEZZI = [   // se comprano co' e nocchie (20/11): così e nocchie servono a du' cose, campi pe' o paese e mezzi pe' te
   { id: 'vespa', nome: 'Vespa', ico: '🛵', prezzo: 0, cosa: 'Veloce e agile' },
-  { id: 'ape', nome: 'Ape', ico: '🛺', prezzo: 80, cosa: 'Robusta, va ovunque' },
-  { id: 'trattore', nome: 'Trattore', ico: '🚜', prezzo: 150, cosa: 'Passa ovunque' },
-  { id: 'semovente', nome: 'Semovente', ico: '🌾', prezzo: 250, cosa: 'Raccoje 3 pe\' nocchia, spazzola larga' },
-  { id: 'supercar', nome: 'Supercar', ico: '🏎️', prezzo: 500, cosa: 'Velocissima' },
-  { id: 'aereo', nome: 'Aereo', ico: '✈️', prezzo: 1000, cosa: 'Voli sopra a Tuscia e atterri dove vòi' }
+  { id: 'ape', nome: 'Ape', ico: '🛺', prezzo: 8000, cosa: 'Robusta, va ovunque' },
+  { id: 'trattore', nome: 'Trattore', ico: '🚜', prezzo: 15000, cosa: 'Passa ovunque' },
+  { id: 'semovente', nome: 'Semovente', ico: '🌾', prezzo: 25000, cosa: 'Raccoje 3 pe\' nocchia, spazzola larga' },
+  { id: 'supercar', nome: 'Supercar', ico: '🏎️', prezzo: 50000, cosa: 'Velocissima' },
+  { id: 'aereo', nome: 'Aereo', ico: '✈️', prezzo: 100000, cosa: 'Voli sopra a Tuscia e atterri dove vòi' }
 ];
 const prezzoM = m => Math.round(m.prezzo * (TG.Coop && TG.Coop.mio() >= 4 ? .8 : 1));   // cooperativa liv 4: mezzi −20%
 const stCont = () => { try { return TG.Contadino.stato(TG.Profile.data); } catch(e){ return null; } };
 function bottega(){
   const L = $('vehList'), st = stCont(); if (!L || !st) return; st.mezzi = st.mezzi || {};
   const cur = mezzo();
-  L.innerHTML = `<p class="prog" style="margin:0 0 6px;font-weight:800">🌰 Hai <b style="color:#f2c74e">${n}</b> nocchie</p>` + scoperteHtml(st, cur) + `<p class="prog" style="margin:14px 0 4px;color:#f2c74e;font-weight:800">🛒 Da comprà co' e nocchie</p>` + MEZZI.map(m => {
+  L.innerHTML = `<p class="prog" style="margin:0 0 6px;font-weight:800">🌰 Hai <b style="color:#f2c74e">${mila(n)}</b> nocchie</p>` + scoperteHtml(st, cur) + `<p class="prog" style="margin:14px 0 4px;color:#f2c74e;font-weight:800">🛒 Da comprà co' e nocchie</p>` + MEZZI.map(m => {
     const ce = !m.prezzo || st.mezzi[m.id], usa = cur === m.id;
     return riga(m.ico, m.nome, m.cosa, usa ? IN_USO : ce ? `<button class="tg-btn" data-usa="${m.id}">${m.id === 'aereo' ? 'Vola' : 'Usa'}</button>` : bottoneCompra(m.id, m.prezzo), false);
   }).join('');
@@ -150,16 +150,17 @@ function scoperteHtml(st, cur){
 const IN_USO = '<span style="color:#8cbf52;font-weight:800">In uso</span>';
 const riga = (ico, nome, cosa, bt, grigio) => `<div style="display:flex;align-items:center;gap:10px;padding:10px 4px;border-top:1px solid rgba(255,255,255,.08)"><span style="font-size:28px;${grigio ? 'filter:grayscale(1) brightness(.6)' : ''}">${ico}</span><div style="flex:1"><b style="font-size:16px">${nome}</b><br><small style="color:#c9bfa8">${cosa}</small></div>${bt}</div>`;
 // co' abbastanza nocchie: «Compra · 80 🌰»; sennò o prezzo grigio e quante ne mancano
-const bottoneCompra = (id, p) => n >= p ? `<button class="tg-btn" data-compra="${id}" style="white-space:nowrap">Compra · ${p} 🌰</button>` : `<span style="text-align:right;color:#9aa39c;font-weight:800;white-space:nowrap">${p} 🌰<br><small style="font-weight:700">te ne mancano ${p - n}</small></span>`;
+const mila = x => String(Math.round(x)).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+const bottoneCompra = (id, p) => n >= p ? `<button class="tg-btn" data-compra="${id}" style="white-space:nowrap">Compra · ${mila(p)} 🌰</button>` : `<span style="text-align:right;color:#9aa39c;font-weight:800;white-space:nowrap">${mila(p)} 🌰<br><small style="font-weight:700">te ne mancano ${mila(p - n)}</small></span>`;
 const prezzoDi = id => { const m = MEZZI.find(x => x.id === id) || (TG.Scoperte && TG.Scoperte.LISTA.find(x => x.id === id)); return m ? m.prezzo || 0 : null; };
 function compraMezzo(id){
   const st = stCont(), p = prezzoDi(id); if (!st || p == null) return false; st.mezzi = st.mezzi || {};
   if (st.mezzi[id]) return true;
-  if (n < p) { msg(`Te ne mancano ${p - n}`, 'Raccoji ancora nocchie', 2.5); return false; }
+  if (n < p) { msg(`Te ne mancano ${mila(p - n)}`, 'Raccoji ancora nocchie', 2.5); return false; }
   C.togli(p); st.mezzi[id] = Date.now(); try { TG.Profile.salva(); } catch(e){}
   ev('mezzo_comprato', id, p); chiudiMezzi();
   const m = MEZZI.find(x => x.id === id) || TG.Scoperte.LISTA.find(x => x.id === id);
-  msg(`${m.ico} ${m.nome} è tuo!`, `−${p} 🌰`, 3);
+  msg(`${m.ico} ${m.nome} è tuo!`, `−${mila(p)} 🌰`, 3);
   setTimeout(() => { try { if (id === 'aereo') TG.debug.vola(id); else if (TG.Scoperte && TG.Scoperte.LISTA.some(x => x.id === id)) TG.Scoperte.usa(id); else TG.debug.setVehicle(id); } catch(e){} }, 300);
   return true;
 }

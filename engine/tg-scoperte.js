@@ -8,15 +8,15 @@
 const TG = window.TG = window.TG || {};
 const ev = (t, c) => { try { TG.Stats && TG.Stats.ev(t, c || ''); } catch(e){} };
 const LISTA = [
-  { id: 'deltaplano', prezzo: 300, art: 'o', nome: 'Deltaplano', ico: '🪂', vola: 'Vola', cosa: 'Parti da o decollo e plani sopra o Lago de Vico', indizio: 'Sopra o Lago de Vico, su a rampa de o decollo', luogo: 'o decollo de o Lago de Vico',
+  { id: 'deltaplano', prezzo: 30000, art: 'o', nome: 'Deltaplano', ico: '🪂', vola: 'Vola', cosa: 'Parti da o decollo e plani sopra o Lago de Vico', indizio: 'Sopra o Lago de Vico, su a rampa de o decollo', luogo: 'o decollo de o Lago de Vico',
     dove: G => G.RAMPA && { x: G.RAMPA.x, z: G.RAMPA.z, mx: G.RAMPA.x, mz: G.RAMPA.z } },
-  { id: 'barca', prezzo: 200, art: 'a', nome: 'Barca a vela', ico: '⛵', vola: 'Salpa', cosa: 'Navighi sul Lago de Vico, a vela va da sola', indizio: 'A o pontile de a Punta de o Lago de Vico', luogo: 'o pontile de o Lago de Vico',
+  { id: 'barca', prezzo: 20000, art: 'a', nome: 'Barca a vela', ico: '⛵', vola: 'Salpa', cosa: 'Navighi sul Lago de Vico, a vela va da sola', indizio: 'A o pontile de a Punta de o Lago de Vico', luogo: 'o pontile de o Lago de Vico',
     dove: G => G.PONTILE && G.PONTILE_BASE && { x: G.PONTILE_BASE.x, z: G.PONTILE_BASE.z, mx: G.PONTILE.x, mz: G.PONTILE.z, acqua: 1 } },
-  { id: 'bici', prezzo: 50, art: 'a', nome: 'Mountain bike', ico: '🚵', cosa: 'Leggera, sale e scende pe\' i boschi', indizio: 'Su o Monte Cimino, ne a faggeta', luogo: 'a faggeta de o Monte Cimino',
+  { id: 'bici', prezzo: 5000, art: 'a', nome: 'Mountain bike', ico: '🚵', cosa: 'Leggera, sale e scende pe\' i boschi', indizio: 'Su o Monte Cimino, ne a faggeta', luogo: 'a faggeta de o Monte Cimino',
     dove: G => G.CIM && { x: G.CIM.x + 40, z: G.CIM.z + 110 } },
-  { id: 'cavallo', prezzo: 150, art: 'o', nome: 'Cavallo', ico: '🐎', cosa: 'Galoppa dappertutto', indizio: 'A Ronciglione, dove parte a corsa de i cavalli', luogo: 'Ronciglione',
+  { id: 'cavallo', prezzo: 15000, art: 'o', nome: 'Cavallo', ico: '🐎', cosa: 'Galoppa dappertutto', indizio: 'A Ronciglione, dove parte a corsa de i cavalli', luogo: 'Ronciglione',
     dove: G => G.CORSE && { x: G.CORSE.x, z: G.CORSE.z } },
-  { id: 'carrettino', prezzo: 80, art: 'o', nome: 'Carrettino', ico: '🛷', cosa: 'De legno, come a a corsa de Fabrica', indizio: 'A Fabrica, in cima a via Roma', luogo: 'via Roma a Fabrica',
+  { id: 'carrettino', prezzo: 8000, art: 'o', nome: 'Carrettino', ico: '🛷', cosa: 'De legno, come a a corsa de Fabrica', indizio: 'A Fabrica, in cima a via Roma', luogo: 'via Roma a Fabrica',
     dove: G => G.RAPIDA && { x: G.RAPIDA.x + 16, z: G.RAPIDA.z + 20 } }
 ];
 const D = () => TG.debug;
@@ -61,7 +61,7 @@ function trovatoOra(m){
     <div style="font-size:54px;line-height:1">${m.ico}</div><div style="font:900 14px Figtree,sans-serif;letter-spacing:.12em;color:#f2c74e;margin-top:8px">🔍 SCOPERTA!</div>
     <h2 style="margin:4px 0 6px;font:900 26px/1.15 Figtree,sans-serif">Hai trovato ${m.art} ${m.nome}</h2>
     <p style="margin:0 0 14px;font:700 16px/1.35 Figtree,sans-serif;color:#c9bfa8">${m.cosa}.</p>${premio ? `<p style="margin:-6px 0 12px;font:900 17px Figtree,sans-serif;color:#f2c74e">🎁 +${premio} 🌰 pe' a scoperta</p>` : ''}
-    ${puo ? `<button data-si style="display:block;width:100%;padding:15px;border:0;border-radius:16px;background:#f2c74e;color:#1b2423;font:900 19px Figtree,sans-serif">COMPRALO · ${m.prezzo} 🌰</button>` : `<p style="margin:0 0 4px;font:800 17px/1.35 Figtree,sans-serif">Costa ${m.prezzo} 🌰: te ne mancano ${m.prezzo - nn}.<br><span style="color:#c9bfa8;font-weight:700">Quanno ce l'hai, compralo da MENU → Cambia mezzo</span></p>`}
+    ${puo ? `<button data-si style="display:block;width:100%;padding:15px;border:0;border-radius:16px;background:#f2c74e;color:#1b2423;font:900 19px Figtree,sans-serif">COMPRALO · ${String(m.prezzo).replace(/\B(?=(\d{3})+(?!\d))/g, '.')} 🌰</button>` : `<p style="margin:0 0 4px;font:800 17px/1.35 Figtree,sans-serif">Costa ${String(m.prezzo).replace(/\B(?=(\d{3})+(?!\d))/g, '.')} 🌰: te ne mancano ${String((m.prezzo - nn)).replace(/\B(?=(\d{3})+(?!\d))/g, '.')}.<br><span style="color:#c9bfa8;font-weight:700">Quanno ce l'hai, compralo da MENU → Cambia mezzo</span></p>`}
     <button data-no style="display:block;width:100%;margin-top:8px;padding:12px;border:0;border-radius:14px;background:transparent;color:#c9bfa8;font:800 16px Figtree,sans-serif">${puo ? 'Dopo' : 'OK'}</button></div>`;
   document.body.appendChild(o);
   const chiudi = () => { o.remove(); setTimeout(() => { aperto = false; }, 1500); };
