@@ -8,15 +8,15 @@
 const TG = window.TG = window.TG || {};
 const ev = (t, c) => { try { TG.Stats && TG.Stats.ev(t, c || ''); } catch(e){} };
 const LISTA = [
-  { id: 'deltaplano', prezzo: 30000, art: 'o', nome: 'Deltaplano', ico: '🪂', vola: 'Vola', cosa: 'Parti da o decollo e plani sopra o Lago de Vico', indizio: 'Sopra o Lago de Vico, su a rampa de o decollo', luogo: 'o decollo de o Lago de Vico',
+  { id: 'deltaplano', prezzo: 3000, art: 'o', nome: 'Deltaplano', ico: '🪂', vola: 'Vola', cosa: 'Parti da o decollo e plani sopra o Lago de Vico', indizio: 'Sopra o Lago de Vico, su a rampa de o decollo', luogo: 'o decollo de o Lago de Vico',
     dove: G => G.RAMPA && { x: G.RAMPA.x, z: G.RAMPA.z, mx: G.RAMPA.x, mz: G.RAMPA.z } },
-  { id: 'barca', prezzo: 20000, art: 'a', nome: 'Barca a vela', ico: '⛵', vola: 'Salpa', cosa: 'Navighi sul Lago de Vico, a vela va da sola', indizio: 'A o pontile de a Punta de o Lago de Vico', luogo: 'o pontile de o Lago de Vico',
+  { id: 'barca', prezzo: 2000, art: 'a', nome: 'Barca a vela', ico: '⛵', vola: 'Salpa', cosa: 'Navighi sul Lago de Vico, a vela va da sola', indizio: 'A o pontile de a Punta de o Lago de Vico', luogo: 'o pontile de o Lago de Vico',
     dove: G => G.PONTILE && G.PONTILE_BASE && { x: G.PONTILE_BASE.x, z: G.PONTILE_BASE.z, mx: G.PONTILE.x, mz: G.PONTILE.z, acqua: 1 } },
-  { id: 'bici', prezzo: 5000, art: 'a', nome: 'Mountain bike', ico: '🚵', cosa: 'Leggera, sale e scende pe\' i boschi', indizio: 'Su o Monte Cimino, ne a faggeta', luogo: 'a faggeta de o Monte Cimino',
+  { id: 'bici', prezzo: 500, art: 'a', nome: 'Mountain bike', ico: '🚵', cosa: 'Leggera, sale e scende pe\' i boschi', indizio: 'Su o Monte Cimino, ne a faggeta', luogo: 'a faggeta de o Monte Cimino',
     dove: G => G.CIM && { x: G.CIM.x + 40, z: G.CIM.z + 110 } },
-  { id: 'cavallo', prezzo: 15000, art: 'o', nome: 'Cavallo', ico: '🐎', cosa: 'Galoppa dappertutto', indizio: 'A Ronciglione, dove parte a corsa de i cavalli', luogo: 'Ronciglione',
+  { id: 'cavallo', prezzo: 1500, art: 'o', nome: 'Cavallo', ico: '🐎', cosa: 'Galoppa dappertutto', indizio: 'A Ronciglione, dove parte a corsa de i cavalli', luogo: 'Ronciglione',
     dove: G => G.CORSE && { x: G.CORSE.x, z: G.CORSE.z } },
-  { id: 'carrettino', prezzo: 8000, art: 'o', nome: 'Carrettino', ico: '🛷', cosa: 'De legno, come a a corsa de Fabrica', indizio: 'A Fabrica, in cima a via Roma', luogo: 'via Roma a Fabrica',
+  { id: 'carrettino', prezzo: 800, art: 'o', nome: 'Carrettino', ico: '🛷', cosa: 'De legno, come a a corsa de Fabrica', indizio: 'A Fabrica, in cima a via Roma', luogo: 'via Roma a Fabrica',
     dove: G => G.RAPIDA && { x: G.RAPIDA.x + 16, z: G.RAPIDA.z + 20 } }
 ];
 const D = () => TG.debug;
