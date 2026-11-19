@@ -128,12 +128,13 @@ const stCont = () => { try { return TG.Contadino.stato(TG.Profile.data); } catch
 function bottega(){
   const L = $('vehList'), st = stCont(); if (!L || !st) return; st.mezzi = st.mezzi || {};
   const cur = mezzo();
-  L.innerHTML = `<p class="prog" style="margin:0 0 6px;font-weight:800">🌰 Hai <b style="color:#f2c74e">${mila(n)}</b> nocchie</p>` + scoperteHtml(st, cur) + `<p class="prog" style="margin:14px 0 4px;color:#f2c74e;font-weight:800">🛒 Da comprà co' e nocchie</p>` + MEZZI.map(m => {
+  L.innerHTML = `<p class="prog" style="margin:0 0 6px;font-weight:800">🌰 Hai <b style="color:#f2c74e">${mila(n)}</b> nocchie · 🎨 = cambia colore</p><p class="prog" style="margin:8px 0 4px;color:#f2c74e;font-weight:800">🛒 Da comprà co' e nocchie</p>` + MEZZI.map(m => {
     const ce = !m.prezzo || st.mezzi[m.id], usa = cur === m.id;
-    return riga(m.ico, m.nome, m.cosa, usa ? IN_USO : ce ? `<button class="tg-btn" data-usa="${m.id}">${m.id === 'aereo' ? 'Vola' : 'Usa'}</button>` : bottoneCompra(m.id, m.prezzo), false);
-  }).join('');
+    return riga(m.ico, m.nome, m.cosa, (ce && m.id !== 'aereo' ? PENNELLO(m.id) : '') + (usa ? IN_USO : ce ? `<button class="tg-btn" data-usa="${m.id}">${m.id === 'aereo' ? 'Vola' : 'Usa'}</button>` : bottoneCompra(m.id, m.prezzo)), false);
+  }).join('') + scoperteHtml(st, cur);
   L.querySelectorAll('[data-usa]').forEach(b => b.onclick = () => { const id = b.dataset.usa; st.mezzi[id] = st.mezzi[id] || Date.now(); try { TG.Profile.salva(); } catch(e){} chiudiMezzi(); setTimeout(() => { try { if (id === 'aereo') TG.debug.vola(id); else TG.debug.setVehicle(id); } catch(e){} }, 250); ev('mezzo_scelto', id); });
   L.querySelectorAll('[data-sco]').forEach(b => b.onclick = () => { const id = b.dataset.sco; chiudiMezzi(); TG.Scoperte.usa(id); ev('mezzo_scelto', id); });
+  L.querySelectorAll('[data-skin]').forEach(b => b.onclick = () => TG.Skin.apri(b.dataset.skin));
   L.querySelectorAll('[data-compra]').forEach(b => b.onclick = () => compraMezzo(b.dataset.compra));
   L.querySelectorAll('[data-portami]').forEach(b => b.onclick = () => { const id = b.dataset.portami; chiudiMezzi(); setTimeout(() => TG.Scoperte.portami(id), 250); });
 }
@@ -141,12 +142,13 @@ function bottega(){
 function scoperteHtml(st, cur){
   const S = TG.Scoperte; if (!S) return '';
   const nn = S.LISTA.filter(m => st.mezzi[m.id] || S.trovato(m.id)).length;
-  return `<p class="prog" style="margin:0 0 4px;color:#f2c74e;font-weight:800">🔍 Da trovà in giro, poi se comprano (${nn}/${S.LISTA.length})</p>` + S.LISTA.map(m => {
+  return `<p class="prog" style="margin:14px 0 4px;color:#f2c74e;font-weight:800">🔍 Da trovà in giro, poi se comprano (${nn}/${S.LISTA.length})</p>` + S.LISTA.map(m => {
     const ce = !!st.mezzi[m.id], visto = ce || S.trovato(m.id), usa = cur === m.id;
-    const bt = usa ? IN_USO : ce ? `<button class="tg-btn" data-sco="${m.id}">${m.vola || 'Usa'}</button>` : visto ? bottoneCompra(m.id, m.prezzo) : `<button class="tg-btn" data-portami="${m.id}" style="background:#3a4a47;color:#f3e7cb">Portamece</button>`;
+    const bt = (ce && !m.vola ? PENNELLO(m.id) : '') + (usa ? IN_USO : ce ? `<button class="tg-btn" data-sco="${m.id}">${m.vola || 'Usa'}</button>` : visto ? bottoneCompra(m.id, m.prezzo) : `<button class="tg-btn" data-portami="${m.id}" style="background:#3a4a47;color:#f3e7cb">Portamece</button>`);
     return riga(visto ? m.ico : '❓', visto ? m.nome : 'Mezzo misterioso', visto ? m.cosa : '🔍 ' + m.indizio, bt, !visto);
   }).join('');
 }
+const PENNELLO = id => TG.Skin ? `<button class="tg-btn" data-skin="${id}" title="Vernice" style="background:#3a4a47;color:#f3e7cb;padding-left:10px;padding-right:10px;margin-right:6px">🎨</button>` : '';
 const IN_USO = '<span style="color:#8cbf52;font-weight:800">In uso</span>';
 const riga = (ico, nome, cosa, bt, grigio) => `<div style="display:flex;align-items:center;gap:10px;padding:10px 4px;border-top:1px solid rgba(255,255,255,.08)"><span style="font-size:28px;${grigio ? 'filter:grayscale(1) brightness(.6)' : ''}">${ico}</span><div style="flex:1"><b style="font-size:16px">${nome}</b><br><small style="color:#c9bfa8">${cosa}</small></div>${bt}</div>`;
 // co' abbastanza nocchie: «Compra · 80 🌰»; sennò o prezzo grigio e quante ne mancano
