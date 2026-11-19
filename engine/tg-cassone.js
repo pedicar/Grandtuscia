@@ -115,35 +115,26 @@ function mappa(){
 
 /* ---------- I MEZZI SE COMPRANO CO' E NOCCHIE: o pannello «Cambia mezzo» diventa a bottega ----------
    Ogni mezzo porta un cassone più grande; a semovente raccoje 3 pe' nocchia e va veloce. */
-const MEZZI = [
-  { id: 'vespa', nome: 'Vespa', ico: '🛵', prezzo: 0, cosa: 'Veloce e agile' },
-  { id: 'ape', nome: 'Ape', ico: '🛺', prezzo: 80, cosa: 'Cassone vero' },
-  { id: 'trattore', nome: 'Trattore', ico: '🚜', prezzo: 140, cosa: 'Passa ovunque e da a mappa vai subito ai terreni' },
-  { id: 'semovente', nome: 'Semovente', ico: '🌾', prezzo: 240, cosa: 'Raccoje 3 pe\' nocchia, spazzola larga, veloce' }
+const MEZZI = [   // regola unica: arrivano in regalo coi campi presi (campi = quanti ne servono); se cambia quanno vòi
+  { id: 'vespa', nome: 'Vespa', ico: '🛵', prezzo: 0, campi: 0, cosa: 'Veloce e agile' },
+  { id: 'ape', nome: 'Ape', ico: '🛺', prezzo: 0, campi: 5, cosa: 'Robusta, va ovunque' },
+  { id: 'trattore', nome: 'Trattore', ico: '🚜', prezzo: 0, campi: 15, cosa: 'Passa ovunque' },
+  { id: 'semovente', nome: 'Semovente', ico: '🌾', prezzo: 0, campi: 30, cosa: 'Raccoje 3 pe\' nocchia, spazzola larga' },
+  { id: 'supercar', nome: 'Supercar', ico: '🏎️', prezzo: 0, campi: 50, cosa: 'Velocissima' },
+  { id: 'aereo', nome: 'Aereo', ico: '✈️', prezzo: 0, campi: 80, cosa: 'Voli sopra a Tuscia e atterri dove vòi' }
 ];
 const prezzoM = m => Math.round(m.prezzo * (TG.Coop && TG.Coop.mio() >= 4 ? .8 : 1));   // cooperativa liv 4: mezzi −20%
 const stCont = () => { try { return TG.Contadino.stato(TG.Profile.data); } catch(e){ return null; } };
 function bottega(){
   const L = $('vehList'), st = stCont(); if (!L || !st) return; st.mezzi = st.mezzi || {};
-  const cur = mezzo();
-  L.innerHTML = `<p class="prog" style="margin:0 0 6px">🌰 Ne o cassone: <b style="color:#f2c74e">${n}</b> nocchie · co' e nocchie compri mezzi e terreni</p>` + MEZZI.map(m => {
-    const ce = m.prezzo === 0 || st.mezzi[m.id], usa = cur === m.id;
-    const bt = usa ? '<span style="color:#8cbf52;font-weight:800">In uso</span>' : ce ? `<button class="tg-btn" data-usa="${m.id}">Usa</button>` : n >= prezzoM(m) ? `<button class="tg-btn" data-compra="${m.id}">Compra · ${prezzoM(m)} 🌰</button>` : `<span style="color:#9aa39c;font-weight:700">${prezzoM(m)} 🌰 · te ne mancano ${prezzoM(m) - n}</span>`;
-    return `<div style="display:flex;align-items:center;gap:10px;padding:10px 4px;border-top:1px solid rgba(255,255,255,.08)"><span style="font-size:28px">${m.ico}</span><div style="flex:1"><b style="font-size:16px">${m.nome}</b><br><small style="color:#c9bfa8">${m.cosa} · cassone ${CAPIENZA[m.id]}</small></div>${bt}</div>`;
+  const cur = mezzo(), presi = +(ls.get('tg-presi') || 0);
+  L.innerHTML = `<p class="prog" style="margin:0 0 6px">Scegli o mezzo: quelli novi arrivano in regalo coi campi che prendi (tu ne hai presi <b style="color:#f2c74e">${presi}</b>)</p>` + MEZZI.map(m => {
+    const ce = m.campi === 0 || st.mezzi[m.id] || presi >= m.campi, usa = cur === m.id;
+    const bt = usa ? '<span style="color:#8cbf52;font-weight:800">In uso</span>' : ce ? `<button class="tg-btn" data-usa="${m.id}">${m.id === 'aereo' ? 'Vola' : 'Usa'}</button>` : `<span style="color:#9aa39c;font-weight:700">🔒 al ${m.campi}° campo</span>`;
+    return `<div style="display:flex;align-items:center;gap:10px;padding:10px 4px;border-top:1px solid rgba(255,255,255,.08)"><span style="font-size:28px">${m.ico}</span><div style="flex:1"><b style="font-size:16px">${m.nome}</b><br><small style="color:#c9bfa8">${m.cosa}</small></div>${bt}</div>`;
   }).join('');
-  L.querySelectorAll('[data-usa]').forEach(b => b.onclick = () => { try { TG.debug.setVehicle(b.dataset.usa); } catch(e){} chiudiMezzi(); });
-  L.querySelectorAll('[data-compra]').forEach(b => b.onclick = () => { if (compraMezzo(b.dataset.compra)) chiudiMezzi(); });
+  L.querySelectorAll('[data-usa]').forEach(b => b.onclick = () => { const id = b.dataset.usa; st.mezzi[id] = st.mezzi[id] || Date.now(); try { TG.Profile.salva(); } catch(e){} chiudiMezzi(); setTimeout(() => { try { if (id === 'aereo') TG.debug.vola(); else TG.debug.setVehicle(id); } catch(e){} }, 250); ev('mezzo_scelto', id); });
 }
-// compra un mezzo co' e nocchie e ce sale sopra (usato da a bottega e da i consigli de tg-facile.js)
-function compraMezzo(id){
-  const st = stCont(), m = MEZZI.find(x => x.id === id); if (!st || !m || n < prezzoM(m)) return false; st.mezzi = st.mezzi || {};
-  C.togli(prezzoM(m)); st.mezzi[m.id] = Date.now(); try { TG.Profile.salva(); } catch(e){}
-  ev('acquisto_mezzo', m.id, m.prezzo); try { TG.debug.setVehicle(m.id); } catch(e){}
-  msg(`${m.ico} ${m.nome} comprata!`, `Cassone da ${CAPIENZA[m.id]}${m.id === 'semovente' ? ' e ogni nocchia vale 3' : ''}`, 4);
-  return true;
-}
-// o prossimo mezzo da comprà (in ordine), co' o prezzo de adesso
-function prossimoMezzo(){ const st = stCont(); if (!st) return null; const h = st.mezzi || {}; const m = MEZZI.find(x => x.prezzo > 0 && !h[x.id]); return m ? Object.assign({}, m, { costo: prezzoM(m), capienza: CAPIENZA[m.id] }) : null; }
 function chiudiMezzi(){ const o = $('vehOv'); if (!o) return; const x = o.querySelector('[data-close]'); if (x) x.click(); else o.hidden = true; }
 function osservaMezzi(){
   const o = $('vehOv'); if (!o) return setTimeout(osservaMezzi, 1500);

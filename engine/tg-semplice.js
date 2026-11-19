@@ -45,11 +45,12 @@ const breve = n => (n || '').replace(/^(Il|I|La|Le|Lo) /, '');
 function conta(){ const W = TG.Terre, t = {}; if (!W) return t; for (const T of W.lista()) { const p = W.padrone(T.id); if (p && !(W.casa && W.casa(T.id))) t[p] = (t[p] || 0) + 1; } return t; }   /* conta solo i terreni comprati (come o Trono), no quelli de casa */
 function alto(){
   const sc = document.getElementById('score'); if (!sc || !TG.Terre) return;
-  let el = document.getElementById('trTop'); if (!el) { el = document.createElement('div'); el.id = 'trTop'; sc.appendChild(el); }
+  let el = document.getElementById('trTop'); if (!el) { el = document.createElement('div'); el.id = 'trTop'; sc.appendChild(el); el.style.cursor = 'pointer'; el.onclick = e => { if (e.target.closest('[data-mezzo]')) { e.stopPropagation(); const b = document.getElementById('bVeh'); b && b.click(); } }; }
   // in alto solo e nocchie che c'hai: o resto (terreni, posizione, derby) sta in Classifica
   { const n = TG.Cassone ? TG.Cassone.n : 0, p = paese(); let pos = '';
     if (p && TG.Terre && TG.Terre.lista) { const t = conta(), cl = Object.entries(t).sort((a, b) => b[1] - a[1]), i = cl.findIndex(r => r[0] === p); pos = `<span class="alt">🏆 ${corto(p)} ${i >= 0 ? (i + 1) + 'ª' : ''}</span>`; }
-    const h = `<span>🌰 <b>${n}</b></span>${pos}`; if (el._h !== h) { el._h = h; el.innerHTML = h; } return; }
+    let ico = '🛵'; try { ico = { piedi: '🚶', vespa: '🛵', ape: '🛺', trattore: '🚜', semovente: '🌾', supercar: '🏎️' }[TG.debug.VEH.cur.id] || '🛵'; } catch(e){}
+    const h = `<span>🌰 <b>${n}</b></span>${pos}<span data-mezzo style="padding-left:4px">${ico}</span>`; if (el._h !== h) { el._h = h; el.innerHTML = h; } return; }
   const S = SF();
   if (S && (S.p.includes(paese()) || Math.floor(Date.now() / 4500) % 2)) { const t = {}; for (const T of TG.Terre.lista()) { if (!TG.Terre.derby(T.id)) continue; const q = TG.Terre.padrone(T.id); if (q) t[q] = (t[q] || 0) + 1; }
     const [a, b] = S.p, p = paese(), nm = q => q === p ? `<b style="color:#fff">${S.nome(q)}</b>` : `<span class="alt">${S.nome(q)}</span>`;
@@ -130,9 +131,9 @@ function tutorial(){
 }
 
 /* ---------- i mezzi se sbloccano prendendo terreni ---------- */
-const SOGLIE = [[5, 'ape', "🛺 L'Ape è tua: va più veloce ne i campi"], [15, 'trattore', '🚜 O trattore è tuo: passa ovunque'], [30, 'semovente', '🌾 A semovente è tua: raccoje 3 nocchie pe\' volta']];   // regola unica: i mezzi arrivano in regalo coi terreni presi
+const SOGLIE = [[5, 'ape', "🛺 L'Ape è tua: va più veloce ne i campi"], [15, 'trattore', '🚜 O trattore è tuo: passa ovunque'], [30, 'semovente', '🌾 A semovente è tua: raccoje 3 nocchie pe\' volta'], [50, 'supercar', '🏎️ A Supercar è tua: velocissima!'], [80, 'aereo', '✈️ L\'aereo è tuo: MENU → Mezzi → Vola, e atterri dove vòi']];   // regola unica: i mezzi arrivano in regalo coi terreni presi
 function sblocca(tot){
-  try { const L = TG.Contadino.stato(TG.Profile.data); for (const [n, id, cosa] of SOGLIE) if (tot >= n && !L.mezzi[id]) { L.mezzi[id] = Date.now(); TG.Profile.salva && TG.Profile.salva(); setTimeout(() => { try { TG.msg('🚜 Mezzo nuovo!', cosa + ` (${n} terreni presi)`, 4); TG.debug.setVehicle && TG.debug.setVehicle(id); } catch(e){} }, 5600); } } catch(e){}
+  try { const L = TG.Contadino.stato(TG.Profile.data); for (const [n, id, cosa] of SOGLIE) if (tot >= n && !L.mezzi[id]) { L.mezzi[id] = Date.now(); TG.Profile.salva && TG.Profile.salva(); setTimeout(() => { try { TG.msg('🎁 Mezzo novo in regalo!', cosa + ` (${n} campi presi)`, 5); if (id !== 'aereo') TG.debug.setVehicle && TG.debug.setVehicle(id); } catch(e){} }, 5600); } } catch(e){}
 }
 addEventListener('tg-presa', e => { sblocca(e.detail.tot); setTimeout(prossimo, 6000); });
 
