@@ -50,12 +50,13 @@ function trovato(m){
   const s = st(); s.mezzi[m.id] = Date.now(); try { TG.Profile.salva(); } catch(e){}
   if (colonne[m.id]) colonne[m.id].visible = false;
   ev('scoperta_mezzo', m.id); aperto = true;
+  let premio = 0; try { premio = TG.Cassone ? TG.Cassone.aggiungi(20, true) : 0; } catch(e){}   // chi gira aiuta o paese: 20 nocchie pe' ogni scoperta
   const o = document.createElement('div');
   o.style.cssText = 'position:fixed;inset:0;z-index:96;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(10,14,13,.72);font-family:Figtree,system-ui,sans-serif;color:#f3e7cb';
   o.innerHTML = `<div style="width:min(380px,100%);padding:20px 18px 16px;border-radius:22px;background:#1b2423;border:2px solid rgba(242,199,78,.6);text-align:center">
     <div style="font-size:54px;line-height:1">${m.ico}</div><div style="font:900 14px Figtree,sans-serif;letter-spacing:.12em;color:#f2c74e;margin-top:8px">🔍 SCOPERTA!</div>
     <h2 style="margin:4px 0 6px;font:900 26px/1.15 Figtree,sans-serif">Hai trovato ${m.art} ${m.nome}</h2>
-    <p style="margin:0 0 14px;font:700 16px/1.35 Figtree,sans-serif;color:#c9bfa8">${m.cosa}. Da mo' sta ne o garage: MENU → Cambia mezzo.</p>
+    <p style="margin:0 0 14px;font:700 16px/1.35 Figtree,sans-serif;color:#c9bfa8">${m.cosa}. Da mo' sta ne o garage: MENU → Cambia mezzo.</p>${premio ? `<p style="margin:-6px 0 14px;font:900 18px Figtree,sans-serif;color:#f2c74e">🎁 +${premio} 🌰 pe' o paese tuo</p>` : ''}
     <button data-si style="display:block;width:100%;padding:15px;border:0;border-radius:16px;background:#f2c74e;color:#1b2423;font:900 19px Figtree,sans-serif">${m.vola ? m.vola.toUpperCase() + ' ADESSO' : 'PROVALO ADESSO'}</button>
     <button data-no style="display:block;width:100%;margin-top:8px;padding:12px;border:0;border-radius:14px;background:transparent;color:#c9bfa8;font:800 16px Figtree,sans-serif">Dopo</button></div>`;
   document.body.appendChild(o);
