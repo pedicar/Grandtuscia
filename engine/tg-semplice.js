@@ -99,7 +99,7 @@ let obi = null;
 function apriMappa(){ try { const b = document.getElementById('bMap') || document.querySelector('[data-open="map"],#mapBtn,#btnMap'); if (b) { b.click(); return; } } catch(e){} try { TG.Terre.pannello(); } catch(e){} }
 function obiettivo(){
   const D = TG.debug, W = TG.Terre, C = TG.Cassone; if (!D || !W || !D.car || !C) return;
-  if (!obi) { obi = document.createElement('div'); obi.id = 'obi'; obi.onclick = e => { if (e.target.closest && e.target.closest('[data-coop]') && TG.Coop) { e.stopPropagation(); TG.Coop.vai(); return; } apriMappa(); }; document.body.appendChild(obi); }
+  if (!obi) { obi = document.createElement('div'); obi.id = 'obi'; obi.onclick = e => { if (e.target.closest && e.target.closest('[data-coop]') && TG.Coop) { e.stopPropagation(); TG.Coop.vai(); return; } if (obi.dataset.va === 'account') { try { TG.debug.openAccount(); TG.Stats && TG.Stats.ev('iscrivi_tocco', 'obiettivo'); } catch(er){} return; } if (obi.dataset.va === 'mezzi') { try { TG.debug.openVehicles(); } catch(er){} return; } apriMappa(); }; document.body.appendChild(obi); }
 
   const p = paese(), c = D.car, dentro = W.terraIn(c.x, c.z), n = C.n, cap = C.cap(), pct = Math.min(100, n / cap * 100);
   if (!p) { obi.innerHTML = `<div class="t">Scegli o paese tuo</div>`; return; }
@@ -119,8 +119,22 @@ function obiettivo(){
   const T = mia && W.lista().find(x => x.id === mia.id);
   if (T) { const d = Math.max(0, Math.hypot(T.x - c.x, T.z - c.z) - T.rad), st = W.stato(T.id), cs = W.costo(T.id), dist = d < 950 ? Math.round(d / 10) * 10 + ' m' : (d / 1000).toFixed(1).replace('.', ',') + ' km'; obi.style.borderColor = '#ff8a3c'; obi.innerHTML = st === 'nostro' ? `<div class="t">🛡 Vai a rinforzà</div><div class="s">${breve(T.nome)} · ${dist}</div>${barra}${piede}` : `<div class="t">💰 ➜ ${breve(T.nome)}</div><div class="s">costa ${cs} 🌰${n >= cs ? ' · ce l\'hai' : ''} · ${dist}</div>${barra}${piede}`; return; }
   if (n >= cap) { obi.innerHTML = `<div class="t">Cassone pieno: vai a comprà!</div><div class="s">Tocca qui e scegli o terreno (o un mezzo novo)</div>${barra}${piede}`; return; }
+  // 20/11 — un premio sempre in vista: o prossimo mezzo da vince o da comprà, co' a barra (tocca → iscrizione o garage)
+  const pr = prossimo(n); obi.dataset.va = pr ? pr.va || '' : '';
+  if (pr) { obi.innerHTML = `<div class="t">${pr.t}</div><div class="s">${pr.s}</div><div class="b"><i style="width:${Math.max(3, Math.min(100, pr.pct))}%;background:${col}"></i></div>${piede}`; return; }
   obi.innerHTML = `<div class="t">🌰 Raccoji e nocchie!</div>${barra}${piede}`;
 }
+function prossimo(n){
+  let fatti = {}, raccolte = 0; try { const S = TG.Scala.stato(); fatti = S.fatti || {}; raccolte = S.raccolte || 0; } catch(e){}
+  const anonimo = (() => { try { return TG.Account.stato === 'anonimo'; } catch(e){ return false; } })();
+  if (!fatti.vespa) return { t: '🛵 A Vespa te aspetta', s: `Raccoji ${Math.max(0, 20 - raccolte)} nocchie ancora`, pct: raccolte / 20 * 100 };
+  if (!fatti.ape) return { t: '🛺 Prossimo regalo: l\'Ape', s: `${Math.min(raccolte, 100)}/100 nocchie raccolte`, pct: raccolte };
+  if (!fatti.pandino && anonimo) return { t: '🚙 4x4 de campagna gratis', s: 'Salva a partita co\' a mail: tocca qui', pct: 100, va: 'account' };
+  let M = null; try { M = TG.Cassone.prossimoMezzo(); } catch(e){}
+  if (M && M.prezzo) return { t: `${M.ico || '🚗'} Prossimo: ${M.nome}`, s: n >= M.prezzo ? '<b style="color:#fff">Ce l\'hai: tocca e compralo!</b>' : `${mila(n)} / ${mila(M.prezzo)} 🌰`, pct: n / M.prezzo * 100, va: 'mezzi' };
+  return null;
+}
+const mila = x => String(Math.round(x)).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 /* ---------- la prima volta: come se conquista un campo, in tre righe ---------- */
 function tutorial(){
   if (true || ls.get('tg-tuto-terreni') || !document.body.classList.contains('playing')) return;   // 2.0: sostituito da i messaggi de o cassone

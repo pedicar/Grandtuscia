@@ -106,7 +106,8 @@ document.addEventListener('click', e => { if (!toccaFn || Date.now() > toccaFino
 function tocca(fn, s){ toccaFn = fn; toccaFino = Date.now() + (s || 8) * 1000; }
 const apriAccount = () => { try { TG.debug.openAccount(); ev('account_da_terreni'); } catch(e){} };
 let senzaDetto = false;
-function avvisaSenzaAccount(){ if (senzaDetto || registrato()) return; senzaDetto = true; setTimeout(() => { msg('💾 Salva a partita co\' a mail', 'Senza account i terreni tuoi pagano a manutenzione doppia e l\'affitto va a a cooperativa. Tocca qui', 7); tocca(apriAccount, 9); }, 4500); }
+function avvisaSenzaAccount(){ return;   // pulizia 20/11: ora o propone tg-iscriviti.js (co' o 4x4 in regalo)
+  if (senzaDetto || registrato()) return; senzaDetto = true; setTimeout(() => { msg('💾 Salva a partita co\' a mail', 'Senza account i terreni tuoi pagano a manutenzione doppia e l\'affitto va a a cooperativa. Tocca qui', 7); tocca(apriAccount, 9); }, 4500); }
 let manutVista = false;
 async function manutMia(){
   if (manutVista) return; const d = dev(); if (!d) return; manutVista = true;

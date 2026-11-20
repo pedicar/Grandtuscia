@@ -14,7 +14,7 @@ const ev = (t, c) => { try { TG.Stats && TG.Stats.ev(t, c || ''); } catch(e){} }
 let fatti = {}; try { fatti = JSON.parse(ls.get('tg-iscriviti') || '{}') || {}; } catch(e){}
 const css = document.createElement('style'); css.textContent = `#iscrBtn{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 104px);transform:translate(-50%,-8px);opacity:0;z-index:42;padding:10px 18px;border-radius:999px;border:2px solid #f2c74e;background:rgba(14,18,16,.9);color:#f3e7cb;font:900 17px/1.2 Figtree,system-ui,sans-serif;white-space:nowrap;box-shadow:0 6px 18px rgba(0,0,0,.35);transition:opacity .3s,transform .3s;pointer-events:none}
 #iscrBtn.on{opacity:1;transform:translate(-50%,0);pointer-events:auto}#iscrBtn small{display:block;font-weight:700;font-size:13px;color:#c9bfa8;margin-top:2px}
-body:not(.playing) #iscrBtn,body.flying #iscrBtn{display:none}body:has(#iscrBtn.on) #campoPill,body:has(#iscrBtn.on) #crossPill,body:has(#iscrBtn.on) #dhPill{visibility:hidden}`;
+body:not(.playing) #iscrBtn,body.flying #iscrBtn{display:none}body:has(#iscrBtn.on) #obi,body:has(#iscrBtn.on) #campoPill,body:has(#iscrBtn.on) #crossPill,body:has(#iscrBtn.on) #dhPill{visibility:hidden}`;
 document.head.appendChild(css);
 const btn = document.createElement('button'); btn.id = 'iscrBtn'; btn.type = 'button';
 const testo = () => { let ha = false; try { ha = !!TG.Scala.stato().fatti.pandino; } catch(e){} return ha ? '💾 Salva o podere tuo · +100 🌰<small>una mail e via, niente password</small>' : '🚙 Vinci o 4x4 de campagna<small>salva a partita co\' a mail, niente password</small>'; };
