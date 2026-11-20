@@ -120,11 +120,11 @@ function obiettivo(){
   if (T) { const d = Math.max(0, Math.hypot(T.x - c.x, T.z - c.z) - T.rad), st = W.stato(T.id), cs = W.costo(T.id), dist = d < 950 ? Math.round(d / 10) * 10 + ' m' : (d / 1000).toFixed(1).replace('.', ',') + ' km'; obi.style.borderColor = '#ff8a3c'; obi.innerHTML = st === 'nostro' ? `<div class="t">🛡 Vai a rinforzà</div><div class="s">${breve(T.nome)} · ${dist}</div>${barra}${piede}` : `<div class="t">💰 ➜ ${breve(T.nome)}</div><div class="s">costa ${cs} 🌰${n >= cs ? ' · ce l\'hai' : ''} · ${dist}</div>${barra}${piede}`; return; }
   if (n >= cap) { obi.innerHTML = `<div class="t">Cassone pieno: vai a comprà!</div><div class="s">Tocca qui e scegli o terreno (o un mezzo novo)</div>${barra}${piede}`; return; }
   // 20/11 — un premio sempre in vista: o prossimo mezzo da vince o da comprà, co' a barra (tocca → iscrizione o garage)
-  const pr = prossimo(n); obi.dataset.va = pr ? pr.va || '' : '';
+  const pr = premio(n); obi.dataset.va = pr ? pr.va || '' : '';
   if (pr) { obi.innerHTML = `<div class="t">${pr.t}</div><div class="s">${pr.s}</div><div class="b"><i style="width:${Math.max(3, Math.min(100, pr.pct))}%;background:${col}"></i></div>${piede}`; return; }
   obi.innerHTML = `<div class="t">🌰 Raccoji e nocchie!</div>${barra}${piede}`;
 }
-function prossimo(n){
+function premio(n){
   let fatti = {}, raccolte = 0; try { const S = TG.Scala.stato(); fatti = S.fatti || {}; raccolte = S.raccolte || 0; } catch(e){}
   const anonimo = (() => { try { return TG.Account.stato === 'anonimo'; } catch(e){ return false; } })();
   if (!fatti.vespa) return { t: '🛵 A Vespa te aspetta', s: `Raccoji ${Math.max(0, 20 - raccolte)} nocchie ancora`, pct: raccolte / 20 * 100 };
