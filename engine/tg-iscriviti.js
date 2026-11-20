@@ -1,7 +1,9 @@
 /* ISCRIVITI AR MOMENTO GIUSTO — 20/11: su 200 giocatori solo 32 toccavano «Salva la partita».
    Invece de aspettà che o trovano ner menu, o gioco o propone quanno uno è contento:
      1) quanno conquista o primo campo (dopo almeno 1 minuto de gioco);
-     2) quanno vince l'Ape (scaletta de i mezzi).
+     2) dopo l'Ape, quanno è o momento de o Trattore (90 s de gioco da l'Ape): NO o bottoncino ma a cartolina grande in mezzo
+        «🚜 O Trattore te aspetta · lascia a mail e raccoji e nocchie 3 vorte più veloce» [Lascia a mail] [Dopo]; se dice dopo, torna
+        na vorta sola dopo 10 minuti.
    Compare in alto un bottone piccolo «🚜 Vinci o Trattore» (o «💾 Salva o podere · +100 🌰» si o trattore ce l'hai già) pe' 12 secondi: niente blocca, se o tocchi
    s'apre o pannello de sempre (una mail e via). Massimo 2 volte, a distanza de almeno 5 minuti; mai si sei già iscritto,
    in volo, coi trucchi. O trattore o dà tg-scala.js appena a mail è confermata (i +100 🌰, a chi ce l'ha già, mondo/app.js).
@@ -33,13 +35,25 @@ setInterval(() => {
   if (window.TG_TRUCCO || !document.body.classList.contains('playing') || document.body.classList.contains('flying')) return;
   inGioco += 1;
   const A = TG.Account; if (!A || A.stato !== 'anonimo' || A.attesa) return;   // già iscritto, o mail già mandata
+  let scala = {}; try { scala = TG.Scala.stato().fatti || {}; } catch(e){}
+  if (scala.ape && !scala.trattore && inGioco >= 60 && !document.querySelector('.ov:not([hidden]), #accountOv:not([hidden]), #tgFesta, #iscrBtn.on') && Date.now() - (+scala.ape || 0) > 90e3 && (fatti.cart || 0) < 2 && (!fatti.cartT || Date.now() - fatti.cartT > 10 * 60e3)) return void cartolina();
   const volte = ['campo', 'ape'].filter(k => fatti[k]).length; if (volte >= 2) return;
   if (fatti.ultimo && Date.now() - fatti.ultimo < 5 * 60e3) return;
   if (document.querySelector('.ov:not([hidden]), #accountOv:not([hidden])')) return;   // c'è un pannello aperto
   const presi = +(ls.get('tg-presi') || 0);
-  let scala = {}; try { scala = TG.Scala.stato().fatti || {}; } catch(e){}
   if (!fatti.campo && presi >= 1 && inGioco >= 60) { fatti.campo = 1; setTimeout(() => mostra('campo'), 3500); return; }   // dopo l'avviso de o campo preso
-  if (!fatti.ape && scala.ape && Date.now() - (+scala.ape || 0) > 6000) return void mostra('ape');
 }, 1000);
-TG.Iscriviti = { mostra, stato: () => fatti };
+// a cartolina de o trattore (stile de i regali, tg-scala.js #tgFesta)
+function cartolina(){
+  fatti.cart = (fatti.cart || 0) + 1; fatti.cartT = fatti.ultimo = Date.now(); ls.set('tg-iscriviti', JSON.stringify(fatti));
+  const v = document.getElementById('tgFesta'); if (v) v.remove();
+  const d = document.createElement('div'); d.id = 'tgFesta';
+  d.innerHTML = `<div class="c"><div class="i">🚜</div><div class="r">🎁 PROSSIMO REGALO</div><h2>O Trattore te aspetta!</h2><p>Lascia a tua mail e raccoji e nocchie <b style="color:#fff">3 vorte più veloce</b>.<br>Niente password, a partita resta salvata.</p><button type="button" data-si>📧 Lascia a mail</button><div><button type="button" data-no style="background:none;color:#c9bfa8;font-size:16px;padding:12px 20px 2px">Dopo</button></div></div>`;
+  const via = () => { clearTimeout(t); d.remove(); };
+  d.querySelector('[data-si]').addEventListener('click', e => { e.stopPropagation(); via(); ev('iscrivi_tocco', 'trattore'); try { TG.debug.openAccount(); } catch(er){} });
+  d.addEventListener('click', e => { if (e.target.closest('[data-si]')) return; via(); ev('iscrivi_dopo', 'trattore'); });
+  const t = setTimeout(via, 25000); document.body.appendChild(d);
+  ev('iscrivi_proposto', 'trattore');
+}
+TG.Iscriviti = { mostra, cartolina, stato: () => fatti };
 })();
