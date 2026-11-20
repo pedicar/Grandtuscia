@@ -26,7 +26,7 @@ function riempi(){
     if (TG.Skin) for (const id of tutti) for (const v of TG.Skin.VERNICI) if (v.prezzo && !s.vernici[id + ':' + v.id]) { s.vernici[id + ':' + v.id] = 1; cambiato = true; }
     if (cambiato) TG.Profile.salva();
   } catch(e){}
-  try { localStorage.setItem('tg-scala', '{"vespa":1,"ape":1,"pandino":1}'); } catch(e){}
+  try { localStorage.setItem('tg-scala', '{"vespa":1,"ape":1,"trattore":1}'); } catch(e){}
 }
 setInterval(riempi, 1000); riempi();
 TG.Trucchi = { attivi: true };

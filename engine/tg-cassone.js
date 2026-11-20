@@ -116,15 +116,15 @@ function mappa(){
 
 /* ---------- I MEZZI SE COMPRANO CO' E NOCCHIE: o pannello «Cambia mezzo» diventa a bottega ----------
    Ogni mezzo porta un cassone più grande; a semovente raccoje 3 pe' nocchia e va veloce. */
-const MEZZI = [   // se comprano co' e nocchie (20/11); i primi (Vespa, Ape, 4x4) arrivano in regalo (tg-scala.js). tipo: corsa o lavoro
+const MEZZI = [   // se comprano co' e nocchie (20/11); i primi (Vespa, Ape, Trattore) arrivano in regalo (tg-scala.js). tipo: corsa o lavoro
   { id: 'vespa', nome: 'Vespa', ico: '🛵', prezzo: 0, tipo: 'corsa', cosa: 'Veloce e agile' },
   { id: 'ape', nome: 'Ape', ico: '🛺', prezzo: 0, regalo: 'a 100 nocchie', tipo: 'corsa', cosa: 'In curva va su due ruote: vale nocchie' },
-  { id: 'pandino', nome: '4x4 de campagna', ico: '🚙', prezzo: 0, regalo: 'salvando a partita', tipo: 'corsa', cosa: 'Piccola, alta, va dappertutto' },
+  { id: 'pandino', nome: '4x4 de campagna', ico: '🚙', prezzo: 1500, tipo: 'corsa', cosa: 'Piccola, alta, va dappertutto' },
   { id: 'moto', nome: 'Moto da cross', ico: '🏍️', prezzo: 3000, tipo: 'corsa', cosa: 'Salta tanto e fa i trick: valgono nocchie' },
   { id: 'supercar', nome: 'Supercar', ico: '🏎️', prezzo: 30000, tipo: 'corsa', cosa: 'Velocissima' },
   { id: 'aereo', nome: 'Aereo', ico: '✈️', prezzo: 50000, tipo: 'corsa', cosa: 'Voli sopra a Tuscia e atterri dove vòi' },
-  { id: 'trattore', nome: 'Trattore', ico: '🚜', prezzo: 5000, tipo: 'lavoro', cosa: 'Lento, ma ogni nocchia vale DOPPIO' },
-  { id: 'semovente', nome: 'Semovente', ico: '🌾', prezzo: 12000, tipo: 'lavoro', cosa: 'Lenta, spazzola larga, ogni nocchia vale TRIPLO' }
+  { id: 'trattore', nome: 'Trattore', ico: '🚜', prezzo: 0, regalo: 'salvando a partita', tipo: 'lavoro', cosa: 'Lento, ma ogni nocchia vale ×3' },
+  { id: 'semovente', nome: 'Semovente', ico: '🌾', prezzo: 12000, tipo: 'lavoro', cosa: 'Lenta, spazzola larga, ogni nocchia vale ×5' }
 ];
 const prezzoM = m => Math.round(m.prezzo * (TG.Coop && TG.Coop.mio() >= 4 ? .8 : 1));   // cooperativa liv 4: mezzi −20%
 const stCont = () => { try { return TG.Contadino.stato(TG.Profile.data); } catch(e){ return null; } };

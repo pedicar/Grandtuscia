@@ -149,7 +149,7 @@ async function invia(){
 function contaGuerra(t, a){
   if (!((t === 'n' || t === 'c') && a > 0)) return;
   try {
-    const m = (TG.debug.VEH.cur || {}).id, C = TG.Cassone; if (!C) return; let u = a * (m === 'semovente' ? 6 : m === 'trattore' ? 4 : 2);   // mezzi da lavoro (20/11): trattore doppio, semovente triplo   // ogni nocchia vale 2 ne o cassone: o primo attacco in 2-3 minuti
+    const m = (TG.debug.VEH.cur || {}).id, C = TG.Cassone; if (!C) return; let u = a * 2 * (m === 'semovente' ? 5 : m === 'trattore' ? 3 : 1) * ((TG.Strada && TG.Strada.molt && TG.Strada.molt()) || 1);   // mezzi da lavoro (20/11 sera): trattore ×3, semovente ×5; e i moltiplicatori de a strada (tg-strada.js)   // ogni nocchia vale 2 ne o cassone: o primo attacco in 2-3 minuti
     // AFFITTO: se raccoji in un terreno de un altro paese, 1 su 5 va a o padrone
     const car = TG.debug.car, T = car && terraIn(car.x, car.z), k = T && !C.pieno() ? affitto(T, u) : 0;
     C.aggiungi(u - k);

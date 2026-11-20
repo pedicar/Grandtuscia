@@ -27,7 +27,7 @@ function vai(p, zitto){
   try { TG.Stats && TG.Stats.ev('passo', String(p)); } catch(e){}
   if (zitto) return;
   const M = {
-    2: ['🌰 10 nocchie: ce l\'hai!', 'Mo\' segui a freccia e compra o primo terreno pe\' o paese tuo'],
+    2: comprabile() ? ['🌰 10 nocchie: ce l\'hai!', 'Mo\' segui a freccia arancione: o primo terreno costa poco'] : null,
     3: ['🎉 O primo terreno è vostro!', 'In alto a destra mo\' c\'è a mappa: vedi chi tiene i terreni'],
     4: ['🎮 Novità: i giochi', 'Vicino a i cartelli giochi e vinci tante nocchie. Ne o garage, mezzi più grossi'],
     5: ['🏛 Novità: a cooperativa', 'Ogni paese c\'ha a sua: dona nocchie e fa crescere o paese tuo']
@@ -45,6 +45,8 @@ function filtro(){
 filtro();
 addEventListener('tg-presa', e => { const t = (e.detail && e.detail.tot) || +(ls.get('tg-presi') || 0); for (const p of [5, 4, 3]) if (t >= SOGLIE[p]) { vai(p); break; } });
 setInterval(() => { if (passo === 1 && TG.Cassone && TG.Cassone.n >= 10) vai(2); }, 500);
+// c'è almeno un terreno che co' e nocchie de mo' se po' comprà? (sennò nun se dice de annà a comprà)
+function comprabile(){ try { const W = TG.Terre, n = TG.Cassone.n; return W.lista().some(T => W.stato(T.id) !== 'nostro' && W.costo(T.id) <= n); } catch(e){ return false; } }
 TG.Passi = {
   n: () => passo,
   vai,
@@ -56,7 +58,8 @@ TG.Passi = {
     if (dentro && W) { const st = W.stato(dentro.id), c = W.costo(dentro.id);
       if (st !== 'nostro' && n >= c) return `<div class="t">🎉 Ce sei!</div><div class="s">O campo sta a diventà tuo</div>`;
       if (st !== 'nostro') return `<div class="t">Questo costa ${c}</div><div class="s">Raccoji ancora ${c - n} nocchie</div>${b(n, c, '#e2b765')}`; }
-    return `<div class="t">🚩 Compra un terreno</div><div class="s">Tocca o pulsante arancione: te ce porta a Vespa</div>`;
+    if (!comprabile()) return null;   // nessun terreno che te poi permette: se vede o riquadro normale (o prossimo mezzo)
+    return `<div class="t">🚩 Mo' compra un terreno</div><div class="s">Segui a freccia arancione</div>`;
   }
 };
 })();
