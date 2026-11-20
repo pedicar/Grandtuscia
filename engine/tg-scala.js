@@ -1,6 +1,7 @@
 /* A SCALETTA DE I MEZZI — i primi secondi devono dà a sensazione de annà sempre più veloce, senza fà gnente.
    Chi entra pe' a prima volta parte A PIEDI, e se li vince da solo, uno dopo l'altro:
-     20 nocchie → 🛵 Vespa · 100 nocchie → 🛺 Ape · terzo campo → 🚙 4x4 de campagna (e almeno 20 s / 1,5 min / 2 min tra un regalo e l'altro)
+     20 nocchie → 🛵 Vespa · 100 nocchie → 🛺 Ape (almeno 20 s / 1,5 min tra un regalo e l'altro)
+     🚙 4x4 de campagna → quanno salvi a partita co' a mail (20/11: l'iscrizione vale o 4x4), in qualsiasi momento
    Ogni volta ce sale sopra da solo (se stai su un mezzo più lento) e in alto compare «🎁 …» pe' 3 secondi: niente da toccà.
    Chi giocava già: Vespa ce l'ha, l'Ape arriva a 10 nocchie raccolte, o 4x4 dopo 20 secondi (o primo campo l'ha già preso).
    Stato: tg-scala (passi fatti), tg-raccolte (nocchie raccolte in tutto, solo quelle che entrano ner cassone).
@@ -15,7 +16,7 @@ const PASSI = [
   // più calma (19/11 sera): ogni gradino vò un po' de gioco, e almeno 'dopo' secondi da o gradino prima
   { id: 'vespa', nocchie: 20, dopo: 20, t: '🛵 Mo\' vai in Vespa!', s: 'Più veloce, raccoji de più' },
   { id: 'ape', nocchie: 100, dopo: 90, t: '🛺 Te sei vinto l\'Ape!', s: 'Ancora più veloce' },
-  { id: 'pandino', campi: 3, dopo: 120, t: '🚙 4x4 de campagna: è tua!', s: 'Va dappertutto' }
+  { id: 'pandino', iscritto: true, t: '🚙 4x4 de campagna: è tua!', s: 'Partita salvata. Va dappertutto' }
 ];
 let fatti = {}; try { fatti = JSON.parse(ls.get('tg-scala') || '{}') || {}; } catch(e){}
 const nuovo = !ls.get('tg-primo-scarico') && !(+(ls.get('tg-presi') || 0) > 0) && !ls.get('tg-scala-inizio');
@@ -42,7 +43,9 @@ function giro(){
   if (Date.now() - ultimoPasso < 2500) return;   // uno pe' volta, che se godono
   const ultimoT = Math.max(0, ...Object.values(fatti).map(Number).filter(x => x > 1e12));   // quanno è arrivato l'ultimo regalo
   const presi = +(ls.get('tg-presi') || 0);
+  const iscritto = (() => { try { return TG.Account.stato === 'registrato'; } catch(e){ return false; } })();
   for (const P of PASSI) { if (fatti[P.id]) continue;
+    if (P.iscritto) { if (iscritto) { sali(P); return; } continue; }   // o 4x4 nun aspetta a fila: arriva appena salvi
     const ok = (P.nocchie ? raccolte >= P.nocchie : presi >= P.campi) && inGioco >= (P.dopo || 0) && Date.now() - ultimoT >= (P.dopo || 0) * 1000;
     if (ok) sali(P); break; }
 }

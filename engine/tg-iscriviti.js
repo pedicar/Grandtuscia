@@ -2,9 +2,9 @@
    Invece de aspettà che o trovano ner menu, o gioco o propone quanno uno è contento:
      1) quanno conquista o primo campo (dopo almeno 1 minuto de gioco);
      2) quanno vince l'Ape (scaletta de i mezzi).
-   Compare in alto un bottone piccolo «💾 Salva o podere tuo · +100 🌰» pe' 12 secondi: niente blocca, se o tocchi
+   Compare in alto un bottone piccolo «🚙 Vinci o 4x4 de campagna» (o «💾 Salva o podere · +100 🌰» si o 4x4 ce l'hai già) pe' 12 secondi: niente blocca, se o tocchi
    s'apre o pannello de sempre (una mail e via). Massimo 2 volte, a distanza de almeno 5 minuti; mai si sei già iscritto,
-   in volo, coi trucchi. O regalo (+100 🌰) o dà mondo/app.js quanno a mail è confermata.
+   in volo, coi trucchi. O 4x4 o dà tg-scala.js appena a mail è confermata (i +100 🌰, a chi o 4x4 ce l'ha già, mondo/app.js).
    Usa TG.Account (stato), TG.debug.openAccount, TG.Scala, TG.Stats. */
 (function(){
 'use strict';
@@ -17,14 +17,15 @@ const css = document.createElement('style'); css.textContent = `#iscrBtn{positio
 body:not(.playing) #iscrBtn,body.flying #iscrBtn{display:none}body:has(#iscrBtn.on) #campoPill,body:has(#iscrBtn.on) #crossPill,body:has(#iscrBtn.on) #dhPill{visibility:hidden}`;
 document.head.appendChild(css);
 const btn = document.createElement('button'); btn.id = 'iscrBtn'; btn.type = 'button';
-btn.innerHTML = '💾 Salva o podere tuo · +100 🌰<small>una mail e via, niente password</small>';
+const testo = () => { let ha = false; try { ha = !!TG.Scala.stato().fatti.pandino; } catch(e){} return ha ? '💾 Salva o podere tuo · +100 🌰<small>una mail e via, niente password</small>' : '🚙 Vinci o 4x4 de campagna<small>salva a partita co\' a mail, niente password</small>'; };
+btn.innerHTML = testo();
 let timer = null;
 btn.addEventListener('click', e => { e.stopPropagation(); nascondi(); ev('iscrivi_tocco', btn.dataset.perche || ''); try { TG.debug.openAccount(); } catch(er){} });
 document.body.appendChild(btn);
 function nascondi(){ btn.classList.remove('on'); clearTimeout(timer); }
 function mostra(perche){
   fatti[perche] = Date.now(); fatti.ultimo = Date.now(); ls.set('tg-iscriviti', JSON.stringify(fatti));
-  btn.dataset.perche = perche; btn.classList.add('on'); clearTimeout(timer); timer = setTimeout(nascondi, 12000);
+  btn.dataset.perche = perche; btn.innerHTML = testo(); btn.classList.add('on'); clearTimeout(timer); timer = setTimeout(nascondi, 12000);
   ev('iscrivi_proposto', perche);
 }
 let inGioco = 0;
