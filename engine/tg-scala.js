@@ -1,6 +1,6 @@
 /* A SCALETTA DE I MEZZI — i primi secondi devono dà a sensazione de annà sempre più veloce, senza fà gnente.
    Chi entra pe' a prima volta parte A PIEDI, e se li vince da solo, uno dopo l'altro:
-     20 nocchie → 🛵 Vespa · 100 nocchie → 🛺 Ape (almeno 20 s / 1,5 min tra un regalo e l'altro)
+     20 nocchie → 🛵 Vespa · 50 nocchie → 🛺 Ape (almeno 20 s / 40 s tra un regalo e l'altro)
      🚜 Trattore (nocchie ×3) → quanno salvi a partita co' a mail (20/11 sera: l'iscrizione vale o trattore), in qualsiasi momento
    Ogni volta ce sale sopra da solo (se stai su un mezzo più lento) e in mezzo a o schermo compare a cartolina «🎉 Hai vinto …» (4 s, o tocchi e sparisce).
    Chi giocava già: Vespa ce l'ha; l'Ape arriva co' e nocchie, o Trattore appena è iscritto.
@@ -15,7 +15,7 @@ const ORDINE = ['piedi', 'vespa', 'ape', 'pandino', 'trattore'];
 const PASSI = [
   // più calma (19/11 sera): ogni gradino vò un po' de gioco, e almeno 'dopo' secondi da o gradino prima
   { id: 'vespa', nocchie: 20, dopo: 20, ico: '🛵', t: 'Hai vinto a Vespa!', s: 'Più veloce: raccoji de più' },
-  { id: 'ape', nocchie: 100, dopo: 90, ico: '🛺', t: 'Hai vinto l\'Ape!', s: 'Ancora più veloce' },
+  { id: 'ape', nocchie: 50, dopo: 40, ico: '🛺', t: 'Hai vinto l\'Ape!', s: 'Ancora più veloce' },
   { id: 'trattore', iscritto: true, ico: '🚜', t: 'Hai vinto o Trattore!', s: 'Partita salvata. Ogni nocchia vale ×3' }
 ];
 let fatti = {}; try { fatti = JSON.parse(ls.get('tg-scala') || '{}') || {}; } catch(e){}

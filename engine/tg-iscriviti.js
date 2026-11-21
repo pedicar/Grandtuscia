@@ -1,7 +1,7 @@
 /* ISCRIVITI AR MOMENTO GIUSTO — 20/11: su 200 giocatori solo 32 toccavano «Salva la partita».
    Invece de aspettà che o trovano ner menu, o gioco o propone quanno uno è contento:
      1) quanno conquista o primo campo (dopo almeno 1 minuto de gioco);
-     2) dopo l'Ape, quanno è o momento de o Trattore (90 s de gioco da l'Ape): NO o bottoncino ma a cartolina grande in mezzo
+     2) dopo a Vespa (21/11: prima era dopo l'Ape, ma in 2 minuti de sessione nessuno ce arrivava), 60 s dopo l'urtimo mezzo vinto: NO o bottoncino ma a cartolina grande in mezzo
         «🚜 O Trattore te aspetta · lascia a mail e raccoji e nocchie 3 vorte più veloce» [Lascia a mail] [Dopo]; se dice dopo, torna
         na vorta sola dopo 10 minuti.
    Compare in alto un bottone piccolo «🚜 Vinci o Trattore» (o «💾 Salva o podere · +100 🌰» si o trattore ce l'hai già) pe' 12 secondi: niente blocca, se o tocchi
@@ -36,7 +36,7 @@ setInterval(() => {
   inGioco += 1;
   const A = TG.Account; if (!A || A.stato !== 'anonimo' || A.attesa) return;   // già iscritto, o mail già mandata
   let scala = {}; try { scala = TG.Scala.stato().fatti || {}; } catch(e){}
-  if (scala.ape && !scala.trattore && inGioco >= 60 && !document.querySelector('.ov:not([hidden]), #accountOv:not([hidden]), #tgFesta, #iscrBtn.on') && Date.now() - (+scala.ape || 0) > 90e3 && (fatti.cart || 0) < 2 && (!fatti.cartT || Date.now() - fatti.cartT > 10 * 60e3)) return void cartolina();
+  if (scala.vespa && !scala.trattore && inGioco >= 60 && !document.querySelector('.ov:not([hidden]), #accountOv:not([hidden]), #tgFesta, #iscrBtn.on') && Date.now() - (+scala.ape || +scala.vespa || 0) > 60e3 && (fatti.cart || 0) < 2 && (!fatti.cartT || Date.now() - fatti.cartT > 10 * 60e3)) return void cartolina();
   const volte = ['campo', 'ape'].filter(k => fatti[k]).length; if (volte >= 2) return;
   if (fatti.ultimo && Date.now() - fatti.ultimo < 5 * 60e3) return;
   if (document.querySelector('.ov:not([hidden]), #accountOv:not([hidden])')) return;   // c'è un pannello aperto

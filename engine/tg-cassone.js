@@ -118,7 +118,7 @@ function mappa(){
    Ogni mezzo porta un cassone più grande; a semovente raccoje 3 pe' nocchia e va veloce. */
 const MEZZI = [   // se comprano co' e nocchie (20/11); i primi (Vespa, Ape, Trattore) arrivano in regalo (tg-scala.js). tipo: corsa o lavoro
   { id: 'vespa', nome: 'Vespa', ico: '🛵', prezzo: 0, tipo: 'corsa', cosa: 'Veloce e agile' },
-  { id: 'ape', nome: 'Ape', ico: '🛺', prezzo: 0, regalo: 'a 100 nocchie', tipo: 'corsa', cosa: 'In curva va su due ruote: vale nocchie' },
+  { id: 'ape', nome: 'Ape', ico: '🛺', prezzo: 0, regalo: 'a 50 nocchie', tipo: 'corsa', cosa: 'In curva va su due ruote: vale nocchie' },
   { id: 'pandino', nome: '4x4 de campagna', ico: '🚙', prezzo: 1500, tipo: 'corsa', cosa: 'Piccola, alta, va dappertutto' },
   { id: 'moto', nome: 'Moto da cross', ico: '🏍️', prezzo: 3000, tipo: 'corsa', cosa: 'Salta tanto e fa i trick: valgono nocchie' },
   { id: 'supercar', nome: 'Supercar', ico: '🏎️', prezzo: 30000, tipo: 'corsa', cosa: 'Velocissima' },

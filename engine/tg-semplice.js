@@ -128,7 +128,7 @@ function premio(n){
   let fatti = {}, raccolte = 0; try { const S = TG.Scala.stato(); fatti = S.fatti || {}; raccolte = S.raccolte || 0; } catch(e){}
   const anonimo = (() => { try { return TG.Account.stato === 'anonimo'; } catch(e){ return false; } })();
   if (!fatti.vespa) return { t: '🛵 A Vespa te aspetta', s: `Raccoji ${Math.max(0, 20 - raccolte)} nocchie ancora`, pct: raccolte / 20 * 100 };
-  if (!fatti.ape) return { t: '🛺 Prossimo regalo: l\'Ape', s: `${Math.min(raccolte, 100)}/100 nocchie raccolte`, pct: raccolte };
+  if (!fatti.ape) return { t: '🛺 Prossimo regalo: l\'Ape', s: `${Math.min(raccolte, 50)}/50 nocchie raccolte`, pct: raccolte * 2 };
   if (!fatti.trattore && anonimo) return { t: '🚜 Trattore gratis · nocchie ×3', s: 'Salva a partita co\' a mail: tocca qui', pct: 100, va: 'account' };
   let M = null; try { M = TG.Cassone.prossimoMezzo(); } catch(e){}
   if (M && M.prezzo) return { t: `${M.ico || '🚗'} Prossimo: ${M.nome}`, s: n >= M.prezzo ? '<b style="color:#fff">Ce l\'hai: tocca e compralo!</b>' : `${mila(n)} / ${mila(M.prezzo)} 🌰`, pct: n / M.prezzo * 100, va: 'mezzi' };
