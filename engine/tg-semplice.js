@@ -102,7 +102,7 @@ function obiettivo(){
   if (!obi) { obi = document.createElement('div'); obi.id = 'obi'; obi.onclick = e => { if (e.target.closest && e.target.closest('[data-coop]') && TG.Coop) { e.stopPropagation(); TG.Coop.vai(); return; } if (obi.dataset.va === 'account') { try { TG.debug.openAccount(); TG.Stats && TG.Stats.ev('iscrivi_tocco', 'obiettivo'); } catch(er){} return; } if (obi.dataset.va === 'mezzi') { try { TG.debug.openVehicles(); } catch(er){} return; } apriMappa(); }; document.body.appendChild(obi); }
 
   const p = paese(), c = D.car, dentro = W.terraIn(c.x, c.z), n = C.n, cap = C.cap(), pct = Math.min(100, n / cap * 100);
-  if (!p) { obi.innerHTML = `<div class="t">Scegli o paese tuo</div>`; return; }
+  if (!p) { obi.style.borderColor = '#ff8a3c'; obi.innerHTML = `<div class="t">📍 Scegli o paese tuo</div><div class="s">Tocca qui: i terreni che prendi vanno a lui</div>`; return; }
   const P = TG.Passi && TG.Passi.riquadro(dentro); if (P) { obi.style.borderColor = '#ff8a3c'; obi.innerHTML = P; return; }
   const col = W.colore(p), barra = `<div class="b"><i style="width:${Math.max(3, pct)}%;background:${n >= cap ? '#ff8a3c' : col}"></i></div>`;
   const piede = `<div class="r"><span>🌰 <b style="color:#fff">${n}/${cap}</b></span><span>${TG.Coop ? '<b data-coop style="padding:0 4px;cursor:pointer">🏛</b> · ' : ''}🗺 mappa</span></div>`;
