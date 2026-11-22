@@ -1,6 +1,6 @@
 /* A SCALETTA DE I MEZZI — i primi secondi devono dà a sensazione de annà sempre più veloce, senza fà gnente.
-   Chi entra pe' a prima volta parte A PIEDI, e se li vince da solo, uno dopo l'altro:
-     20 nocchie → 🛵 Vespa · 50 nocchie → 🛺 Ape (almeno 20 s / 40 s tra un regalo e l'altro)
+   Chi entra pe' a prima volta parte GIÀ IN VESPA (22/11; prima a piedi), poi se li vince da solo:
+     50 nocchie → 🛺 Ape (almeno 40 s da l'inizio)
      🚜 Trattore (nocchie ×3) → quanno salvi a partita co' a mail (20/11 sera: l'iscrizione vale o trattore), in qualsiasi momento
    Ogni volta ce sale sopra da solo (se stai su un mezzo più lento) e in mezzo a o schermo compare a cartolina «🎉 Hai vinto …» (4 s, o tocchi e sparisce).
    Chi giocava già: Vespa ce l'ha; l'Ape arriva co' e nocchie, o Trattore appena è iscritto.
@@ -54,7 +54,10 @@ function giro(){
   const n = TG.Cassone.n; if (ultimo != null && n > ultimo) { raccolte += n - ultimo; ls.set('tg-raccolte', String(raccolte)); } ultimo = n;
   if (!document.body.classList.contains('playing') || !TG.debug || !TG.debug.car) return;
   inGioco += .3;
-  if (nuovo && !partito) { partito = true; ls.set('tg-scala-inizio', '1'); if (cur() !== 'piedi') try { TG.debug.setVehicle('piedi'); } catch(e){} }
+  if (nuovo && !partito) { partito = true; ls.set('tg-scala-inizio', '1');   // 22/11: se parte subito in Vespa (a piedi era troppo lento: sessioni de 1 minuto)
+    const s = st(); if (s) { s.mezzi.vespa = s.mezzi.vespa || Date.now(); try { TG.Profile.salva(); } catch(e){} }
+    if (!fatti.vespa) { fatti.vespa = Date.now(); ls.set('tg-scala', JSON.stringify(fatti)); }
+    if (cur() !== 'vespa' && !document.body.classList.contains('flying')) try { TG.debug.setVehicle('vespa'); } catch(e){} }
   if (Date.now() - ultimoPasso < 2500) return;   // uno pe' volta, che se godono
   const ultimoT = Math.max(0, ...Object.values(fatti).map(Number).filter(x => x > 1e12));   // quanno è arrivato l'ultimo regalo
   const presi = +(ls.get('tg-presi') || 0);
