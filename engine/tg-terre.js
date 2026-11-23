@@ -125,7 +125,13 @@ const riconquista = id => false;
 // comprato da n'antro paese: quanto l'ha pagato x 1,5 (arrotondato a 10, minimo 150, massimo 5.000). Lunedì se riparte.
 const PRIMI = 3, BASE = 100, CASA_ALTRI = 150, MAX = 5000;
 let TRUCCO = {}; try { TRUCCO = JSON.parse(localStorage.getItem('tg-trucco-campi') || '{}') || {}; } catch(e){}
-const costo = id => { const pd = padrone(id); if (!pd) return +(ls.get('tg-presi') || 0) < PRIMI ? 10 : BASE; if (casa(id)) return CASA_ALTRI; return Math.min(MAX, Math.max(CASA_ALTRI, Math.ceil(prezzo(id) * 1.5 / 10) * 10)); };
+const costo0 = id => { const pd = padrone(id); if (!pd) return +(ls.get('tg-presi') || 0) < PRIMI ? 10 : BASE; if (casa(id)) return CASA_ALTRI; return Math.min(MAX, Math.max(CASA_ALTRI, Math.ceil(prezzo(id) * 1.5 / 10) * 10)); };
+/* FRENO A I PAESI GROSSI (23/11): co' i moltiplicatori un paese se pijava 112 terreni in un giorno.
+   Sopra 20 terreni, ogni terreno novo costa de più: ×(1 + (terreni − 20)/40) → 60 terreni ×2, 100 ×3, 140 ×4. I terreni vostri (rinforzo) no.
+   O conto vero lo fa o server (tg_terra_compra3, conta i terreni comprati 'sta settimana); qui è pe' mostrà o prezzo giusto. O freno nun se salva ner prezzo. */
+let grossi = { t: 0, k: 1, n: 0 };
+const freno = () => { const ora = Date.now(); if (ora - grossi.t < 4000) return grossi; const p = paese(); let n = 0; if (p) for (const T of TERRE) if (!casa(T.id) && padrone(T.id) === p) n++; grossi = { t: ora, n, k: n > 20 ? 1 + (n - 20) / 40 : 1 }; return grossi; };
+const costo = id => { const c = costo0(id), pd = padrone(id), p = paese(); if (pd && pd === p) return c; const k = freno().k; return k > 1 ? Math.ceil(c * k / 10) * 10 : c; };
 const alMassimo = id => false;
 // TERRENI DE CASA: ogni paese parte padrone de i terreni suoi (prezzo 10) finché nun li compra quarcun altro
 const casa = id => { const l = classifica[id]; return !!(l && l[0] && l[0].casa); };
@@ -196,7 +202,7 @@ async function deposita(T, k){
   if (!r) return r;
   if (!r.ok && r.tetto_ora) { const fra = Math.max(1, +r.fra || 10); bloccoFino = Date.now() + fra * 60000; msg('🐢 Limite orario raggiunto', `Al massimo 30.000 nocchie spese in un'ora: riprova fra ${fra} minut${fra === 1 ? 'o' : 'i'}`, 5); return r; }
   if (!r.ok && r.al_massimo) { classifica[T.id] = [{ paese: p, punti: r.prezzo }]; versione++; msg('✅ È già al massimo', `Vale ${TETTO}: chi o vò paga ${TETTO + 10}`, 3.5); return r; }
-  if (!r.ok) { if (r.manca) { if (r.paese) classifica[T.id] = [{ paese: r.paese, punti: r.prezzo, casa: !!r.casa }]; else delete classifica[T.id]; versione++; msg(`Costa ${r.costo}: te ne mancano ${r.manca}`, "Qualcuno l'ha pagato de più: raccoji ancora e torna", 4); } return r; }
+  if (!r.ok) { if (r.manca) { if (r.paese) classifica[T.id] = [{ paese: r.paese, punti: r.prezzo, casa: !!r.casa }]; else delete classifica[T.id]; versione++; msg(`Costa ${r.costo}: te ne mancano ${r.manca}`, r.freno > 1 ? `${corto(p)} tiene già ${r.tiene} terreni: pe' voi costano ×${(+r.freno).toFixed(1).replace('.', ',')}` : "Qualcuno l'ha pagato de più: raccoji ancora e torna", 4); } return r; }
   classifica[T.id] = [{ paese: r.paese, punti: r.prezzo }]; versione++;
   r.aggiunti = r.spesa;
   ev('deposito', T.id, r.spesa, { azione: r.azione, da: r.da || null, prezzo: r.prezzo });
@@ -503,7 +509,7 @@ function mini(){
 function descrivi(id){
   const p = paese(), pd = padrone(id), c = costo(id), cass = (TG.Cassone && TG.Cassone.n) || 0;
   const b = pp => `<b style="color:${colore(pp)}">${corto(pp)}</b>`;
-  const tu = cass >= c ? `Ce l'hai: o cassone ne tiene ${cass}.` : `Te ne mancano ${c - cass} (ne hai ${cass}).`;
+  const F = freno(), tu = (cass >= c ? `Ce l'hai: o cassone ne tiene ${cass}.` : `Te ne mancano ${c - cass} (ne hai ${cass}).`) + (F.k > 1 && pd !== p ? ` (${corto(p)} tiene già ${F.n} terreni: costa ×${F.k.toFixed(1).replace('.', ',')})` : '');
   if (!pd) return `Terreno libero! Costa ${c} nocchie. ${tu}`;
   if (casa(id)) return pd === p ? `🏠 Terreno de casa vostra. Rinforzalo pe' fallo costà de più (e conta pe' o Trono).` : `🏠 Terreno de casa de ${b(pd)}. Pe' compràllo ne servono ${c}. ${tu}`;
   if (pd === p) return `Sto terreno è nostro: l'avemo pagato ${prezzo(id)}. Rinforzalo: più ce metti, più costa a l'altri.`;
