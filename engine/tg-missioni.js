@@ -1,6 +1,9 @@
 /* MISSIONI COME GTA — storie corte co' un personaggio, na meta, er tempo e un premio grosso (27/11: «oltre a raccoje nocchie nun so che fà»).
-   Tre missioni in fila (se sblocca a prossima quanno finisci quella prima):
-     🎪 A Sagra de a Nocciola (Carbognano) · 📮 O Postino de o Lago · 🚚 O Carico pe' Viterbo
+   Otto missioni in fila (se sblocca a prossima quanno finisci quella prima):
+     🎪 A Sagra de a Nocciola · 🍄 I Porcini pe' Antonella · 🍪 Impara a fà i Tozzetti · 🕳️ E Buche de Fabrica ·
+     📮 O Postino de o Lago · 🗣️ 10 Parole Caprolatte · 🛝 I Giochi pe' i Regazzini · 🚚 O Carico pe' Viterbo
+   Passi: «vai», «raccoji», «quiz» (domande co' 3 risposte: sbagli e riprovi), «punti» (trova o aggiusta n cose: porcini, buche, giochi;
+   co' lento:true te devi fermà sopra 1,5 s). Parole caprolatte da o glossario de o progetto (lingua/tg-lingua.js).
    Come funziona:
    - Ner riquadro in alto (tg-semplice.js) compare «🎪 Missione: …» → tocchi → cartolina co' a storia → «Accetta».
    - Ogni passo: freccia e colonna gialla su a meta (TG.debug.setDest), striscia in alto co' cosa fà e, si c'è, er tempo.
@@ -27,12 +30,60 @@ const MISSIONI = [
       { vai: 'FABRICA', r: 45, t: 'Va\' a pijà a banda a Fabrica', chiF: '🎺', nomeF: 'O maestro de a banda', dice: 'Semo pronti! Portace a Carbognano, che famo tardi!' },
       { vai: 'CARBOGNANO', r: 45, tempo: 140, carico: '🎺 a banda', t: 'Porta a banda a Carbognano', dice: 'Evviva! A sagra po\' comincià! Guarda che fochi!' }
     ] },
+  { id: 'porcini', ico: '🍄', titolo: 'I Porcini pe\' Antonella', chi: '👩‍🍳', nome: 'Antonella', dove: 'CAPRAROLA', premio: 400, medaja: '🏅 Cercatore de porcini',
+    storia: 'Stasera ho gente a cena e me servono i porcini! Ner bosco tra Caprarola e Carbognano ce ne so\' parecchi: trovamene 5 e portameli. Occhio, se nascondono!',
+    passi: [
+      { vai: 'FUNGHI', r: 60, t: 'Va\' ner bosco de i funghi' },
+      { punti: { centro: 'FUNGHI', n: 5, raggio: 220, su: 'terra', ico: '🍄', nome: 'porcino', presi: 'porcini' }, t: 'Trova 5 porcini ner bosco', dice: 'Che profumo! Mo\' portali da Antonella.' },
+      { vai: 'CAPRAROLA', r: 50, carico: '🍄 i porcini', t: 'Porta i porcini da Antonella', dice: 'Che belli! Stasera fettuccine coi porcini. Grazie!' }
+    ] },
+  { id: 'tozzetti', ico: '🍪', titolo: 'Impara a fà i Tozzetti', chi: '👵', nome: 'Nonna Peppa', dove: 'CARBOGNANO', premio: 350, medaja: '🏅 Mastro tozzettaro',
+    storia: 'I tozzetti co\' e nocchie nostre so\' i mejo de a Tuscia! Te insegno a ricetta de mi\' nonna, ma tu me devi portà e nocchie e l\'ova.',
+    passi: [
+      { vai: 'CARBOGNANO', r: 45, t: 'Va\' da Nonna Peppa a Carbognano' },
+      { quiz: [{ d: 'Che ce va drento i tozzetti?', r: ['Farina, zucchero, ova e nocchie', 'Patate e formaggio', 'Riso e latte'], ok: 0, spiega: 'Brava! Farina, zucchero, ova e tante nocchie tostate.' }], t: 'Ascorta a Nonna Peppa' },
+      { raccoji: 30, t: 'Raccoji 30 nocchie pe\' l\'impasto' },
+      { vai: 'PODERE', r: 45, t: 'Va\' a o podere a pijà l\'ova', dice: 'Ecco l\'ova fresche! Piano, che se rompono!' },
+      { vai: 'CARBOGNANO', r: 45, tempo: 150, carico: '🥚 l\'ova', t: 'Porta l\'ova a Nonna Peppa' },
+      { quiz: [{ d: 'Quante vorte se cociono i tozzetti?', r: ['Una', 'Due: prima o filone, poi a fette', 'Tre'], ok: 1, spiega: 'Esatto! Se coce o filone, se taja a fette e se ricoce: pe\' questo so\' croccanti.' },
+               { d: 'E co\' che se magnano, a fine pranzo?', r: ['Co\' o caffellatte', 'Inzuppati ner vino', 'Co\' a maionese'], ok: 1, spiega: 'Bravo! Inzuppati ner vino, come se fa da sempre.' }], t: 'Fa\' i tozzetti co\' Nonna Peppa', dice: 'Mo\' sai fà i tozzetti! Pòrtene un vassoio a casa.' }
+    ] },
+  { id: 'buche', ico: '🕳️', titolo: 'E Buche de Fabrica', chi: '👷', nome: 'O cantoniere de Fabrica', dove: 'FABRICA', premio: 450, medaja: '🏅 Cantoniere onorario',
+    storia: 'E strade de Fabrica so\' piene de buche e io so\' solo! Te do pala e catrame: fermate sopra ogni buca quarche secondo e a tappi tu. Ne servono 5.',
+    passi: [
+      { vai: 'FABRICA', r: 50, t: 'Va\' da o cantoniere a Fabrica', dice: 'Ecco a pala e o catrame. E buche so\' segnate: fermate sopra e a tappi!' },
+      { punti: { centro: 'FABRICA', n: 5, raggio: 420, su: 'strada', ico: '🕳️', nome: 'buca', presi: 'buche tappate', lento: true, fatto: '🔧 Buca tappata!' }, t: 'Tappa 5 buche: fermate sopra', dice: 'Mo\' e strade de Fabrica so\' come un biliardo! Bravo!' }
+    ] },
   { id: 'postino', ico: '📮', titolo: 'O Postino de o Lago', chi: '👨‍✈️', nome: 'O postino Gigetto', dove: 'PALAZZO', premio: 400, medaja: '🏅 Postino d\'oro',
     storia: 'So\' rimasto a piedi co\' tre lettere urgenti! Una pe\' o Palazzo Farnese, una pe\' Ronciglione e una pe\' o pontile su o lago. Ce pensi tu? Ma de corsa!',
     passi: [
-      { vai: 'PALAZZO', r: 50, t: 'Va\' a o Palazzo Farnese a Caprarola', dice: 'Ecco e lettere. Ogni consegna c\'ha er tempo suo: daje!' },
+      { vai: 'PALAZZO', r: 90, t: 'Va\' a o Palazzo Farnese a Caprarola', dice: 'Ecco e lettere. Ogni consegna c\'ha er tempo suo: daje!' },
       { vai: 'RONCIGLIONE', r: 55, tempo: 150, carico: '✉️ a lettera', t: 'Consegna a lettera a Ronciglione' },
       { vai: 'PONTILE', r: 40, tempo: 150, carico: '✉️ l\'urtima lettera', t: 'Consegna l\'urtima lettera a o pontile', dice: 'Tutte consegnate! Mejo de me!' }
+    ] },
+  { id: 'parole', ico: '🗣️', titolo: '10 Parole Caprolatte', chi: '👨‍🏫', nome: 'O maestro de Caprarola', dove: 'PALAZZO', premio: 400, medaja: '🏅 Caprolatto onorario',
+    storia: 'Si vòi esse de casa a Caprarola, devi parlà come noi! Te insegno 10 parole caprolatte: 5 qui a o Palazzo e 5 giù in piazza.',
+    passi: [
+      { vai: 'PALAZZO', r: 90, t: 'Va\' a o Palazzo Farnese' },
+      { quiz: [
+        { d: 'A Caprarola «ancò» vò dì…', r: ['Ancora', 'Anche', 'Ancona'], ok: 0 },
+        { d: '«Derèto» vò dì…', r: ['Davanti', 'Dietro', 'Diritto'], ok: 1 },
+        { d: '«Dimà» vò dì…', r: ['Domenica', 'Domani', 'Di mattina'], ok: 1 },
+        { d: '«Dunca» vò dì…', r: ['Dunque', 'Donna', 'Dove'], ok: 0 },
+        { d: '«Prè» vò dì…', r: ['Prete', 'Presto', 'Prima'], ok: 1 }], t: 'Impara e prime 5 parole', dice: 'Bravo! Mo\' scendi in piazza pe\' l\'antre 5.' },
+      { vai: 'PIAZZA', r: 40, t: 'Scendi in piazza a Caprarola' },
+      { quiz: [
+        { d: '«Gnibbè» vò dì…', r: ['Niente', 'Tutto quanto', 'Gnocchi'], ok: 1, spiega: 'Tutto quanto: viene da «ogni bene».' },
+        { d: '«Macchè!» a Caprarola vò dì…', r: ['Certo!', 'Per niente!', 'Macché!'], ok: 0 },
+        { d: '«Ccà» vò dì…', r: ['Casa', 'Qua', 'Così'], ok: 1 },
+        { d: '«Llà» vò dì…', r: ['Là', 'Lago', 'Lana'], ok: 0 },
+        { d: '«Tarmente» vò dì…', r: ['Tardi', 'Talmente', 'Tremendo'], ok: 1 }], t: 'Impara l\'antre 5 parole', dice: 'Mo\' parli caprolatto! Ma nun dillo a Carbognano.' }
+    ] },
+  { id: 'giochi', ico: '🛝', titolo: 'I Giochi pe\' i Regazzini', chi: '👩‍🏫', nome: 'A maestra Lucia', dove: 'FABRICA', premio: 450, medaja: '🏅 Amico de i regazzini',
+    storia: 'Ar parchetto so\' rotti tutti i giochi e i regazzini nun sanno do\' annà! Scivolo, altalena, giostra e dondolo: me li aggiusti? Fermate vicino a ognuno e sistemalo.',
+    passi: [
+      { vai: 'FABRICA', r: 50, t: 'Va\' da a maestra a Fabrica', dice: 'Grazie! I giochi rotti so\' ar parchetto: segui a freccia.' },
+      { punti: { centro: 'FABRICA', n: 4, raggio: 260, su: 'gruppo', ico: ['🛝', '🎠', '🪁', '🐴'], nome: 'gioco', presi: 'giochi aggiustati', lento: true, fatto: '🔧 Aggiustato!' }, t: 'Aggiusta i 4 giochi: fermate vicino', dice: 'Guarda come corrono i regazzini! Sei un mito!' }
     ] },
   { id: 'carico', ico: '🚚', titolo: 'O Carico pe\' Viterbo', chi: '👩‍🌾', nome: 'A presidente de o Consorzio', dove: 'CONSORZIO', premio: 900, medaja: '🏅 Camionista de a Tuscia',
     storia: 'O mercato de Viterbo vò e nocchie nostre, ma o camion s\'è rotto! Te tocca portà o carico fino a Viterbo, passando sotto o Cimino. È lunga: nun perde tempo e nun te cappottà!',
@@ -120,13 +171,15 @@ function segnale(){
 /* ---------- a missione ---------- */
 let tempo = 0, fine = 0, base = 0, rac = 0, ultimoN = null, vicinoVisto = 0;
 function accetta(m){ st.attiva = { id: m.id, passo: 0 }; salva(); ev('missione_via', m.id); vaiPasso(0); }
-function lascia(){ const m = attiva(); if (m) ev('missione_lasciata', m.id, st.attiva.passo); st.attiva = null; salva(); try { TG.debug.setDest(null); } catch(e){} document.body.classList.remove('tg-missione'); pill.hidden = true; }
+function lascia(){ toglPunti(); const m = attiva(); if (m) ev('missione_lasciata', m.id, st.attiva.passo); st.attiva = null; salva(); try { TG.debug.setDest(null); } catch(e){} document.body.classList.remove('tg-missione'); pill.hidden = true; }
 function vaiPasso(i, riprova){
   const m = attiva(); if (!m) return;
   // si riprovi un passo a tempo, riparti da quello prima (dove se carica)
   if (riprova && m.passi[i].tempo && i > 0) i--;
   st.attiva.passo = i; salva();
-  const P = m.passi[i]; rac = 0; ultimoN = TG.Cassone ? TG.Cassone.n : 0;
+  const P = m.passi[i]; rac = 0; ultimoN = TG.Cassone ? TG.Cassone.n : 0; toglPunti();
+  if (P.punti) creaPunti(P.punti);
+  if (P.quiz) { try { TG.debug.setDest(null); } catch(e){} setTimeout(() => domanda(m, P, 0), 600); }
   fine = P.tempo ? performance.now() + P.tempo * 1000 : 0;
   const q = P.vai && G(P.vai); try { TG.debug.setDest(q ? { x: q.x, z: q.z, name: P.t } : null); } catch(e){}
   ev('missione_passo', m.id, i);
@@ -140,7 +193,7 @@ function fatto(){
   try { TG.debug.setDest(null); } catch(e){} document.body.classList.remove('tg-missione'); pill.hidden = true;
   try { TG.Cassone.aggiungi(m.premio, true); } catch(e){}
   ev('missione_fatta', m.id, m.premio);
-  const p = G(m.passi[m.passi.length - 1].vai); if (p) fochi(p.x, p.z);
+  toglPunti(); const p = G(m.passi[m.passi.length - 1].vai) || G(m.dove) || TG.debug.car; if (p) fochi(p.x, p.z);
   setTimeout(() => carta(m, 'fatta', prossima()), 1800);
 }
 function fallita(perche){ const m = attiva(); ev('missione_fallita', m.id, st.attiva.passo); fine = 0; try { TG.debug.setDest(null); } catch(e){} carta(m, 'fallita', perche); }
@@ -157,6 +210,8 @@ function giro(){
     const n = TG.Cassone ? TG.Cassone.n : 0; if (ultimoN != null && n > ultimoN) rac += n - ultimoN; ultimoN = n;
     s = `🌰 ${Math.min(rac, P.raccoji)} / ${P.raccoji}`; if (rac >= P.raccoji) return fatto();
   }
+  if (P.quiz) { s = 'Rispondi a ' + m.nome; }
+  if (P.punti) { const r = giroPunti(P); if (r === undefined || !attiva()) return; s = r; }
   if (P.vai) {
     const q = G(P.vai); if (!q) return fatto();
     const d = Math.hypot(c.x - q.x, c.z - q.z); s = (P.carico ? P.carico + ' · ' : '') + (d < 950 ? Math.round(d / 10) * 10 + ' m' : (d / 1000).toFixed(1).replace('.', ',') + ' km');
@@ -167,6 +222,66 @@ function giro(){
   if (fine) { const r = (fine - performance.now()) / 1000; if (r <= 0) return fallita('Tempo scaduto!'); tm = `<div class="tm${r < 20 ? ' poco' : ''}">⏱ ${mmss(r)}</div>`; }
   const h = `<div class="k">${m.ico} ${m.titolo.toUpperCase()} · ${st.attiva.passo + 1}/${m.passi.length}</div><div class="t">${P.t}</div><div class="s">${s}</div>${tm}`;
   if (pill._h !== h) { pill._h = h; pill.innerHTML = h; } pill.hidden = false;
+}
+/* ---------- e domande (impara) ---------- */
+function domanda(m, P, k){
+  if (!attiva() || attiva() !== m || m.passi[st.attiva.passo] !== P) return;
+  if (k >= P.quiz.length) return fatto();
+  const Q = P.quiz[k]; document.querySelectorAll('.misCard').forEach(x => x.remove());
+  const d = document.createElement('div'); d.className = 'misCard';
+  d.innerHTML = `<div class="c"><div class="k">${m.ico} ${P.quiz.length > 1 ? 'DOMANDA ' + (k + 1) + '/' + P.quiz.length : 'IMPARA'}</div><div class="chi"><b>${m.chi}</b><p><small>${m.nome}</small>${Q.d}</p></div>${Q.r.map((r, i) => `<button data-r="${i}" style="background:#2c3a38;color:#fff;font-size:17px">${r}</button>`).join('')}</div>`;
+  d.addEventListener('click', e => {
+    const b = e.target.closest('button[data-r]'); if (!b) return;
+    if (+b.dataset.r === Q.ok) { b.style.background = '#4fae5a'; d.querySelectorAll('button').forEach(x => x.disabled = true); ev('missione_risposta', m.id + ':' + k, 1);
+      const p = d.querySelector('p'); p.innerHTML = `<small>${m.nome}</small>✔ ${Q.spiega || 'Giusto!'}`;
+      setTimeout(() => { d.remove(); domanda(m, P, k + 1); }, Q.spiega ? 2200 : 1100); }
+    else { b.style.background = '#b8442f'; b.disabled = true; ev('missione_risposta', m.id + ':' + k, 0); try { navigator.vibrate && navigator.vibrate(80); } catch(er){} }
+  });
+  document.body.appendChild(d);
+}
+/* ---------- e cose da trovà o da aggiustà (porcini, buche, giochi) ---------- */
+let punti = [], tieni = 0;
+function sprite(ico){
+  const cv = document.createElement('canvas'); cv.width = cv.height = 128; const c = cv.getContext('2d');
+  c.beginPath(); c.arc(64, 64, 56, 0, 7); c.fillStyle = 'rgba(242,199,78,.95)'; c.fill(); c.lineWidth = 6; c.strokeStyle = '#fff'; c.stroke();
+  c.font = '66px system-ui, "Apple Color Emoji", "Segoe UI Emoji", sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(ico, 64, 70);
+  const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(cv), depthWrite: false })); s.scale.set(4.5, 4.5, 1); return s;
+}
+function creaPunti(Pp){
+  const D = TG.debug, E = D.world, C = G(Pp.centro); if (!C) return;
+  const libero = (x, z) => { try { if (E.isWater && E.isWater(x, z)) return false; } catch(e){} return !punti.some(p => Math.hypot(p.x - x, p.z - z) < (Pp.su === 'gruppo' ? 9 : 45)); };
+  let cand = [];
+  if (Pp.su === 'strada' || Pp.su === 'gruppo') for (const r of E.roads || []) { if (!r.samples || r.w < 2) continue; for (let i = 0; i < r.samples.length; i += 3) { const q = r.samples[i], d = Math.hypot(q[0] - C.x, q[1] - C.z); if (d > 40 && d < Pp.raggio) cand.push([q[0], q[1]]); } }
+  let base = null; if (Pp.su === 'gruppo' && cand.length) { cand.sort((a, b) => Math.abs(Math.hypot(a[0] - C.x, a[1] - C.z) - Pp.raggio * .6) - Math.abs(Math.hypot(b[0] - C.x, b[1] - C.z) - Pp.raggio * .6)); base = cand[0]; }
+  for (let k = 0, tent = 0; k < Pp.n && tent < 400; tent++) {
+    let x, z;
+    if (base) { const a = k / Pp.n * 6.283 + .4; x = base[0] + Math.cos(a) * 11; z = base[1] + Math.sin(a) * 11; }
+    else if (cand.length) { const q = cand[(Math.random() * cand.length) | 0]; x = q[0]; z = q[1]; }
+    else { const a = Math.random() * 6.283, r = 40 + Math.random() * (Pp.raggio - 40); x = C.x + Math.cos(a) * r; z = C.z + Math.sin(a) * r; }
+    if (!base && !libero(x, z)) continue;
+    const ico = Array.isArray(Pp.ico) ? Pp.ico[k % Pp.ico.length] : Pp.ico, s = sprite(ico), y = Math.max(E.ground(x, z), E.surfH ? E.surfH(x, z) : -1e9) + 2.6;
+    s.position.set(x, y, z); D.scene.add(s); punti.push({ x, z, y, s, f: Math.random() * 6 }); k++;
+  }
+  punti.cfg = Pp; punti.fatti = 0; tieni = 0;
+}
+function toglPunti(){ for (const p of punti) try { TG.debug.scene.remove(p.s); } catch(e){} punti = []; }
+function giroPunti(P){
+  const D = TG.debug, c = D.car, Pp = P.punti; if (!punti.cfg) creaPunti(Pp);
+  let best = null, bd = 1e9; const t = performance.now();
+  for (const p of punti) { p.s.position.y = p.y + Math.sin(t / 350 + p.f) * .4; const d = Math.hypot(c.x - p.x, c.z - p.z); if (d < bd) { bd = d; best = p; } }
+  if (!best) return fatto();
+  let extra = '';
+  if (bd < (Pp.lento ? 7 : 6)) {
+    if (Pp.lento && Math.abs(c.speed || 0) > 3) { extra = ' · <b style="color:#fff">fermate!</b>'; tieni = 0; }
+    else if (Pp.lento && (tieni += .25) < 1.5) extra = ' · 🔧 ' + '▮'.repeat(Math.ceil(tieni / .25)) ;
+    else {
+      try { D.scene.remove(best.s); } catch(e){} punti.splice(punti.indexOf(best), 1); punti.fatti++; tieni = 0;
+      try { TG.msg(Pp.fatto || `${Pp.ico} Trovato!`, `${punti.fatti} / ${Pp.n} ${Pp.presi}`, 1.8); } catch(e){} try { navigator.vibrate && navigator.vibrate(40); } catch(e){}
+      if (!punti.length) return fatto();
+    }
+  } else tieni = 0;
+  try { const N = D.NAV && D.NAV.dest; if (!N || Math.hypot(N.x - best.x, N.z - best.z) > 3) D.setDest({ x: best.x, z: best.z, name: P.t }); } catch(e){}
+  return `${punti.fatti} / ${Pp.n} ${Pp.presi} · ${bd < 950 ? Math.round(bd) + ' m' : (bd / 1000).toFixed(1).replace('.', ',') + ' km'}${extra}`;
 }
 /* ---------- fochi d'artificio ---------- */
 function fochi(x, z){
@@ -194,5 +309,5 @@ setInterval(() => {
 
 function avvia(){ if (!TG.debug || !TG.debug.car || !TG.GEO) return setTimeout(avvia, 1000); if (st.attiva) vaiPasso(st.attiva.passo, true); giro(); }
 if (document.readyState === 'complete') setTimeout(avvia, 2500); else addEventListener('load', () => setTimeout(avvia, 2500));
-TG.Missioni = { lista: MISSIONI, stato: () => st, attiva, prossima, apri: () => { const m = attiva() || prossima(); if (m) carta(m, attiva() ? 'info' : 'offerta'); }, accetta, lascia, fochi };
+TG.Missioni = { lista: MISSIONI, stato: () => st, punti: () => punti, attiva, prossima, apri: () => { const m = attiva() || prossima(); if (m) carta(m, attiva() ? 'info' : 'offerta'); }, accetta, lascia, fochi };
 })();
