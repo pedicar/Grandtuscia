@@ -30,12 +30,12 @@ const MISSIONI = [
       { vai: 'FABRICA', r: 45, t: 'Va\' a pijà a banda a Fabrica', chiF: '🎺', nomeF: 'O maestro de a banda', dice: 'Semo pronti! Portace a Carbognano, che famo tardi!' },
       { vai: 'CARBOGNANO', r: 45, tempo: 140, carico: '🎺 a banda', t: 'Porta a banda a Carbognano', dice: 'Evviva! A sagra po\' comincià! Guarda che fochi!' }
     ] },
-  { id: 'porcini', ico: '🍄', titolo: 'I Porcini pe\' Antonella', chi: '👩‍🍳', nome: 'Antonella', dove: 'CAPRAROLA', premio: 400, medaja: '🏅 Cercatore de porcini',
-    storia: 'Stasera ho gente a cena e me servono i porcini! Ner bosco tra Caprarola e Carbognano ce ne so\' parecchi: trovamene 5 e portameli. Occhio, se nascondono!',
+  { id: 'porcini', ico: '🍄', titolo: 'I Porcini pe\' Antonella', chi: '👩‍🍳', nome: 'Antonella de o ristorante', dove: 'FABRICA', premio: 400, medaja: '🏅 Cercatore de porcini',
+    storia: 'Stasera o ristorante è pieno e me servono i porcini! Ner bosco tra Caprarola e Carbognano ce ne so\' parecchi: trovamene 5 e portameli qui a Fabrica. Occhio, se nascondono!',
     passi: [
       { vai: 'FUNGHI', r: 60, t: 'Va\' ner bosco de i funghi' },
       { punti: { centro: 'FUNGHI', n: 5, raggio: 220, su: 'terra', ico: '🍄', nome: 'porcino', presi: 'porcini' }, t: 'Trova 5 porcini ner bosco', dice: 'Che profumo! Mo\' portali da Antonella.' },
-      { vai: 'CAPRAROLA', r: 50, carico: '🍄 i porcini', t: 'Porta i porcini da Antonella', dice: 'Che belli! Stasera fettuccine coi porcini. Grazie!' }
+      { vai: 'FABRICA', r: 50, carico: '🍄 i porcini', t: 'Porta i porcini a o ristorante de Antonella', dice: 'Che belli! Stasera fettuccine coi porcini. Vieni a assaggiarle!' }
     ] },
   { id: 'tozzetti', ico: '🍪', titolo: 'Impara a fà i Tozzetti', chi: '👵', nome: 'Nonna Peppa', dove: 'CARBOGNANO', premio: 350, medaja: '🏅 Mastro tozzettaro',
     storia: 'I tozzetti co\' e nocchie nostre so\' i mejo de a Tuscia! Te insegno a ricetta de mi\' nonna, ma tu me devi portà e nocchie e l\'ova.',
