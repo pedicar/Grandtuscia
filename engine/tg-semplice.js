@@ -76,6 +76,7 @@ function prossimo(){
   // arrivato a o terreno scelto: a freccia se spegne, resta o bottone SCARICA
   if (mia && dentro && dentro.id === mia.id) { try { if (D.NAV && D.NAV.dest) D.setDest(null); } catch(e){} return; }
   if (scelta) return;   // meta scelta da te: nun se tocca
+  if (TG.Missioni && TG.Missioni.attiva()) return;   // in missione a freccia è de a missione
   const N = D.NAV || {};
   const pieno = C && (C.pieno() || (TG.Passi && TG.Passi.n() === 2 && C.n >= C.MINIMO)); if (!pieno) guidato = false;
   // cassone pieno: a prima volta pe' ogni pieno a freccia va a o terreno da comprà più vicino, anche se c'era un'altra meta (missione automatica)
@@ -99,7 +100,7 @@ let obi = null;
 function apriMappa(){ try { const b = document.getElementById('bMap') || document.querySelector('[data-open="map"],#mapBtn,#btnMap'); if (b) { b.click(); return; } } catch(e){} try { TG.Terre.pannello(); } catch(e){} }
 function obiettivo(){
   const D = TG.debug, W = TG.Terre, C = TG.Cassone; if (!D || !W || !D.car || !C) return;
-  if (!obi) { obi = document.createElement('div'); obi.id = 'obi'; obi.onclick = e => { if (e.target.closest && e.target.closest('[data-coop]') && TG.Coop) { e.stopPropagation(); TG.Coop.vai(); return; } if (obi.dataset.va === 'account') { try { TG.debug.openAccount(); TG.Stats && TG.Stats.ev('iscrivi_tocco', 'obiettivo'); } catch(er){} return; } if (obi.dataset.va === 'mezzi') { try { TG.debug.openVehicles(); } catch(er){} return; } apriMappa(); }; document.body.appendChild(obi); }
+  if (!obi) { obi = document.createElement('div'); obi.id = 'obi'; obi.onclick = e => { if (e.target.closest && e.target.closest('[data-coop]') && TG.Coop) { e.stopPropagation(); TG.Coop.vai(); return; } if (obi.dataset.va === 'account') { try { TG.debug.openAccount(); TG.Stats && TG.Stats.ev('iscrivi_tocco', 'obiettivo'); } catch(er){} return; } if (obi.dataset.va === 'missione') { try { TG.Missioni.apri(); } catch(er){} return; } if (obi.dataset.va === 'mezzi') { try { TG.debug.openVehicles(); } catch(er){} return; } apriMappa(); }; document.body.appendChild(obi); }
 
   const p = paese(), c = D.car, dentro = W.terraIn(c.x, c.z), n = C.n, cap = C.cap(), pct = Math.min(100, n / cap * 100);
   if (!p) { obi.style.borderColor = '#ff8a3c'; obi.innerHTML = `<div class="t">📍 Scegli o paese tuo</div><div class="s">Tocca qui: i terreni che prendi vanno a lui</div>`; return; }
@@ -120,6 +121,9 @@ function obiettivo(){
   if (T) { const d = Math.max(0, Math.hypot(T.x - c.x, T.z - c.z) - T.rad), st = W.stato(T.id), cs = W.costo(T.id), dist = d < 950 ? Math.round(d / 10) * 10 + ' m' : (d / 1000).toFixed(1).replace('.', ',') + ' km'; obi.style.borderColor = '#ff8a3c'; obi.innerHTML = st === 'nostro' ? `<div class="t">🛡 Vai a rinforzà</div><div class="s">${breve(T.nome)} · ${dist}</div>${barra}${piede}` : `<div class="t">💰 ➜ ${breve(T.nome)}</div><div class="s">costa ${cs} 🌰${n >= cs ? ' · ce l\'hai' : ''} · ${dist}</div>${barra}${piede}`; return; }
   if (n >= cap) { obi.innerHTML = `<div class="t">Cassone pieno: vai a comprà!</div><div class="s">Tocca qui e scegli o terreno (o un mezzo novo)</div>${barra}${piede}`; return; }
   // 20/11 — un premio sempre in vista: o prossimo mezzo da vince o da comprà, co' a barra (tocca → iscrizione o garage)
+  // 27/11 — e missioni come GTA: dopo o primo campo, si nun stai in missione, a prossima sta qui
+  const MS = TG.Missioni && !TG.Missioni.attiva() && !(TG.Passi && TG.Passi.n() < 3) && TG.Missioni.prossima();
+  if (MS) { obi.dataset.va = 'missione'; obi.style.borderColor = '#f2c74e'; obi.innerHTML = `<div class="t">${MS.ico} Missione: ${MS.titolo}</div><div class="s">${MS.nome.replace(/ de .*/, '')} te cerca · <b style="color:#fff">tocca qui</b></div>${piede}`; return; }
   const pr = premio(n); obi.dataset.va = pr ? pr.va || '' : '';
   if (pr) { obi.innerHTML = `<div class="t">${pr.t}</div><div class="s">${pr.s}</div><div class="b"><i style="width:${Math.max(3, Math.min(100, pr.pct))}%;background:${col}"></i></div>${piede}`; return; }
   obi.innerHTML = `<div class="t">🌰 Raccoji e nocchie!</div>${barra}${piede}`;
